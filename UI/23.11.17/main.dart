@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'LoginPage.dart';
 import 'ReadingLogPage.dart';
-import 'package:webview_flutter/webview_flutter.dart';
-
 
 void main() => runApp(MyApp());
 
@@ -15,14 +13,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-//메인 컬러들
-const Color lavender = Color.fromRGBO(154, 132, 188, 1.0);
-const Color ourpink = Color.fromRGBO(218, 118, 172, 1.0);
-const Color ourblue = Color.fromRGBO(108, 155, 210, 1.0);
-const Color ourred = Color.fromRGBO(234, 83, 93, 1.0); // #ea535d 색상
-const Color ouryellow = Color.fromRGBO(248, 181, 0, 1.0); // #f8b500 색상
-const Color ourgreen = Color.fromRGBO(170, 206, 55, 1.0); // #aace37 색상
-const Color ourmint = Color.fromRGBO(101, 191, 161, 1.0); // #65bfa1 색상
 
 class HomePage extends StatelessWidget {
   @override
@@ -65,14 +55,13 @@ class HomePage extends StatelessWidget {
               },
               child: Icon(
                 Icons.account_circle,
-                color: lavender, // 아이콘 색상 설정
+                color: Colors.cyan.shade800, // 아이콘 색상 설정
               ),
             ),
           ),
         ],
       ),
-      body:
-      Column(
+      body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Padding(
@@ -81,7 +70,7 @@ class HomePage extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4.0),
                 border: Border.all(
-                  color: ourmint, // 테두리 색상
+                  color: Colors.cyan.shade700, // 테두리 색상
                   width: 2.0, // 테두리 두께
                 ),
               ),
@@ -89,7 +78,7 @@ class HomePage extends StatelessWidget {
                 padding: const EdgeInsets.all(8.0),
                 child: Row(
                   children: [
-                    Icon(Icons.search, color: ourmint),
+                    Icon(Icons.search, color: Colors.cyan.shade700),
                     SizedBox(width: 8.0),
                     Expanded(
                       child: TextField(
@@ -117,7 +106,7 @@ class HomePage extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(12.0),
               border: Border.all(
-                color: ourmint, // 테두리 색상
+                color: Colors.cyan.shade800, // 테두리 색상
                 width: 4.0, // 테두리 두께
               ),
             ),
@@ -128,7 +117,7 @@ class HomePage extends StatelessWidget {
                 Expanded(
                   flex: 0,
                   child: Container(
-                    color: ourmint,
+                    color: Colors.cyan.shade800,
                     child: Center(
                       child: Column(
                         children: [
@@ -204,15 +193,15 @@ class HomePage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.storage,
-                              color: ourblue,
+                              Icons.business,
+                              color: Colors.blue.shade300,
                               size: 48.0,
                             ),
                             Text(
-                                '대출\n현황',
-                                style: TextStyle(
-                                    color: ourblue,
-                                    fontWeight: FontWeight.bold)
+                              '대출\n현황',
+                              style: TextStyle(
+                                color: Colors.blue.shade300,
+                                fontWeight: FontWeight.bold)
                             ),
                           ],
                         ),
@@ -251,13 +240,13 @@ class HomePage extends StatelessWidget {
                           children: [
                             Icon(
                               Icons.favorite,
-                              color: ourpink,
+                              color: Colors.red.shade300,
                               size: 48.0,
                             ),
                             Text(
                                 '관심\n도서',
                                 style: TextStyle(
-                                    color: ourpink,
+                                    color: Colors.red.shade300,
                                     fontWeight: FontWeight.bold)
                             ),
                           ],
@@ -302,14 +291,14 @@ class HomePage extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.timeline,
-                              color: ouryellow,
+                              Icons.home,
+                              color: Colors.yellow.shade700,
                               size: 48.0,
                             ),
                             Text(
                                 '독서\n로그',
                                 style: TextStyle(
-                                    color: ouryellow,
+                                    color: Colors.yellow.shade700,
                                     fontWeight: FontWeight.bold)
                             ),
                           ],
@@ -319,42 +308,25 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      _launchURL('https://www.sdlib.or.kr/main/');
-                    },
-                    child: Container(
-                      margin: EdgeInsets.only(top: 5, bottom: 5, left: 5.0, right: 10.0),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Colors.white, Colors.grey.shade300],
-                        ),
-                        borderRadius: BorderRadius.circular(2.0),
-                        border: Border.all(
-                          color: Colors.grey, // 테두리 색상
-                          width: 0.7, // 테두리 두께
-                        ),
+                  child: Container(
+                    margin: EdgeInsets.only(top: 5, bottom: 5, left: 5.0, right: 10.0),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Colors.white, Colors.grey.shade300],
                       ),
-                      child: Center(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center, // 가로 중앙 정렬 추가
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.account_balance,
-                              color: ourgreen,
-                              size: 48.0,
-                            ),
-                            Text(
-                                '홈페\n이지',
-                                style: TextStyle(
-                                    color: ourgreen,
-                                    fontWeight: FontWeight.bold)
-                            ),
-                          ],
-                        ),
+                      borderRadius: BorderRadius.circular(2.0),
+                      border: Border.all(
+                        color: Colors.grey, // 테두리 색상
+                        width: 0.7, // 테두리 두께
+                      ),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.calendar_month,
+                        color: Colors.purple.shade100,
+                        size: 48.0,
                       ),
                     ),
                   ),
@@ -364,105 +336,50 @@ class HomePage extends StatelessWidget {
           ),
           // 공지사항 창
           GestureDetector(
+            onTap: () {
+              // 공지사항 웹 페이지로 이동
+              _launchURL(
+                  'https://www.sdlib.or.kr/SD/contents.do?a_num=25663758'); // 원하는 웹사이트 주소로 변경
+            },
             child: Container(
               width: double.infinity,
+              height: 80,
               color: Colors.blueGrey.shade100,
               padding: EdgeInsets.all(9.0),
-              margin: EdgeInsets.only(top: 5, bottom: 5, left: 10.0, right: 10.0),
+              margin:
+                  EdgeInsets.only(top: 5, bottom: 5, left: 10.0, right: 10.0),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '휴관일 안내',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 15.0,
-                          fontWeight: FontWeight.bold,
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        WidgetSpan(
+                          child: Icon(
+                            Icons.arrow_forward_ios, // 공지사항 아이콘
+                            color: Colors.black,
+                            size: 20.0,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 5.0),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildCircleDay('6'),
-                          SizedBox(width: 5.0),
-                          _buildCircleDay('13'),
-                          SizedBox(width: 5.0),
-                          _buildCircleDay('20'),
-                          SizedBox(width: 5.0),
-                          _buildCircleDay('27'),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Text(
-                    '2023. 11',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 15.0,
-                      fontWeight: FontWeight.bold,
+                        TextSpan(
+                          text: '공지사항\n',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextSpan(
+                          text: '이곳에 공지사항 내용이 들어갑니다.',
+                          style: TextStyle(fontSize: 16.0, color: Colors.black),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
           ),
-
-
-
-
-
-
-          // GestureDetector(
-          //   onTap: () {
-          //     // 공지사항 웹 페이지로 이동
-          //     _launchURL(
-          //         'https://www.sdlib.or.kr/SD/contents.do?a_num=25663758'); // 원하는 웹사이트 주소로 변경
-          //   },
-          //   child: Container(
-          //     width: double.infinity,
-          //     height: 80,
-          //     color: Colors.blueGrey.shade100,
-          //     padding: EdgeInsets.all(9.0),
-          //     margin:
-          //     EdgeInsets.only(top: 5, bottom: 5, left: 10.0, right: 10.0),
-          //     child: Row(
-          //       crossAxisAlignment: CrossAxisAlignment.start,
-          //       children: [
-          //         RichText(
-          //           text: TextSpan(
-          //             children: [
-          //               WidgetSpan(
-          //                 child: Icon(
-          //                   Icons.arrow_forward_ios, // 공지사항 아이콘
-          //                   color: Colors.black,
-          //                   size: 20.0,
-          //                 ),
-          //               ),
-          //               TextSpan(
-          //                 text: '공지사항\n',
-          //                 style: TextStyle(
-          //                   color: Colors.black,
-          //                   fontSize: 20.0,
-          //                   fontWeight: FontWeight.bold,
-          //                 ),
-          //               ),
-          //               TextSpan(
-          //                 text: '이곳에 공지사항 내용이 들어갑니다.',
-          //                 style: TextStyle(fontSize: 16.0, color: Colors.black),
-          //               ),
-          //             ],
-          //           ),
-          //         ),
-          //       ],
-          //     ),
-          //   ),
-          // ),
         ],
       ),
     );
@@ -506,23 +423,4 @@ class MyInterestBooksPage extends StatelessWidget {
   }
 }
 
-Widget _buildCircleDay(String day) {
-  return Container(
-    width: 40.0,
-    height: 40.0,
-    margin: EdgeInsets.all(5.0),
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      color: Colors.grey,
-    ),
-    child: Center(
-      child: Text(
-        day,
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    ),
-  );
-}
+
