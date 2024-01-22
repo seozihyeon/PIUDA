@@ -35,36 +35,23 @@ class _HomePageState extends State<HomePage> {
 
   //
   final TextEditingController _isbnController = TextEditingController();
+  Set<String> selectedOptions = {};
 
-  Future<void> searchBook() async {
-    final String isbn = _isbnController.text;
-    final String clientId = 'uFwwNh4yYFgq3WtAYl6S';
-    final String clientSecret = 'WElJXwZDhV';
-
-    final response = await http.get(
-      Uri.parse('https://openapi.naver.com/v1/search/book_adv.json?d_isbn=$isbn'),
-      headers: {
-        'X-Naver-Client-Id': clientId,
-        'X-Naver-Client-Secret': clientSecret,
-      },
+  void _navigateAndSearch() {
+    print('Selected Search Target: $_selectedSearchTarget'); // 디버깅을 위한 출력
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BookSearch(
+          iniimageUrl: 'assets/your_default_image.png',
+          searchText: _isbnController.text,
+          searchOptions: selectedOptions,
+          searchTarget: _selectedSearchTarget,
+        ),
+      ),
     );
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      if (data['items'].isNotEmpty) {
-        String iniimageUrl = data['items'][0]['image'];
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BookSearch(iniimageUrl: iniimageUrl),
-          ),
-        );
-      }
-    } else {
-      print('Failed to fetch book data.');
-    }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -144,7 +131,7 @@ class _HomePageState extends State<HomePage> {
                         }
                       });
                     },
-                    items: ['자료명', '저자명']
+                    items: ['자료명', '저자명', '발행처']
                         .map<DropdownMenuItem<String>>((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
@@ -162,7 +149,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: searchBook,
+                          onTap: _navigateAndSearch,
                           child: Icon(Icons.search, color: Colors.cyan.shade700),
                         )
                       ],

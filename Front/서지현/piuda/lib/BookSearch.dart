@@ -5,9 +5,17 @@ import 'dart:convert';
 
 
 class BookSearch extends StatefulWidget {
+  final String searchText;
+  final Set<String> searchOptions;
   final String iniimageUrl;
+  final String searchTarget;
+  final Set<String> selectedLibraries;
 
-  BookSearch({required this.iniimageUrl});
+  BookSearch({required this.iniimageUrl,
+    required this.searchText,
+    required this.searchOptions,
+    required this.searchTarget,
+    required this. selectedLibraries});
 
   @override
   _BookSearchState createState() => _BookSearchState();
@@ -16,11 +24,21 @@ class BookSearch extends StatefulWidget {
 class _BookSearchState extends State<BookSearch> {
   String _selectedSearchTarget = '자료명';
   Set<String> selectedOptions = Set<String>();
+  TextEditingController _isbnController;
 
-  bool _isPanelExpanded = false;
+  _BookSearchState() : _isbnController = TextEditingController(); // 생성자에서 초기화
+
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedSearchTarget = widget.searchTarget;
+    _isbnController.text = widget.searchText; // 검색어 설정
+    selectedOptions = widget.searchOptions; // 검색 옵션 설정
+    searchBook(); // 페이지가 로드될 때 자동으로 검색 수행
+  }
 
   //
-  TextEditingController _isbnController = TextEditingController();
   String _imageUrl = '';
 
 // _BookSearchState 클래스 내부에 추가할 상태 변수
@@ -30,12 +48,20 @@ class _BookSearchState extends State<BookSearch> {
   Future<void> searchBook() async {
     try {
       print("searchBook 함수 호출됨");
-      final String bookTitle = _isbnController.text;
-      print("검색어: $bookTitle");
+      final String searchText = _isbnController.text;
+      print("검색어: $searchText");
 
-      final response = await http.get(
-        Uri.parse('http://10.0.2.2:8080/api/books/search?title=$bookTitle'),
-      );
+      String url;
+      if (_selectedSearchTarget == '자료명') {
+        url = 'http://10.0.2.2:8080/api/books/search?title=$searchText';
+      } else if (_selectedSearchTarget == '저자명') {
+        url = 'http://10.0.2.2:8080/api/books/search?author=$searchText';
+      } else { // '발행처' 선택 시
+        url = 'http://10.0.2.2:8080/api/books/search?publisher=$searchText';
+      }
+
+      final response = await http.get(Uri.parse(url));
+
 
       print('Response status: ${response.statusCode}');
       final decodedResponse = utf8.decode(response.bodyBytes);
@@ -60,11 +86,11 @@ class _BookSearchState extends State<BookSearch> {
               imageUrl: _imageUrl.isNotEmpty ? _imageUrl : widget.iniimageUrl,
               bookTitle: bookData['title'] as String? ?? '제목 없음',
               author: bookData['author'] as String? ?? '저자 없음',
-              library: '성동구립도서관', // 예시 값, 실제 값으로 대체 필요
+              library: bookData['library'] as String? ?? '도서관 없음',// 예시 값, 실제 값으로 대체 필요
               publisher: bookData['publisher'] as String? ?? '출판사 없음',
-              location: '제1자료열람실', // 예시 값, 실제 값으로 대체 필요
+              location: bookData['location'] as String? ?? '자료위치 없음', // 예시 값, 실제 값으로 대체 필요
               loanstatus: false, // 예시 값, 실제 값으로 대체 필요
-              book_isbn: book_isbn,
+              book_isbn: book_isbn
             );
             bookWidgets.add(bookWidget);
           }
@@ -176,7 +202,7 @@ class _BookSearchState extends State<BookSearch> {
                               }
                             });
                           },
-                          items: ['자료명', '저자명']
+                          items: ['자료명', '저자명', '발행처']
                               .map<DropdownMenuItem<String>>((String value) {
                             return DropdownMenuItem<String>(
                               value: value,
@@ -227,53 +253,13 @@ class _BookSearchState extends State<BookSearch> {
             ),
 
 
-            Container(
-              child: BookContainer(
-                imageUrl: _imageUrl.isNotEmpty ? _imageUrl : widget.iniimageUrl,
-                bookTitle: '라플라스의마녀',
-                author: '히가시노 게이고',
-                library: '성동구립도서관',
-                publisher: '현대문학,2012',
-                location: '제1자료열람실',
-                loanstatus: false,
-                book_isbn: '여기에 적절한 ISBN 값을 넣으세요',
-              ),
-            ),
-            Container(
-              child: BookContainer(
-                imageUrl: _imageUrl.isNotEmpty ? _imageUrl : widget.iniimageUrl,
-                bookTitle: '라플라스의마녀',
-                author: '히가시노 게이고',
-                library: '성동구립도서관',
-                publisher: '현대문학,2012',
-                location: '제1자료열람실',
-                loanstatus: false,
-                book_isbn: '여기에 적절한 ISBN 값을 넣으세요',
-              ),
-            ),
-            Container(
-              child: BookContainer(
-                imageUrl: _imageUrl.isNotEmpty ? _imageUrl : widget.iniimageUrl,
-                bookTitle: '라플라스의마녀',
-                author: '히가시노 게이고',
-                library: '성동구립도서관',
-                publisher: '현대문학,2012',
-                location: '제1자료열람실',
-                loanstatus: false,
-                book_isbn: '여기에 적절한 ISBN 값을 넣으세요',
-              ),
-            ),
-            Container(
-              child: BookContainer(
-                imageUrl: _imageUrl.isNotEmpty ? _imageUrl : widget.iniimageUrl,
-                bookTitle: '라플라스의마녀',
-                author: '히가시노 게이고',
-                library: '성동구립도서관',
-                publisher: '현대문학,2012',
-                location: '제1자료열람실',
-                loanstatus: false,
-                book_isbn: '여기에 적절한 ISBN 값을 넣으세요',
-              ),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(), // 스크롤 가능성 제거
+              itemCount: _bookWidgets.length,
+              itemBuilder: (context, index) {
+                return _bookWidgets[index];
+              },
             ),
           ],
         ),
@@ -282,6 +268,7 @@ class _BookSearchState extends State<BookSearch> {
   }
 }
 
+//책 정보박스
 //책 정보박스
 class BookContainer extends StatelessWidget {
   final String imageUrl;
@@ -315,9 +302,8 @@ class BookContainer extends StatelessWidget {
 
 
     return Container(
-        height: Height * 0.35,
         width: Width *0.95,
-        margin: EdgeInsets.only(bottom: 10),
+        margin: EdgeInsets.only(bottom: 10, left: 5, right: 5),
         padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(3.0),
@@ -327,122 +313,132 @@ class BookContainer extends StatelessWidget {
           ),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Align(
-              alignment: Alignment.topLeft,
-              child: Image.network(imageUrl, height: Height*0.25*0.6
-              ),
+            Image.network(imageUrl, height: Height*0.25*0.6
             ),
             SizedBox(width: 20,),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [loanstatus ? Icon(Icons.check, color: Colors.cyan.shade700, weight: 20): Icon(Icons.clear, color: Colors.red.shade400),
-                  Text(loanstatus ? '대출가능' : '대출불가', style: TextStyle(color: loanstatus ? Colors.cyan.shade700 : Colors.red.shade400,),),],),
-                Row(
-                  children: [
-                    Text('['+library+']', style: TextStyle(color: Colors.cyan.shade900, fontSize: 18, fontWeight: FontWeight.bold),),
-                    SizedBox(width: 5,),
-                    Text(bookTitle)
-                  ],
-                ),
-                SizedBox(height: 9,),
-                Container(
-                  child: RichText(
-                    text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: '저자 ',
-                            style: TextStyle(
-                              fontSize: 18.0,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                          TextSpan(
-                            text: author,
-                            style: TextStyle(
-                              fontSize: 18.0,
-                              color: Colors.grey.shade900, // 두 번째 텍스트의 글자색
-                            ),
-                          ),
-                          TextSpan(text: '\n'),
-                          TextSpan(
-                            text: '발행처 ',
-                            style: TextStyle(
-                              fontSize: 18.0,
-                              color: Colors.grey.shade600, // 세 번째 텍스트의 글자색
-                            ),
-                          ),
-                          TextSpan(
-                            text: publisher,
-                            style: TextStyle(
-                              fontSize: 18.0,
-                              color: Colors.black, // 네 번째 텍스트의 글자색
-                            ),
-                          ),
-                          TextSpan(text: '\n'),
-                          TextSpan(
-                            text: '자료위치 ',
-                            style: TextStyle(
-                              fontSize: 18.0,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                          TextSpan(
-                            text: location,
-                            style: TextStyle(
-                              fontSize: 18.0,
-                              color: Colors.grey.shade900, // 두 번째 텍스트의 글자색
-                            ),
-                          ),
-                          TextSpan(text: '\n'),
-                        ]
-                    ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [loanstatus ? Icon(Icons.check, color: Colors.cyan.shade700, weight: 20): Icon(Icons.clear, color: Colors.red.shade400),
+                    Text(loanstatus ? '대출가능' : '대출불가', style: TextStyle(color: loanstatus ? Colors.cyan.shade700 : Colors.red.shade400, fontSize: 16),),],),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: RichText(softWrap:true, text: TextSpan(children: [
+                          TextSpan(text: '['+library+']', style: TextStyle(color: Colors.cyan.shade900, fontSize: 18, fontWeight: FontWeight.bold),),
+                          TextSpan(text: ' '+bookTitle, style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),),
+                        ]),),
+                      ),
+                    ],
                   ),
-                ),
-                Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: loanStatusColor,
-                        border: Border.all(
-                          color: Colors.white, // 테두리 색상
-                          width: 1.0, // 테두리 두께
+                  SizedBox(height: 4,),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade500,), top: BorderSide(color: Colors.grey.shade500,))),
+                          child: RichText(
+                            text: TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: '저자 ',
+                                    style: TextStyle(
+                                      fontSize: 18.0,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: author,
+                                    style: TextStyle(
+                                      fontSize: 18.0,
+                                      color: Colors.grey.shade900, // 두 번째 텍스트의 글자색
+                                    ),
+                                  ),
+                                  TextSpan(text: '\n'),
+                                  TextSpan(
+                                    text: '발행처 ',
+                                    style: TextStyle(
+                                      fontSize: 18.0,
+                                      color: Colors.grey.shade600, // 세 번째 텍스트의 글자색
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: publisher,
+                                    style: TextStyle(
+                                      fontSize: 18.0,
+                                      color: Colors.black, // 네 번째 텍스트의 글자색
+                                    ),
+                                  ),
+                                  TextSpan(text: '\n'),
+                                  TextSpan(
+                                    text: '자료위치 ',
+                                    style: TextStyle(
+                                      fontSize: 18.0,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: location,
+                                    style: TextStyle(
+                                      fontSize: 18.0,
+                                      color: Colors.grey.shade900, // 두 번째 텍스트의 글자색
+                                    ),
+                                  ),
+                                ]
+                            ),
+                          ),
                         ),
-                        borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
                       ),
-                      child: Text(
-                        loanStatusBox,
-                        style: TextStyle(
-                            color: Colors.white,
+                    ],
+                  ),
+                  SizedBox(height: 12,),
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: loanStatusColor,
+                          border: Border.all(
+                            color: Colors.white, // 테두리 색상
+                            width: 1.0, // 테두리 두께
+                          ),
+                          borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
+                        ),
+                        child: Text(
+                          loanStatusBox,
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 17.5,
+                              fontWeight: FontWeight.bold
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 10,),
+                      Container(
+                        padding: EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: Colors.white70,
+                          border: Border.all(
+                            color: Colors.grey.shade700, // 테두리 색상
+                            width: 1.0, // 테두리 두께
+                          ),
+                          borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
+                        ),
+                        child: Text(
+                          '관심도서담기',
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
                             fontSize: 17.5,
-                            fontWeight: FontWeight.bold
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox(width: 10,),
-                    Container(
-                      padding: EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: Colors.white70,
-                        border: Border.all(
-                          color: Colors.grey.shade700, // 테두리 색상
-                          width: 1.0, // 테두리 두께
-                        ),
-                        borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
-                      ),
-                      child: Text(
-                        '관심도서담기',
-                        style: TextStyle(
-                          color: Colors.grey.shade700,
-                          fontSize: 17.5,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             )
           ],
         )
