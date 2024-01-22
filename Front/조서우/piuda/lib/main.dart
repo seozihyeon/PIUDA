@@ -15,6 +15,7 @@ import 'dart:convert';
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
+  static bool isLoggedIn = false;
 
   @override
   Widget build(BuildContext context) {
@@ -122,23 +123,86 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginPage()),
-                );
-              },
-              child: Column(
-                children: [
-                  Icon(Icons.account_circle, color: Colors.cyan.shade800,),
-                  Text("로그인", style: TextStyle(color: Colors.cyan.shade800, fontSize: 13),)
-                ],
-              )
+          ],
+        ),
+        actions: <Widget>[
+          Builder(
+            builder: (BuildContext innerContext) {
+              return IconButton(
+                icon: Icon(Icons.account_circle, color: Colors.cyan.shade800,),
+                onPressed: () {
+                  if (MyApp.isLoggedIn) {
+                    Scaffold.of(innerContext).openEndDrawer();
+                  } else {
+                    // 로그인이 안된 상태일 경우 LoginPage로 이동
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => LoginPage()),
+                    );
+                  }
+                },
+              );
+            },
+          ),
+        ],
+      ),
+      endDrawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            UserAccountsDrawerHeader(
+              currentAccountPicture: CircleAvatar(
+                backgroundColor: Colors.white,
+              ),
+              accountName: Text('Gozero'),
+              accountEmail: Text('baekmoon1230@naver.com'),
+              decoration: BoxDecoration(
+                color: Colors.cyan[800],
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(40.0),
+                  bottomRight: Radius.circular(40.0),
+                ),
+              ),
             ),
+            ListTile(
+              leading: Icon(
+                Icons.wifi_protected_setup,
+                color: Colors.grey[850],
+              ),
+              title: Text('회원상태 '),
+              onTap: () {
+                print('Home button is clicked!');
+              },
+            ),
+            Divider(thickness: 1,),
+            ListTile(
+              leading: Icon(
+                Icons.question_answer,
+                color: Colors.grey[850],
+              ),
+              title: Text('나의 독서 로그'),
+              onTap: () {
+                print('Q&A button is clicked!');
+              },
+              //trailing: Icon(Icons.add),
+            ),
+            Divider(thickness: 1,),
+            ListTile(
+              leading: Icon(
+                Icons.exit_to_app,
+                color: Colors.black, // 로그아웃 버튼 아이콘 색상 변경
+              ),
+              title: Text('로그아웃'),
+              onTap: () {
+// 로그아웃 함수 호출
+                Navigator.pop(context);
+              },
+            ),
+
           ],
         ),
       ),
+
 
 
       body: SingleChildScrollView(

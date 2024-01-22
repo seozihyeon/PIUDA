@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'main.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 
 class LoginPage extends StatefulWidget {
@@ -11,17 +12,17 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   TextEditingController _UsernameController = TextEditingController();
-  TextEditingController _PasswordController = TextEditingController();
+  TextEditingController _UseridController = TextEditingController();
 
   Future<void> _login() async {
     String username = _UsernameController.text;
-    String userId = _PasswordController.text;
+    String userId = _UseridController.text;
     int? userIdInt = int.tryParse(userId);
 
     if (userIdInt == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('올바른 회원번호를 입력하세요.'),
+          content: Text('올바른 회원정보를 입력하세요.'),
           duration: Duration(seconds: 3),
         ),
       );
@@ -78,8 +79,6 @@ class _LoginPageState extends State<LoginPage> {
       );
     }
   }
-
-
 
 
 
@@ -172,7 +171,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       SizedBox(height: 12.0),
                       TextField(
-                        controller: _PasswordController,
+                        controller: _UseridController,
                         decoration: InputDecoration(labelText: '회원번호',
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(color: Colors.blue),)
