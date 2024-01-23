@@ -11,6 +11,8 @@ import 'Agreement.dart';
 import 'BookSearch.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'users.dart';
 
 void main() => runApp(MyApp());
 
@@ -27,16 +29,80 @@ class MyApp extends StatelessWidget {
 
 
 class HomePage extends StatefulWidget {
+  final String? username;
+  final int? userid;
+  final Users? userInfo;
+
+  HomePage({Key? key, this.username, this.userid, this.userInfo}) : super(key: key);
+
   @override
   _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
+  String userStatus = '';
   String _selectedSearchTarget = '자료명';
-
-  //
   final TextEditingController _isbnController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    fetchUserStatus(); // 앱이 시작될 때 사용자 상태를 가져옴
+  }
+
+  Future<String> getUserStatus(int userId) async {
+    var response = await http.get(
+      Uri.parse('http://10.0.2.2:8080/userstatus/$userId'),
+    );
+
+    if (response.statusCode == 200) {
+      return response.body;
+    } else {
+      throw Exception('Failed to load user status');
+    }
+  }
+
+  Future<void> fetchUserStatus() async {
+    try {
+      String status = await getUserStatus(widget.userid ?? 0);
+      setState(() {
+        userStatus = status; // 상태를 업데이트하고 다시 렌더링
+      });
+    } catch (e) {
+      print('Error fetching user status: $e');
+    }
+  }
+
+  Future<void> _logout() async {
+    var response = await http.post(
+      Uri.parse('http://10.0.2.2:8080/logout'),
+      // 추가적인 헤더 또는 데이터가 필요하다면 여기에 추가
+    );
+
+    if (response.statusCode == 200) {
+      // 서버에서 로그아웃 성공 응답이 오면 로컬 데이터 클리어
+      // 예: 토큰, 사용자 정보 등의 로컬 데이터 삭제
+      await _clearLocalData();
+      MyApp.isLoggedIn = false;
+
+      // 로그인 페이지로 이동
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage()),
+      );
+    } else {
+      // 로그아웃 실패 시 에러 메시지 출력
+      print('Failed to logout. ${response.statusCode}');
+    }
+  }
+
+  Future<void> _clearLocalData() async {
+    final secureStorage = FlutterSecureStorage();
+    await secureStorage.delete(key: 'user_token');
+  }
+
+
+  //책 검색 로직
   Future<void> searchBook() async {
     final String isbn = _isbnController.text;
     if (isbn.isEmpty) {
@@ -89,6 +155,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -134,7 +201,6 @@ class _HomePageState extends State<HomePage> {
                   if (MyApp.isLoggedIn) {
                     Scaffold.of(innerContext).openEndDrawer();
                   } else {
-                    // 로그인이 안된 상태일 경우 LoginPage로 이동
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => LoginPage()),
@@ -146,6 +212,9 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+
+
+      //마이페이지 드로어
       endDrawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -154,8 +223,8 @@ class _HomePageState extends State<HomePage> {
               currentAccountPicture: CircleAvatar(
                 backgroundColor: Colors.white,
               ),
-              accountName: Text('Gozero'),
-              accountEmail: Text('baekmoon1230@naver.com'),
+              accountName: Text(widget.username ?? 'Guest'),
+              accountEmail: Text(widget.userid != null ? widget.userid.toString() : ''),
               decoration: BoxDecoration(
                 color: Colors.cyan[800],
                 borderRadius: BorderRadius.only(
@@ -169,7 +238,7 @@ class _HomePageState extends State<HomePage> {
                 Icons.wifi_protected_setup,
                 color: Colors.grey[850],
               ),
-              title: Text('회원상태 '),
+              title: Text('회원상태: $userStatus'),
               onTap: () {
                 print('Home button is clicked!');
               },
@@ -193,10 +262,7 @@ class _HomePageState extends State<HomePage> {
                 color: Colors.black, // 로그아웃 버튼 아이콘 색상 변경
               ),
               title: Text('로그아웃'),
-              onTap: () {
-// 로그아웃 함수 호출
-                Navigator.pop(context);
-              },
+              onTap: _logout,
             ),
 
           ],
@@ -299,7 +365,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ),
                                 TextSpan(
-                                  text: '유성동',
+                                  text: widget.username,
                                   style: TextStyle(
                                     fontSize: 18.0,
                                     color: Colors.white70, // 두 번째 텍스트의 글자색
@@ -314,7 +380,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ),
                                 TextSpan(
-                                  text: '12345678',
+                                  text: widget.userid.toString(),
                                   style: TextStyle(
                                     fontSize: 18.0,
                                     color: Colors.white70, // 네 번째 텍스트의 글자색
@@ -567,6 +633,27 @@ class _HomePageState extends State<HomePage> {
 }
 
 
+class Login {
+  final String username;
+  final int userIdInt;
+
+  Login(this.username, this.userIdInt, );
+
+  Login.fromJson(Map<String, dynamic> json)
+      : username = json['user_name'],
+        userIdInt = json['user_id'];
+
+  Map<String, dynamic> toJson() => {
+    'user_name': username,
+    'user_id': userIdInt,
+  };
+}
+
+
+
+
+
+
 class LibDropdown extends StatefulWidget {
   @override
   _LibDropdownState createState() => _LibDropdownState();
@@ -608,6 +695,8 @@ class _LibDropdownState extends State<LibDropdown> {
     );
   }
 }
+
+
 
 
 
