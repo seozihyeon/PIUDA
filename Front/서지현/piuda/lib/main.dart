@@ -37,20 +37,33 @@ class _HomePageState extends State<HomePage> {
   final TextEditingController _isbnController = TextEditingController();
   Set<String> selectedOptions = {};
 
+
+
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>(); // Scaffold 키 추가
+
   void _navigateAndSearch() {
-    print('Selected Search Target: $_selectedSearchTarget'); // 디버깅을 위한 출력
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BookSearch(
-          iniimageUrl: 'assets/your_default_image.png',
-          searchText: _isbnController.text,
-          searchOptions: selectedOptions,
-          searchTarget: _selectedSearchTarget,
+    if (_isbnController.text.isEmpty) {
+      // 텍스트 필드가 비어있으면 SnackBar 표시
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('검색어를 입력해주세요')),
+      );
+    } else {
+      // 검색 로직 수행
+      print('Selected Search Target: $_selectedSearchTarget');
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BookSearch(
+            iniimageUrl: 'assets/your_default_image.png',
+            searchText: _isbnController.text,
+            searchOptions: selectedOptions,
+            searchTarget: _selectedSearchTarget,
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
+
 
 
   @override
@@ -509,7 +522,3 @@ class _LibDropdownState extends State<LibDropdown> {
     );
   }
 }
-
-
-
-
