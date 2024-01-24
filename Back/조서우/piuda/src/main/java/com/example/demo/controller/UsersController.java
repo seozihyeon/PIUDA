@@ -4,9 +4,11 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.mapper.UsersMapper;
 import com.example.demo.model.Users;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @RestController
 public class UsersController {
@@ -43,29 +45,51 @@ public class UsersController {
 
     // Login DTO class
     public static class LoginRequest {
-        private Long userId;
-        private String userName;
+        @JsonProperty("user_id")
+        private Long user_id;
+        @JsonProperty("user_name")
+        private String user_name;
 
         // Getters and Setters
+        public Long getId() {
+            return user_id;
+        }
+
+        public String getName() {
+            return user_name;
+        }
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        boolean isAuthenticated = authenticate(loginRequest.getUserId(), loginRequest.getUserName());
+        System.out.println("Received login request: " + loginRequest);
+        Users user = mapper.findByUserIdAndUserName(loginRequest.getId(), loginRequest.getName());
 
-        if (isAuthenticated) {
-            // 인증 성공
+        if (user != null) {
+            // 사용자가 데이터베이스에 존재하므로 인증 성공
             return ResponseEntity.ok().body("User authenticated successfully");
         } else {
-            // 인증 실패
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication failed");
+            // 사용자가 데이터베이스에 존재하지 않으므로 인증 실패
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication failed: User not found");
         }
     }
-
-    // 간단한 인증 로직 예시
-    private boolean authenticate(Long userId, String userName) {
-        // 여기에 실제 인증 로직을 구현합니다.
-        // 예시로, 단순히 userId와 userName이 null이 아니면 인증이 성공했다고 가정합니다.
-        return userId != null && userName != null;
+    
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        // 로그아웃 관련 로직 수행
+        // 예: 토큰 무효화, 세션 삭제 등
+        return ResponseEntity.ok().body("Logged out successfully");
     }
+    
+    @GetMapping("/userstatus/{user_id}")
+    public ResponseEntity<String> getUserStatus(@PathVariable("user_id") Long user_id) {
+        String userStatus = mapper.getUserStatus(user_id);
+        if (userStatus != null) {
+            return ResponseEntity.ok().body(userStatus);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
+    
+  
 }
