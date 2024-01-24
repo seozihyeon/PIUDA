@@ -1,4 +1,4 @@
-#Wed Jan 24 00:39:09 KST 2024
+#Thu Jan 25 07:13:44 KST 2024
 base.0=C\:\\Users\\jihyu\\StudioProjects\\piuda\\build\\app\\intermediates\\dex\\debug\\mergeDexDebug\\classes.dex
 path.0=classes.dex
 renamed.0=classes.dex

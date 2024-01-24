@@ -11,10 +11,16 @@ import 'Agreement.dart';
 import 'BookSearch.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'users.dart';
+
+final Uri _url = Uri.parse('https://www.sdlib.or.kr/main/');
+
 
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
+  static bool isLoggedIn = false;
 
   @override
   Widget build(BuildContext context) {
@@ -26,18 +32,74 @@ class MyApp extends StatelessWidget {
 
 
 class HomePage extends StatefulWidget {
+  final String? username;
+  final int? userid;
+  final Users? userInfo;
+
+
+  HomePage({Key? key, this.username, this.userid, this.userInfo}) : super(key: key);
+
   @override
   _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  String _selectedSearchTarget = '자료명';
+  String selectedLibrary = '성동구립';
+  Map<String, Map<String, String>> libraryUrls = {
+    '성동구립': {
+      '공지사항': 'https://www.sdlib.or.kr/SD/contents.do?a_num=25663758',
+      '문화행사': 'https://www.sdlib.or.kr/SD/edusat/list.do',
+    },
+    '금호': {
+      '공지사항': 'https://www.sdlib.or.kr/KH/contents.do?a_num=20831646',
+      '문화행사': 'https://www.sdlib.or.kr/KH/edusat/list.do',
+    },
+    '용답': {
+      '공지사항': 'https://www.sdlib.or.kr/YD/contents.do?a_num=55661714',
+      '문화행사': 'https://www.sdlib.or.kr/YD/edusat/list.do',
+    },
+    '무지개': {
+      '공지사항': 'https://www.sdlib.or.kr/RB/contents.do?a_num=48121466',
+      '문화행사': 'https://www.sdlib.or.kr/RB/edusat/list.do',
+    },
+    '성수': {
+      '공지사항': 'https://www.sdlib.or.kr/SS/contents.do?a_num=22326537',
+      '문화행사': 'https://www.sdlib.or.kr/SS/edusat/list.do',
+    },
+    '청계': {
+      '공지사항': 'https://www.sdlib.or.kr/CG/contents.do?a_num=33672856',
+      '문화행사': 'https://www.sdlib.or.kr/CG/edusat/list.do',
+    },
+    '숲속': {
+      '공지사항': 'https://www.sdlib.or.kr/fore/contents.do?a_num=80628730',
+      '문화행사': 'https://www.sdlib.or.kr/fore/edusat/list.do',
+    },
+    '작은': {
+      '공지사항': 'https://www.sdlib.or.kr/small/main.do',
+      '문화행사': 'https://www.sdlib.or.kr/small/main.do',
+    },
+  };
 
-  //
+  void _onLibraryChanged(String newValue) {
+    setState(() {
+      selectedLibrary = newValue;
+    });
+  }
+
+  Future<void> _launchLibraryUrl(String category) async {
+    String url = libraryUrls[selectedLibrary]?[category] ?? '';
+    if (url.isNotEmpty) {
+      final Uri _url = Uri.parse(url);
+      if (!await launchUrl(_url)) {
+        throw 'Could not launch $url';
+      }
+    }
+  }
+
+  String userStatus = '';
+  String _selectedSearchTarget = '자료명';
   final TextEditingController _isbnController = TextEditingController();
   Set<String> selectedOptions = {};
-
-
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>(); // Scaffold 키 추가
 
@@ -64,10 +126,71 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  @override
+  void initState() {
+    super.initState();
+    fetchUserStatus(); // 앱이 시작될 때 사용자 상태를 가져옴
+  }
+
+  Future<String> getUserStatus(int userId) async {
+    var response = await http.get(
+      Uri.parse('http://10.0.2.2:8080/userstatus/$userId'),
+    );
+
+    if (response.statusCode == 200) {
+      return response.body;
+    } else {
+      throw Exception('Failed to load user status');
+    }
+  }
+
+  Future<void> fetchUserStatus() async {
+    try {
+      String status = await getUserStatus(widget.userid ?? 0);
+      setState(() {
+        userStatus = status; // 상태를 업데이트하고 다시 렌더링
+      });
+    } catch (e) {
+      print('Error fetching user status: $e');
+    }
+  }
+
+  Future<void> _logout() async {
+    var response = await http.post(
+      Uri.parse('http://10.0.2.2:8080/logout'),
+      // 추가적인 헤더 또는 데이터가 필요하다면 여기에 추가
+    );
+
+    if (response.statusCode == 200) {
+      // 서버에서 로그아웃 성공 응답이 오면 로컬 데이터 클리어
+      // 예: 토큰, 사용자 정보 등의 로컬 데이터 삭제
+      await _clearLocalData();
+      MyApp.isLoggedIn = false;
+
+      // 로그인 페이지로 이동
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage()),
+      );
+    } else {
+      // 로그아웃 실패 시 에러 메시지 출력
+      print('Failed to logout. ${response.statusCode}');
+    }
+  }
+
+  Future<void> _clearLocalData() async {
+    final secureStorage = FlutterSecureStorage();
+    await secureStorage.delete(key: 'user_token');
+  }
+
+
+
 
 
   @override
   Widget build(BuildContext context) {
+    var screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -76,7 +199,7 @@ class _HomePageState extends State<HomePage> {
           children: [
             GestureDetector(
               onTap: () {
-                _launchURL('https://www.sdlib.or.kr/main/');
+                _launchUrl();
               },
               child: Icon(Icons.public, color: Colors.cyan.shade800,),
             ),
@@ -100,23 +223,85 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginPage()),
-                  );
+          ],
+        ),
+        actions: <Widget>[
+          Builder(
+            builder: (BuildContext innerContext) {
+              return IconButton(
+                icon: Icon(Icons.account_circle, color: Colors.cyan.shade800,),
+                onPressed: () {
+                  if (MyApp.isLoggedIn) {
+                    Scaffold.of(innerContext).openEndDrawer();
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => LoginPage()),
+                    );
+                  }
                 },
-                child: Column(
-                  children: [
-                    Icon(Icons.account_circle, color: Colors.cyan.shade800,),
-                    Text("로그인", style: TextStyle(color: Colors.cyan.shade800, fontSize: 13),)
-                  ],
-                )
+              );
+            },
+          ),
+        ],
+      ),
+
+
+      //마이페이지 드로어
+      endDrawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            UserAccountsDrawerHeader(
+              currentAccountPicture: CircleAvatar(
+                backgroundColor: Colors.white,
+              ),
+              accountName: Text(widget.username ?? 'Guest'),
+              accountEmail: Text(widget.userid != null ? widget.userid.toString() : ''),
+              decoration: BoxDecoration(
+                color: Colors.cyan[800],
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(40.0),
+                  bottomRight: Radius.circular(40.0),
+                ),
+              ),
             ),
+            ListTile(
+              leading: Icon(
+                Icons.wifi_protected_setup,
+                color: Colors.grey[850],
+              ),
+              title: Text('회원상태: $userStatus'),
+              onTap: () {
+                print('Home button is clicked!');
+              },
+            ),
+            Divider(thickness: 1,),
+            ListTile(
+              leading: Icon(
+                Icons.question_answer,
+                color: Colors.grey[850],
+              ),
+              title: Text('나의 독서 로그'),
+              onTap: () {
+                print('Q&A button is clicked!');
+              },
+              //trailing: Icon(Icons.add),
+            ),
+            Divider(thickness: 1,),
+            ListTile(
+              leading: Icon(
+                Icons.exit_to_app,
+                color: Colors.black, // 로그아웃 버튼 아이콘 색상 변경
+              ),
+              title: Text('로그아웃'),
+              onTap: _logout,
+            ),
+
           ],
         ),
       ),
+
 
 
       body: SingleChildScrollView(
@@ -176,13 +361,13 @@ class _HomePageState extends State<HomePage> {
             Row(
               children: [
                 Container(margin: EdgeInsets.only(top: 5),
-                    height:50, width:40,
+                    height:50, width: screenSize.width * 0.1,
                     color: Colors.cyan.shade800,
                     child: Icon(Icons.arrow_back_ios_rounded, color: Colors.white)
                 ),
                 Container(
                   height: 165.0,
-                  width: 330.0,
+                  width: screenSize.width * 0.8,
                   margin: EdgeInsets.only(top:5, bottom:3, left: 0.0, right: 0.0),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -199,7 +384,8 @@ class _HomePageState extends State<HomePage> {
                       Expanded(
                         flex: 1,
                         child: Container(
-                          width: 330,
+                          width: screenSize.width * 0.8,
+                          height: screenSize.height * 0.15,
                           padding: EdgeInsets.only(left: 15, top: 3),
                           color: Colors.cyan.shade800,
                           child: RichText(
@@ -213,7 +399,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ),
                                 TextSpan(
-                                  text: '유성동',
+                                  text: widget.username,
                                   style: TextStyle(
                                     fontSize: 18.0,
                                     color: Colors.white70, // 두 번째 텍스트의 글자색
@@ -228,13 +414,12 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ),
                                 TextSpan(
-                                  text: '12345678',
+                                  text: widget.userid.toString(),
                                   style: TextStyle(
                                     fontSize: 18.0,
                                     color: Colors.white70, // 네 번째 텍스트의 글자색
                                   ),
                                 ),
-                                TextSpan(text: '\n'),
                               ],
                             ),
                           ),
@@ -257,7 +442,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 Container(margin: EdgeInsets.only(top: 5),
-                    height:50, width:40,
+                    height:50, width:screenSize.width*0.1,
                     color: Colors.cyan.shade800,
                     child: Icon(Icons.arrow_forward_ios_rounded, color: Colors.white)
                 ),
@@ -266,9 +451,9 @@ class _HomePageState extends State<HomePage> {
 
 
             //3분할 아이콘
-            Container(
+             Container(
               height: 85,
-              margin: EdgeInsets.only(top: 13, left: 10, right: 10),
+              margin: EdgeInsets.only(top: 13, left: 10, right: 10, bottom:13),
               decoration: BoxDecoration(border: Border(top: BorderSide(color: Colors.grey), bottom: BorderSide(color: Colors.grey))),
               child: Row(
                 children: [
@@ -338,7 +523,7 @@ class _HomePageState extends State<HomePage> {
                   Expanded(
                     child: GestureDetector(
                       onTap: () {
-                        // '독서로그' 페이지로 이동
+                        // '예약내역' 페이지로 이동
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -373,86 +558,95 @@ class _HomePageState extends State<HomePage> {
 
 
 
+
             Row(
               children: [
-                SizedBox(width: 10,),
-                LibDropdown(),
-                GestureDetector(
-                  onTap: () {
-                    _launchURL(
-                        'https://www.sdlib.or.kr/SD/contents.do?a_num=25663758');
-                  },
-                  child: Container(
-                    height: 50,
-                    padding: EdgeInsets.all(8.0),
-                    margin: EdgeInsets.only(top: 5, bottom: 5, left: 10.0, right: 10.0),
-                    child: Row(
-                      children: [
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              WidgetSpan(
-                                child: Icon(
-                                  Icons.arrow_forward_ios, // 공지사항 아이콘
-                                  color: Colors.grey.shade800,
-                                  size: 18.0,
+                Spacer(flex: 3), // 좌측 마진
+                Expanded(
+                  flex: 25, //
+                  child: LibDropdown(
+                    selectedLibrary: selectedLibrary,
+                    onLibraryChanged: _onLibraryChanged,
+                    libraryUrls: libraryUrls,
+                  ),
+                ),
+                Expanded(
+                  flex: 29, // '공지사항' 버튼을 위한 공간
+                  child: GestureDetector(
+                    onTap: () => _launchLibraryUrl('공지사항'),
+                    child: Container(
+                      height: 50,
+                      padding: EdgeInsets.all(5),
+                      margin: EdgeInsets.only(top: 5, bottom: 5, left: 10.0, right: 10),
+                      child: Row(
+                        children: [
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                WidgetSpan(
+                                  child: Icon(
+                                    Icons.arrow_forward_ios,
+                                    color: Colors.grey.shade800,
+                                    size: 18.0,
+                                  ),
                                 ),
-                              ),
-                              TextSpan(
-                                text: '공지사항',
-                                style: TextStyle(
-                                  color: Colors.grey.shade800,
-                                  fontSize: 18.0,
-                                  fontWeight: FontWeight.bold,
+                                TextSpan(
+                                  text: '공지사항',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade800,
+                                    fontSize: 18.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-                Container(height:18, child: Text(''),decoration: BoxDecoration(border: Border(right: BorderSide(color: Colors.grey, width: 2.0)))),
-                GestureDetector(
-                  onTap: () {
-                    // 문화행사 웹 페이지로 이동
-                    _launchURL(
-                        'https://www.sdlib.or.kr/SD/edusat/list.do'); // 원하는 웹사이트 주소로 변경
-                  },
-                  child: Container(
-                    height: 50,
-                    padding: EdgeInsets.all(8.0),
-                    margin: EdgeInsets.only(top: 5, bottom: 5, left: 10.0, right: 10.0),
-                    child: Row(
-                      children: [
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              WidgetSpan(
-                                child: Icon(
-                                  Icons.arrow_forward_ios, // 공지사항 아이콘
-                                  color: Colors.grey.shade800,
-                                  size: 18.0,
+                Container(height: 18, decoration: BoxDecoration(border: Border(right: BorderSide(color: Colors.grey, width: 2)))),
+                Expanded(
+                  flex: 29, // '문화행사' 버튼을 위한 공간
+                  child: GestureDetector(
+                    onTap: () => _launchLibraryUrl('문화행사'),
+                    child: Container(
+                      height: 50,
+                      // width: screenSize.width*0.3, // 이제 필요 없음
+                      padding: EdgeInsets.all(5.0),
+                      margin: EdgeInsets.only(top: 5, bottom: 5, left: 10.0, right: 10.0),
+                      child: Row(
+                        children: [
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                WidgetSpan(
+                                  child: Icon(
+                                    Icons.arrow_forward_ios,
+                                    color: Colors.grey.shade800,
+                                    size: 18.0,
+                                  ),
                                 ),
-                              ),
-                              TextSpan(
-                                text: '문화행사',
-                                style: TextStyle(
-                                  color: Colors.grey.shade800,
-                                  fontSize: 18.0,
-                                  fontWeight: FontWeight.bold,
+                                TextSpan(
+                                  text: '문화행사',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade800,
+                                    fontSize: 18.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
+
 
             Container(
                 child: Container(
@@ -471,49 +665,69 @@ class _HomePageState extends State<HomePage> {
   }
 
   // 웹 페이지로 이동하는 함수
-  _launchURL(String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      throw 'Could not launch $url';
+  Future<void> _launchUrl() async {
+    if (!await launchUrl(_url)) {
+      throw Exception('Could not launch $_url');
     }
   }
 }
 
 
+class Login {
+  final String username;
+  final int userIdInt;
+
+  Login(this.username, this.userIdInt, );
+
+  Login.fromJson(Map<String, dynamic> json)
+      : username = json['user_name'],
+        userIdInt = json['user_id'];
+
+  Map<String, dynamic> toJson() => {
+    'user_name': username,
+    'user_id': userIdInt,
+  };
+}
+
 class LibDropdown extends StatefulWidget {
+  final String selectedLibrary;
+  final Function(String) onLibraryChanged;
+  final Map<String, Map<String, String>> libraryUrls;
+
+  LibDropdown({
+    Key? key,
+    required this.selectedLibrary,
+    required this.onLibraryChanged,
+    required this.libraryUrls,
+  }) : super(key: key);
+
   @override
   _LibDropdownState createState() => _LibDropdownState();
 }
 
 class _LibDropdownState extends State<LibDropdown> {
-  String selectedValue = '성동구립'; // 기본 선택값
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
-          width: 133.0, // 원하는 너비로 설정
+          width: screenWidth*0.25, // 원하는 너비로 설정
           child: DropdownButton<String>(
-            value: selectedValue,
+            value: widget.selectedLibrary,
             onChanged: (String? newValue) {
-              setState(() {
-                selectedValue = newValue!;
-              });
+              if (newValue != null) {
+                setState(() {
+                  widget.onLibraryChanged(newValue);
+                });
+              }
             },
-            style: TextStyle(
-              fontSize: 18.0,
-              color: Colors.black,
-            ),
-            items: <String>['성동구립', '금호', '용답', '무지개', '성수', '청계', '숲속', '스마트', '작은']
-                .map<DropdownMenuItem<String>>((String value) {
+            items: widget.libraryUrls.keys.map<DropdownMenuItem<String>>((String value) {
               return DropdownMenuItem<String>(
                 value: value,
-                child: Padding(
-                  padding: EdgeInsets.only(left: 5.0), // 오른쪽 여백 조절
-                  child: Text(value),
-                ),
+                child: Text(value, style: TextStyle(
+                  fontSize: 17,)),
               );
             }).toList(),
           ),
@@ -522,3 +736,9 @@ class _LibDropdownState extends State<LibDropdown> {
     );
   }
 }
+
+
+
+
+
+

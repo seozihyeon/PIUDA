@@ -369,7 +369,7 @@ class BookContainer extends StatelessWidget {
     Color loanStatusColor = loanstatus ? Colors.cyan.shade700 : Colors.red.shade400;
 
     if (!loanstatus && reserved) {
-      loanStatusText += ' (예약중)';
+      loanStatusText += '(예약중)';
     }
 
     double Height = MediaQuery.of(context).size.height;
@@ -584,7 +584,8 @@ class _LibraryOptionsState extends State<LibraryOptions> {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
+    return Padding(padding: EdgeInsets.only(right: 10),
+      child: Wrap(
       spacing: 8.0, // 가로 간격 설정
       runSpacing: 0.0, // 세로 간격 설정
       children: libraries.map((library) {
@@ -602,6 +603,7 @@ class _LibraryOptionsState extends State<LibraryOptions> {
           ],
         );
       }).toList(),
+    ),
     );
   }
 }
@@ -622,7 +624,10 @@ class _SmallLibraryOptionsState extends State<SmallLibraryOptions> {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
+    double screenWidth = MediaQuery.of(context).size.width;
+    return
+      Padding(padding:EdgeInsets.only(right: 10),
+        child: Wrap(
       spacing: 8.0, // 가로 간격 설정
       runSpacing: 0.0, // 세로 간격 설정
       children: libraries.map((library) {
@@ -647,6 +652,7 @@ class _SmallLibraryOptionsState extends State<SmallLibraryOptions> {
           ],
         );
       }).toList(),
-    );
+    ),
+      );
   }
 }

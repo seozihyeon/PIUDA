@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'main.dart';
 import 'BookSearch.dart';
 import 'package:flutter/material.dart';
-import 'main.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -365,6 +364,13 @@ class _BookDetailState extends State<BookDetail> {
                                                   fontSize: 18.0,
                                                   fontWeight: FontWeight.bold,
                                                   color: Colors.grey.shade900,
+                                                ),
+                                              ),
+                                              TextSpan(
+                                                text: "한국십진분류법->",
+                                                style: TextStyle(
+                                                  fontSize: 18.0,
+                                                  color: Colors.grey.shade800, // 두 번째 텍스트의 글자색
                                                 ),
                                               ),
                                               TextSpan(
