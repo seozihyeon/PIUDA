@@ -14,6 +14,9 @@ import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'users.dart';
 
+final Uri _url = Uri.parse('https://www.sdlib.or.kr/main/');
+
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -33,6 +36,7 @@ class HomePage extends StatefulWidget {
   final int? userid;
   final Users? userInfo;
 
+
   HomePage({Key? key, this.username, this.userid, this.userInfo}) : super(key: key);
 
   @override
@@ -40,9 +44,87 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  String selectedLibrary = '성동구립';
+  Map<String, Map<String, String>> libraryUrls = {
+    '성동구립': {
+      '공지사항': 'https://www.sdlib.or.kr/SD/contents.do?a_num=25663758',
+      '문화행사': 'https://www.sdlib.or.kr/SD/edusat/list.do',
+    },
+    '금호': {
+      '공지사항': 'https://www.sdlib.or.kr/KH/contents.do?a_num=20831646',
+      '문화행사': 'https://www.sdlib.or.kr/KH/edusat/list.do',
+    },
+    '용답': {
+      '공지사항': 'https://www.sdlib.or.kr/YD/contents.do?a_num=55661714',
+      '문화행사': 'https://www.sdlib.or.kr/YD/edusat/list.do',
+    },
+    '무지개': {
+      '공지사항': 'https://www.sdlib.or.kr/RB/contents.do?a_num=48121466',
+      '문화행사': 'https://www.sdlib.or.kr/RB/edusat/list.do',
+    },
+    '성수': {
+      '공지사항': 'https://www.sdlib.or.kr/SS/contents.do?a_num=22326537',
+      '문화행사': 'https://www.sdlib.or.kr/SS/edusat/list.do',
+    },
+    '청계': {
+      '공지사항': 'https://www.sdlib.or.kr/CG/contents.do?a_num=33672856',
+      '문화행사': 'https://www.sdlib.or.kr/CG/edusat/list.do',
+    },
+    '숲속': {
+      '공지사항': 'https://www.sdlib.or.kr/fore/contents.do?a_num=80628730',
+      '문화행사': 'https://www.sdlib.or.kr/fore/edusat/list.do',
+    },
+    '작은': {
+      '공지사항': 'https://www.sdlib.or.kr/small/main.do',
+      '문화행사': 'https://www.sdlib.or.kr/small/main.do',
+    },
+  };
+
+  void _onLibraryChanged(String newValue) {
+    setState(() {
+      selectedLibrary = newValue;
+    });
+  }
+
+  Future<void> _launchLibraryUrl(String category) async {
+    String url = libraryUrls[selectedLibrary]?[category] ?? '';
+    if (url.isNotEmpty) {
+      final Uri _url = Uri.parse(url);
+      if (!await launchUrl(_url)) {
+        throw 'Could not launch $url';
+      }
+    }
+  }
+
   String userStatus = '';
   String _selectedSearchTarget = '자료명';
   final TextEditingController _isbnController = TextEditingController();
+  Set<String> selectedOptions = {};
+
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>(); // Scaffold 키 추가
+
+  void _navigateAndSearch() {
+    if (_isbnController.text.isEmpty) {
+      // 텍스트 필드가 비어있으면 SnackBar 표시
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('검색어를 입력해주세요')),
+      );
+    } else {
+      // 검색 로직 수행
+      print('Selected Search Target: $_selectedSearchTarget');
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BookSearch(
+            iniimageUrl: 'assets/your_default_image.png',
+            searchText: _isbnController.text,
+            searchOptions: selectedOptions,
+            searchTarget: _selectedSearchTarget,
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -102,62 +184,13 @@ class _HomePageState extends State<HomePage> {
   }
 
 
-  //책 검색 로직
-  Future<void> searchBook() async {
-    final String isbn = _isbnController.text;
-    if (isbn.isEmpty) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            content: Text("검색어를 입력해주세요."),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text("확인"),
-              ),
-            ],
-          );
-        },
-      );
-      return;
-    }
 
-    final String clientId = 'uFwwNh4yYFgq3WtAYl6S';
-    final String clientSecret = 'WElJXwZDhV';
-
-    final response = await http.get(
-      Uri.parse('https://openapi.naver.com/v1/search/book_adv.json?d_isbn=$isbn'),
-      headers: {
-        'X-Naver-Client-Id': clientId,
-        'X-Naver-Client-Secret': clientSecret,
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      if (data['items'].isNotEmpty) {
-        String iniimageUrl = data['items'][0]['image'];
-        String inibookTitle = data['items'][0]['title'];
-        String inibookAuthor = data['items'][0]['author'];
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BookSearch(iniimageUrl: iniimageUrl, inibookTitle: inibookTitle, inibookAuthor: inibookAuthor, inisearchitem: _isbnController.text),
-          ),
-        );
-      }
-    } else {
-      print('Failed to fetch book data.');
-    }
-  }
 
 
   @override
   Widget build(BuildContext context) {
+    var screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -166,7 +199,7 @@ class _HomePageState extends State<HomePage> {
           children: [
             GestureDetector(
               onTap: () {
-                _launchURL('https://www.sdlib.or.kr/main/');
+                _launchUrl();
               },
               child: Icon(Icons.public, color: Colors.cyan.shade800,),
             ),
@@ -296,7 +329,7 @@ class _HomePageState extends State<HomePage> {
                         }
                       });
                     },
-                    items: ['자료명', '저자명']
+                    items: ['자료명', '저자명', '발행처']
                         .map<DropdownMenuItem<String>>((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
@@ -314,7 +347,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: searchBook,
+                          onTap: _navigateAndSearch,
                           child: Icon(Icons.search, color: Colors.cyan.shade700),
                         )
                       ],
@@ -328,13 +361,13 @@ class _HomePageState extends State<HomePage> {
             Row(
               children: [
                 Container(margin: EdgeInsets.only(top: 5),
-                  height:50, width:40,
-                  color: Colors.cyan.shade800,
-                  child: Icon(Icons.arrow_back_ios_rounded, color: Colors.white)
+                    height:50, width: screenSize.width * 0.1,
+                    color: Colors.cyan.shade800,
+                    child: Icon(Icons.arrow_back_ios_rounded, color: Colors.white)
                 ),
                 Container(
                   height: 165.0,
-                  width: 330.0,
+                  width: screenSize.width * 0.8,
                   margin: EdgeInsets.only(top:5, bottom:3, left: 0.0, right: 0.0),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -351,7 +384,8 @@ class _HomePageState extends State<HomePage> {
                       Expanded(
                         flex: 1,
                         child: Container(
-                          width: 330,
+                          width: screenSize.width * 0.8,
+                          height: screenSize.height * 0.15,
                           padding: EdgeInsets.only(left: 15, top: 3),
                           color: Colors.cyan.shade800,
                           child: RichText(
@@ -386,7 +420,6 @@ class _HomePageState extends State<HomePage> {
                                     color: Colors.white70, // 네 번째 텍스트의 글자색
                                   ),
                                 ),
-                                TextSpan(text: '\n'),
                               ],
                             ),
                           ),
@@ -409,9 +442,9 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 Container(margin: EdgeInsets.only(top: 5),
-                  height:50, width:40,
-                  color: Colors.cyan.shade800,
-                  child: Icon(Icons.arrow_forward_ios_rounded, color: Colors.white)
+                    height:50, width:screenSize.width*0.1,
+                    color: Colors.cyan.shade800,
+                    child: Icon(Icons.arrow_forward_ios_rounded, color: Colors.white)
                 ),
               ],
             ),
@@ -420,7 +453,7 @@ class _HomePageState extends State<HomePage> {
             //3분할 아이콘
             Container(
               height: 85,
-              margin: EdgeInsets.only(top: 13, left: 10, right: 10),
+              margin: EdgeInsets.only(top: 13, left: 10, right: 10, bottom:13),
               decoration: BoxDecoration(border: Border(top: BorderSide(color: Colors.grey), bottom: BorderSide(color: Colors.grey))),
               child: Row(
                 children: [
@@ -443,11 +476,11 @@ class _HomePageState extends State<HomePage> {
                               Image.asset('assets/images/대출현황.jpg', scale: 1.3),
                               SizedBox(height: 2),
                               Text(
-                                  '대출현황',
+                                  '대출조회',
                                   style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey.shade700,
-                                    fontWeight: FontWeight.bold)
+                                      fontSize: 13,
+                                      color: Colors.grey.shade700,
+                                      fontWeight: FontWeight.bold)
                               ),
                             ],
                           ),
@@ -477,9 +510,9 @@ class _HomePageState extends State<HomePage> {
                               Text(
                                   '관심도서',
                                   style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey.shade700,
-                                    fontWeight: FontWeight.bold)
+                                      fontSize: 13,
+                                      color: Colors.grey.shade700,
+                                      fontWeight: FontWeight.bold)
                               ),
                             ],
                           ),
@@ -490,7 +523,7 @@ class _HomePageState extends State<HomePage> {
                   Expanded(
                     child: GestureDetector(
                       onTap: () {
-                        // '독서로그' 페이지로 이동
+                        // '예약내역' 페이지로 이동
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -509,9 +542,9 @@ class _HomePageState extends State<HomePage> {
                               Text(
                                   '예약내역',
                                   style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey.shade700,
-                                    fontWeight: FontWeight.bold)
+                                      fontSize: 13,
+                                      color: Colors.grey.shade700,
+                                      fontWeight: FontWeight.bold)
                               ),
                             ],
                           ),
@@ -525,86 +558,95 @@ class _HomePageState extends State<HomePage> {
 
 
 
+
             Row(
               children: [
-                SizedBox(width: 10,),
-                LibDropdown(),
-                GestureDetector(
-                  onTap: () {
-                    _launchURL(
-                        'https://www.sdlib.or.kr/SD/contents.do?a_num=25663758');
-                  },
-                  child: Container(
-                    height: 50,
-                    padding: EdgeInsets.all(8.0),
-                    margin: EdgeInsets.only(top: 5, bottom: 5, left: 10.0, right: 10.0),
-                    child: Row(
-                      children: [
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              WidgetSpan(
-                                child: Icon(
-                                  Icons.arrow_forward_ios, // 공지사항 아이콘
-                                  color: Colors.grey.shade800,
-                                  size: 18.0,
+                Spacer(flex: 3), // 좌측 마진
+                Expanded(
+                  flex: 25, //
+                  child: LibDropdown(
+                    selectedLibrary: selectedLibrary,
+                    onLibraryChanged: _onLibraryChanged,
+                    libraryUrls: libraryUrls,
+                  ),
+                ),
+                Expanded(
+                  flex: 29, // '공지사항' 버튼을 위한 공간
+                  child: GestureDetector(
+                    onTap: () => _launchLibraryUrl('공지사항'),
+                    child: Container(
+                      height: 50,
+                      padding: EdgeInsets.all(5),
+                      margin: EdgeInsets.only(top: 5, bottom: 5, left: 10.0, right: 10),
+                      child: Row(
+                        children: [
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                WidgetSpan(
+                                  child: Icon(
+                                    Icons.arrow_forward_ios,
+                                    color: Colors.grey.shade800,
+                                    size: 18.0,
+                                  ),
                                 ),
-                              ),
-                              TextSpan(
-                                text: '공지사항',
-                                style: TextStyle(
-                                  color: Colors.grey.shade800,
-                                  fontSize: 18.0,
-                                  fontWeight: FontWeight.bold,
+                                TextSpan(
+                                  text: '공지사항',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade800,
+                                    fontSize: 18.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-                Container(height:18, child: Text(''),decoration: BoxDecoration(border: Border(right: BorderSide(color: Colors.grey, width: 2.0)))),
-                GestureDetector(
-                  onTap: () {
-                    // 문화행사 웹 페이지로 이동
-                    _launchURL(
-                        'https://www.sdlib.or.kr/SD/edusat/list.do'); // 원하는 웹사이트 주소로 변경
-                  },
-                  child: Container(
-                    height: 50,
-                    padding: EdgeInsets.all(8.0),
-                    margin: EdgeInsets.only(top: 5, bottom: 5, left: 10.0, right: 10.0),
-                    child: Row(
-                      children: [
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              WidgetSpan(
-                                child: Icon(
-                                  Icons.arrow_forward_ios, // 공지사항 아이콘
-                                  color: Colors.grey.shade800,
-                                  size: 18.0,
+                Container(height: 18, decoration: BoxDecoration(border: Border(right: BorderSide(color: Colors.grey, width: 2)))),
+                Expanded(
+                  flex: 29, // '문화행사' 버튼을 위한 공간
+                  child: GestureDetector(
+                    onTap: () => _launchLibraryUrl('문화행사'),
+                    child: Container(
+                      height: 50,
+                      // width: screenSize.width*0.3, // 이제 필요 없음
+                      padding: EdgeInsets.all(5.0),
+                      margin: EdgeInsets.only(top: 5, bottom: 5, left: 10.0, right: 10.0),
+                      child: Row(
+                        children: [
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                WidgetSpan(
+                                  child: Icon(
+                                    Icons.arrow_forward_ios,
+                                    color: Colors.grey.shade800,
+                                    size: 18.0,
+                                  ),
                                 ),
-                              ),
-                              TextSpan(
-                                text: '문화행사',
-                                style: TextStyle(
-                                  color: Colors.grey.shade800,
-                                  fontSize: 18.0,
-                                  fontWeight: FontWeight.bold,
+                                TextSpan(
+                                  text: '문화행사',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade800,
+                                    fontSize: 18.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
+
 
             Container(
                 child: Container(
@@ -623,11 +665,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   // 웹 페이지로 이동하는 함수
-  _launchURL(String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      throw 'Could not launch $url';
+  Future<void> _launchUrl() async {
+    if (!await launchUrl(_url)) {
+      throw Exception('Could not launch $_url');
     }
   }
 }
@@ -649,44 +689,45 @@ class Login {
   };
 }
 
-
-
-
-
-
 class LibDropdown extends StatefulWidget {
+  final String selectedLibrary;
+  final Function(String) onLibraryChanged;
+  final Map<String, Map<String, String>> libraryUrls;
+
+  LibDropdown({
+    Key? key,
+    required this.selectedLibrary,
+    required this.onLibraryChanged,
+    required this.libraryUrls,
+  }) : super(key: key);
+
   @override
   _LibDropdownState createState() => _LibDropdownState();
 }
 
 class _LibDropdownState extends State<LibDropdown> {
-  String selectedValue = '성동구립'; // 기본 선택값
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
-          width: 133.0, // 원하는 너비로 설정
+          width: screenWidth*0.25, // 원하는 너비로 설정
           child: DropdownButton<String>(
-            value: selectedValue,
+            value: widget.selectedLibrary,
             onChanged: (String? newValue) {
-              setState(() {
-                selectedValue = newValue!;
-              });
+              if (newValue != null) {
+                setState(() {
+                  widget.onLibraryChanged(newValue);
+                });
+              }
             },
-            style: TextStyle(
-              fontSize: 18.0,
-              color: Colors.black,
-            ),
-            items: <String>['성동구립', '금호', '용답', '무지개', '성수', '청계', '숲속', '스마트', '작은']
-                .map<DropdownMenuItem<String>>((String value) {
+            items: widget.libraryUrls.keys.map<DropdownMenuItem<String>>((String value) {
               return DropdownMenuItem<String>(
                 value: value,
-                child: Padding(
-                  padding: EdgeInsets.only(left: 5.0), // 오른쪽 여백 조절
-                  child: Text(value),
-                ),
+                child: Text(value, style: TextStyle(
+                  fontSize: 17,)),
               );
             }).toList(),
           ),
@@ -695,10 +736,3 @@ class _LibDropdownState extends State<LibDropdown> {
     );
   }
 }
-
-
-
-
-
-
-
