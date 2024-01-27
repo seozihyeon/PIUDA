@@ -88,6 +88,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
         MyApp.isLoggedIn = true;
+        MyApp.userId = userIdInt;
         // 로그인 성공 후 처리, 예를 들면 홈 페이지로 이동
         Navigator.pushAndRemoveUntil(
           context,

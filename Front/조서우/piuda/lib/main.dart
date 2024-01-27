@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:piuda/MyBookingPage.dart';
 import 'package:piuda/MyLog.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -21,6 +22,7 @@ void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
   static bool isLoggedIn = false;
+  static int? userId;
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +148,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> fetchUserStatus() async {
     try {
-      String status = await getUserStatus(widget.userid ?? 0);
+      String status = await getUserStatus(MyApp.userId ?? 0);
       setState(() {
         userStatus = status; // 상태를 업데이트하고 다시 렌더링
       });
@@ -158,14 +160,12 @@ class _HomePageState extends State<HomePage> {
   Future<void> _logout() async {
     var response = await http.post(
       Uri.parse('http://10.0.2.2:8080/logout'),
-      // 추가적인 헤더 또는 데이터가 필요하다면 여기에 추가
     );
 
     if (response.statusCode == 200) {
-      // 서버에서 로그아웃 성공 응답이 오면 로컬 데이터 클리어
-      // 예: 토큰, 사용자 정보 등의 로컬 데이터 삭제
       await _clearLocalData();
       MyApp.isLoggedIn = false;
+      MyApp.userId = null;  // 사용자 ID 초기화
 
       // 로그인 페이지로 이동
       Navigator.pushReplacement(
@@ -182,8 +182,6 @@ class _HomePageState extends State<HomePage> {
     final secureStorage = FlutterSecureStorage();
     await secureStorage.delete(key: 'user_token');
   }
-
-
 
 
 
@@ -255,9 +253,14 @@ class _HomePageState extends State<HomePage> {
             UserAccountsDrawerHeader(
               currentAccountPicture: CircleAvatar(
                 backgroundColor: Colors.white,
+                child: Icon(
+                  Icons.person,
+                  size: 60.0, // Adjust the size as needed
+                  color: Colors.grey, // Adjust the color as needed
+                ),
               ),
               accountName: Text(widget.username ?? 'Guest'),
-              accountEmail: Text(widget.userid != null ? widget.userid.toString() : ''),
+              accountEmail: Text(MyApp.userId != null ? MyApp.userId.toString() : ''),
               decoration: BoxDecoration(
                 color: Colors.cyan[800],
                 borderRadius: BorderRadius.only(
@@ -284,7 +287,10 @@ class _HomePageState extends State<HomePage> {
               ),
               title: Text('나의 독서 로그'),
               onTap: () {
-                print('Q&A button is clicked!');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => MyLog()),
+                );
               },
               //trailing: Icon(Icons.add),
             ),
@@ -414,7 +420,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ),
                                 TextSpan(
-                                  text: widget.userid.toString(),
+                                  text: MyApp.userId.toString(),
                                   style: TextStyle(
                                     fontSize: 18.0,
                                     color: Colors.white70, // 네 번째 텍스트의 글자색
@@ -527,7 +533,7 @@ class _HomePageState extends State<HomePage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => MyLog()),
+                              builder: (context) => BookingList()),
                         );
                       },
                       child: Container(

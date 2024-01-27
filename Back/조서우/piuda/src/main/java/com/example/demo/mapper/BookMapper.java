@@ -9,7 +9,7 @@ import org.apache.ibatis.annotations.Select;
 import com.example.demo.model.Book;
 
 @Mapper
-public interface BookMapper {
+public interface BookMapper {	
     @Select("SELECT * FROM books WHERE book_title LIKE CONCAT('%', #{book_title}, '%')")
     List<Book> findByBookTitle(@Param("book_title") String book_title);
     
@@ -18,4 +18,7 @@ public interface BookMapper {
     
     @Select("SELECT * FROM books WHERE publisher LIKE CONCAT('%', #{publisher}, '%')")
     List<Book> findByPublisher(@Param("publisher") String publisher);
+    
+    @Select("SELECT * FROM books WHERE book_id = #{book_id}")
+    Book findByBookId(@Param("book_id") String book_id);
 }
