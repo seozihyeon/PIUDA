@@ -3,7 +3,14 @@ package com.example.demo.controller;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.mapper.UsersMapper;
 import com.example.demo.model.Users;
@@ -72,6 +79,34 @@ public class UsersController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authentication failed: User not found");
         }
     }
-
+    
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        // 로그아웃 관련 로직 수행
+        // 예: 토큰 무효화, 세션 삭제 등
+        return ResponseEntity.ok().body("Logged out successfully");
+    }
+    
+    @GetMapping("/userstatus/{user_id}")
+    public ResponseEntity<String> getUserStatus(@PathVariable("user_id") Long user_id) {
+        String userStatus = mapper.getUserStatus(user_id);
+        if (userStatus != null) {
+            return ResponseEntity.ok().body(userStatus);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
+    
+    @GetMapping("/b/{user_id}")
+    public ResponseEntity<String> getUserBarcode(@PathVariable("user_id") Long user_id) {
+        String userBarcode = mapper.getUserBarcode(user_id);
+        if (userBarcode != null) {
+            return ResponseEntity.ok().body(userBarcode);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
+    
+    
   
 }
