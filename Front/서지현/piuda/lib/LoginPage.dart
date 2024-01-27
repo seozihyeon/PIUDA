@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'main.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'users.dart';
 
 
 class LoginPage extends StatefulWidget {
@@ -10,55 +12,100 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  TextEditingController _UsernameController = TextEditingController();
-  TextEditingController _PasswordController = TextEditingController();
+  var _UsernameController = TextEditingController();
+  var _UseridController = TextEditingController();
+  dynamic userInfo = '';
+
+  final storage = new FlutterSecureStorage();
+
+  @override
+  void initState() {
+    super.initState();
+
+    //비동기로 flutter secure storage 정보를 불러오는 작업.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadLoginInfo();
+    });
+  }
+
+  _loadLoginInfo() async {
+    try {
+    // 성명과 회원번호 정보를 불러옵니다.
+    String? username = await storage.read(key: 'username');
+    String? userId = await storage.read(key: 'userId');
+
+    if (username != null && userId != null) {
+      setState(() {
+        _UsernameController.text = username;
+        _UseridController.text = userId;
+      });
+    }
+    } catch (e) {
+      print('Error loading data: $e');
+    }
+
+    // 여기서 'login' 키를 사용하여 로그인 상태를 확인합니다.
+    userInfo = await storage.read(key: 'login');
+    if (userInfo != null) {
+      // 이미 로그인된 상태라면, 메인 페이지로 이동합니다.
+      Navigator.pushNamed(context, '/main');
+    } else {
+      print('로그인이 필요합니다');
+    }
+  }
+
+
 
   Future<void> _login() async {
     String username = _UsernameController.text;
-    String userId = _PasswordController.text;
+    String userId = _UseridController.text;
     int? userIdInt = int.tryParse(userId);
 
     if (userIdInt == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('올바른 회원번호를 입력하세요.'),
+          content: Text('올바른 회원정보를 입력하세요.'),
           duration: Duration(seconds: 3),
         ),
       );
       return;
     }
 
-    var url = Uri.parse('http://10.0.2.2:8080/login');
+    var loginurl = Uri.parse('http://52.63.193.235:8080/login');
 
     try {
+      var param = {'user_name': username, 'user_id': userIdInt};
+
       var response = await http.post(
-        url,
-        headers: <String, String>{
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(<String, dynamic>{
-          'user_name': username,
-          'user_id': userIdInt,
-        }),
+          loginurl,
+          headers: <String, String>{
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(param)
       );
 
-      print('Sending request with data: ${jsonEncode(<String, dynamic>{
-        'user_name': username,
-        'user_id': userIdInt,
-      })}');
+      print('Sending request with data: ${jsonEncode(param)}');
 
 
       if (response.statusCode == 200) {
+        try {
+          await storage.write(key: 'username', value: username);
+          await storage.write(key: 'userId', value: userId);
+        } catch (e) {
+          print('Error saving data: $e');
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('로그인에 성공했습니다.'),
             duration: Duration(seconds: 3),
           ),
         );
+        isLoggedIn = true;
         // 로그인 성공 후 처리, 예를 들면 홈 페이지로 이동
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()), // 로그인 성공 후 이동할 페이지
+          MaterialPageRoute(builder: (context) => HomePage(username: username, userid: userIdInt)), // 로그인 성공 후 이동할 페이지
               (route) => false,
         );
       } else {
@@ -78,8 +125,6 @@ class _LoginPageState extends State<LoginPage> {
       );
     }
   }
-
-
 
 
 
@@ -172,7 +217,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       SizedBox(height: 12.0),
                       TextField(
-                        controller: _PasswordController,
+                        controller: _UseridController,
                         decoration: InputDecoration(labelText: '회원번호',
                             focusedBorder: OutlineInputBorder(
                               borderSide: BorderSide(color: Colors.blue),)
