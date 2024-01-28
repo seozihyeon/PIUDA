@@ -191,8 +191,12 @@ class SecondContent extends StatefulWidget {
 }
 
 class _SecondContentState extends State<SecondContent> {
+  String selectedYear = '2024';
+
   @override
   Widget build(BuildContext context) {
+    List<String> years = List.generate(25, (index) => (2024 - index).toString());
+
     return SingleChildScrollView(
       controller: widget.pageController,
       child: Container(
@@ -203,6 +207,33 @@ class _SecondContentState extends State<SecondContent> {
         ),
         child: Column(
           children: [
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: 10),
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              decoration: BoxDecoration(
+                  border: Border.all(color: Colors.cyan.shade800),
+                  borderRadius: BorderRadius.circular(10)
+              ),
+              child: DropdownButton<String>(
+                value: selectedYear,
+                onChanged: (String? newValue) {
+                  setState(() {
+                    selectedYear = newValue!;
+                    // Perform any additional actions based on the selected year
+                  });
+                },
+                items: years.map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                icon: Icon(Icons.arrow_drop_down),
+                iconSize: 24,
+                isExpanded: true,
+              ),
+            ),
+            SizedBox(height: 10,),
             LoanBookContainer(
               id: null,
               imageUrl: Image.asset('assets/images/나미야.jpg'),

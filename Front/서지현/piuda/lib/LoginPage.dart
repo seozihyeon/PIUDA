@@ -16,7 +16,7 @@ class _LoginPageState extends State<LoginPage> {
   var _UseridController = TextEditingController();
   dynamic userInfo = '';
 
-  final storage = new FlutterSecureStorage();
+  static final storage = new FlutterSecureStorage();
 
   @override
   void initState() {
@@ -30,16 +30,16 @@ class _LoginPageState extends State<LoginPage> {
 
   _loadLoginInfo() async {
     try {
-    // 성명과 회원번호 정보를 불러옵니다.
-    String? username = await storage.read(key: 'username');
-    String? userId = await storage.read(key: 'userId');
+      // 성명과 회원번호 정보를 불러옵니다.
+      String? username = await storage.read(key: 'username');
+      String? userId = await storage.read(key: 'userId');
 
-    if (username != null && userId != null) {
-      setState(() {
-        _UsernameController.text = username;
-        _UseridController.text = userId;
-      });
-    }
+      if (username != null && userId != null) {
+        setState(() {
+          _UsernameController.text = username;
+          _UseridController.text = userId;
+        });
+      }
     } catch (e) {
       print('Error loading data: $e');
     }
@@ -54,6 +54,18 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  _asyncMethod() async {
+    // read 함수로 key값에 맞는 정보를 불러오고 데이터타입은 String 타입
+    // 데이터가 없을때는 null을 반환
+    userInfo = await storage.read(key:'login');
+
+    // user의 정보가 있다면 로그인 후 들어가는 첫 페이지로 넘어가게 합니다.
+    if (userInfo != null) {
+      Navigator.pushNamed(context, '/main');
+    } else {
+      print('로그인이 필요합니다');
+    }
+  }
 
 
   Future<void> _login() async {
@@ -101,7 +113,8 @@ class _LoginPageState extends State<LoginPage> {
             duration: Duration(seconds: 3),
           ),
         );
-        isLoggedIn = true;
+        MyApp.isLoggedIn = true;
+        MyApp.userId = userIdInt;
         // 로그인 성공 후 처리, 예를 들면 홈 페이지로 이동
         Navigator.pushAndRemoveUntil(
           context,

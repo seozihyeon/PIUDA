@@ -1,6 +1,11 @@
 package com.example.demo.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+
+@Entity
 public class Book {
+	@Id
     private String book_id; //등록번호
     private String book_title; //제목
     private String author; //저자
@@ -146,4 +151,3 @@ public class Book {
     	this.reserved = reserved;
     }
 }
-

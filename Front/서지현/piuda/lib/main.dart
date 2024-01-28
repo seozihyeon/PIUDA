@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:piuda/MyBookingPage.dart';
 import 'package:piuda/MyLog.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -17,12 +18,28 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-
-
-
 final Uri _url = Uri.parse('https://www.sdlib.or.kr/main/');
-
 bool isLoggedIn = false;
+
+
+class Event {
+  final int id;
+  final String name;
+  final String library;
+  final DateTime date;
+
+  Event({required this.id, required this.name, required this.library, required this.date});
+
+  factory Event.fromJson(Map<String, dynamic> json) {
+    return Event(
+      id: json['event_id'],
+      name: json['event_name'],
+      library: json['event_library'],
+      date: DateTime.parse(json['event_date']),
+    );
+  }
+}
+
 
 void main() {
   initializeDateFormatting().then((_) {
@@ -31,7 +48,9 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  @override
+  static bool isLoggedIn = false;
+  static int? userId;
+
   Widget build(BuildContext context) {
     Intl.defaultLocale = 'ko_KR';
     return MaterialApp(
@@ -65,7 +84,6 @@ class HomePage extends StatefulWidget {
   final String? username;
   final int? userid;
   final Users? userInfo;
-
 
 
   HomePage({Key? key, this.username, this.userid, this.userInfo}) : super(key: key);
@@ -113,12 +131,54 @@ class _HomePageState extends State<HomePage> {
       '문화행사': 'https://www.sdlib.or.kr/small/main.do',
     },
   };
+  Map<DateTime, List<Event>> _events = {};
+  List<Event> _selectedEvents = [];
 
-  void _onLibraryChanged(String newValue) {
-    setState(() {
-      selectedLibrary = newValue;
-    });
+  Future<void> fetchEvents(String libraryName) async {
+    final url = Uri.parse('http://52.63.193.235:8080/api/events/$libraryName');
+    print("Requesting events from: $url");
+
+    final response = await http.get(url);
+    final decodedBody = utf8.decode(response.bodyBytes);
+    final json = jsonDecode(decodedBody);
+
+    print("Response status: ${response.statusCode}");
+    print("Response body: $decodedBody");
+
+    if (response.statusCode == 200) {
+      Iterable jsonList = json as Iterable; // jsonDecode의 결과를 Iterable로 캐스팅
+      List<Event> events = jsonList.map((event) => Event.fromJson(event)).toList();
+
+      print("Fetched events: $events"); // 이벤트 로깅
+
+      setState(() {
+        _events = groupEventsByDate(events);
+        print("Updated events: $_events");
+      });
+    } else {
+      throw Exception('Failed to load events');
+    }
   }
+
+
+
+  Map<DateTime, List<Event>> groupEventsByDate(List<Event> events) {
+    Map<DateTime, List<Event>> data = {};
+    for (var event in events) {
+      // 시간 정보를 무시하고 날짜만 사용
+      final date = DateTime(event.date.year, event.date.month, event.date.day);
+      if (data[date] == null) {
+        data[date] = [];
+      }
+      data[date]!.add(event);
+    }
+    return data;
+  }
+
+
+
+
+
 
   Future<void> _launchLibraryUrl(String category) async {
     String url = libraryUrls[selectedLibrary]?[category] ?? '';
@@ -165,10 +225,19 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _selectedDay = ValueNotifier(DateTime.now());
     _focusedDay = ValueNotifier(DateTime.now());
+    fetchEvents(selectedLibrary);
+    _selectedEvents = _getEventsForDay(_selectedDay.value);
     fetchUserStatus(); // 앱이 시작될 때 사용자 상태를 가져옴
     if (widget.userid != null) {
       loadBarcodeImage(widget.userid!); // 사용자 ID를 사용하여 바코드 이미지 로드
     }
+  }
+
+  void _onLibraryChanged(String newValue) {
+    setState(() {
+      selectedLibrary = newValue;
+    });
+    fetchEvents(newValue);
   }
 
   @override
@@ -210,7 +279,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> fetchUserStatus() async {
     try {
-      String status = await getUserStatus(widget.userid ?? 0);
+      String status = await getUserStatus(MyApp.userId ?? 0);
       setState(() {
         userStatus = status; // 상태를 업데이트하고 다시 렌더링
       });
@@ -221,15 +290,13 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _logout() async {
     var response = await http.post(
-      Uri.parse('http://52.63.193.235:8080/logout'),
-      // 추가적인 헤더 또는 데이터가 필요하다면 여기에 추가
+      Uri.parse('http://10.0.2.2:8080/logout'),
     );
 
     if (response.statusCode == 200) {
-      // 서버에서 로그아웃 성공 응답이 오면 로컬 데이터 클리어
-      // 예: 토큰, 사용자 정보 등의 로컬 데이터 삭제
       await _clearLocalData();
-      isLoggedIn = false;
+      MyApp.isLoggedIn = false;
+      MyApp.userId = null;  // 사용자 ID 초기화
 
       // 로그인 페이지로 이동
       Navigator.pushReplacement(
@@ -247,86 +314,208 @@ class _HomePageState extends State<HomePage> {
     await secureStorage.delete(key: 'user_token');
   }
 
+  List<Event> _getEventsForDay(DateTime day) {
+    // 시간 정보를 제거하고 날짜만 비교합니다.
+    DateTime dateKey = DateTime(day.year, day.month, day.day);
+    return _events[dateKey] ?? [];
+  }
+
+  // 날짜가 선택될 때 호출되는 콜백
+  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
+    setState(() {
+      _selectedDay.value = selectedDay;
+      _focusedDay.value = focusedDay; // 현재 달력에 표시되는 달을 업데이트
+      _selectedEvents = _getEventsForDay(selectedDay);
+    });
+  }
 
   Widget _buildTableCalendar() {
     return Container(
-      padding: EdgeInsets.only( bottom: 10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(12),
-            topRight: Radius.circular(12),
-            bottomLeft: Radius.circular(12),
-            bottomRight: Radius.circular(12),
+      margin: EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.all(Radius.circular(10)),
+        border: Border.all(
+            color: Color(0xFFF0F0F0), // 테두리 색상
+            width: 1.5
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: Offset(2, 5), // 수평과 수직 방향
           ),
-          border: Border.all(
-            color: Colors.cyan.shade800, // 테두리 색상
-            width: 1
-          ),
-    ),
-    child: TableCalendar(
-      focusedDay: DateTime.now(),
-      firstDay: DateTime.utc(2010, 10, 16),
-      lastDay: DateTime.utc(2030, 3, 14),
-      calendarBuilders: CalendarBuilders(
-        markerBuilder: (context, date, events) {
-          if (isToday(date)) {
-            return Positioned(
-              bottom: 1,
-              left: 0,
-              right: 0,
-              child: Center(
-              child: Container(
-                width: 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.red[400],
+        ],
+      ),
+      child: TableCalendar(
+        onDaySelected: _onDaySelected,
+        focusedDay: _focusedDay.value,
+        firstDay: DateTime.utc(2010, 10, 16),
+        lastDay: DateTime.utc(2030, 3, 14),
+        calendarBuilders: CalendarBuilders(
+          markerBuilder: (context, date, events) {
+            bool isHoliday = events.any((event) => (event as Event).name == '휴관일');
+            bool hasOtherEvents = events.any((event) => (event as Event).name != '휴관일');
+
+            if (isToday(date)) {
+              return Positioned(
+                bottom: 1,
+                child: Center(
+                  child: Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.red[400],
+                    ),
+                  ),
                 ),
-              ),
+              );
+            } else if (hasOtherEvents || (isHoliday && events.length > 1)) {
+              // 휴관일이지만 다른 이벤트도 있는 경우 또는 다른 이벤트가 있는 경우
+              return Positioned(
+                bottom: 1,
+                child: Center(
+                  child: Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ),
+              );
+            } else if (isHoliday) {
+              // 휴관일인 경우만
+              return Positioned(
+                bottom: 1,
+                child: Center(
+                  child: Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+              );
+            }
+            return null;
+          },
+          // ... 나머지 코드
+        ),
+
+
+        calendarStyle: CalendarStyle(
+          todayDecoration: BoxDecoration(
+            shape: BoxShape.circle,
+          ),
+          // 여기에서 셀의 높이를 조정
+          cellMargin: EdgeInsets.all(0),
+          cellPadding: EdgeInsets.all(0),
+          todayTextStyle: TextStyle(fontSize: 14),
+          defaultTextStyle: TextStyle(fontSize: 14),
+        ),
+        headerStyle: HeaderStyle(
+          // 헤더 높이 조정
+          titleCentered: true,
+          formatButtonVisible: false,
+          titleTextStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white,),
+          leftChevronIcon: Icon(Icons.chevron_left, size: 24, color: Colors.white),
+          rightChevronIcon: Icon(Icons.chevron_right, size: 24, color: Colors.white),
+          decoration: BoxDecoration(
+            color: Color(0xFF69C1D7),
+            //border: Border(bottom: BorderSide(color: Colors.cyan.shade800)),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(10.0),
+              topRight: Radius.circular(10.0),
             ),
-            );
-          }
-          return null;
+          ),
+          headerPadding: EdgeInsets.symmetric(horizontal: 2.0, vertical: 0),
+          headerMargin: EdgeInsets.only(bottom: 12),
+        ),
+        daysOfWeekStyle: DaysOfWeekStyle(
+          // 요일 행의 스타일 조정
+          weekdayStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+          weekendStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+        ),
+        eventLoader: (day) {
+          // 시간 정보를 무시하고 날짜만 사용
+          DateTime dateKey = DateTime(day.year, day.month, day.day);
+          print("Events for $dateKey: ${_events[dateKey]}");
+          return _events[dateKey] ?? [];
         },
       ),
-      calendarStyle: CalendarStyle(
-        todayDecoration: BoxDecoration(
-          // color: Colors.red[200], // 색상 설정
-          shape: BoxShape.circle,
-        ),
-        // 여기에서 셀의 높이를 조정
-        cellMargin: EdgeInsets.all(0),
-        cellPadding: EdgeInsets.all(0),
-        todayTextStyle: TextStyle(fontSize: 14),
-        defaultTextStyle: TextStyle(fontSize: 14),
-      ),
-      headerStyle: HeaderStyle(
-        // 헤더 높이 조정
-        titleCentered: true,
-        formatButtonVisible: false,
-        titleTextStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black,),
-        leftChevronIcon: Icon(Icons.chevron_left, size: 24, color: Colors.grey),
-        rightChevronIcon: Icon(Icons.chevron_right, size: 24, color: Colors.grey),
-        decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.cyan.shade800)),
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(12),
-            topRight: Radius.circular(12),
-          ),
-        ),
-        headerPadding: EdgeInsets.symmetric(horizontal: 2.0, vertical: 0),
-        headerMargin: EdgeInsets.only(bottom: 5),
-      ),
-      daysOfWeekStyle: DaysOfWeekStyle(
-        // 요일 행의 스타일 조정
-        weekdayStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-        weekendStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-      ),
-      // 추가 설정...
-    ),
     );
   }
+
+
+  Widget _buildEventList() {
+    var screenWidth = MediaQuery.of(context).size.width;
+    var selectedDateString = DateFormat('dd').format(_selectedDay.value); // 선택된 날짜 문자열
+
+    return Container(
+      width: screenWidth,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (_selectedEvents.isNotEmpty)
+            Column(
+              children: _selectedEvents.map((event) {
+                return Container(
+                  alignment: Alignment.center,
+                  width: screenWidth * 0.9,
+                  padding: EdgeInsets.all(8),
+                  margin: EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.all(Radius.circular(10)),
+                    border: Border.all(
+                        color: Color(0xFFF0F0F0),
+                        width: 1.5
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        spreadRadius: 2,
+                        blurRadius: 5,
+                        offset: Offset(2, 5),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "$selectedDateString일 ", // 선택된 날짜 표시
+                        style: TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                      Expanded(
+                        child: Text(
+                          event.name,
+                          style: TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.bold),
+                          softWrap: true,
+                          overflow: TextOverflow.visible,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+
+
+
+
 
   bool isToday(DateTime date) {
     final now = DateTime.now();
@@ -334,7 +523,7 @@ class _HomePageState extends State<HomePage> {
   }
 
 
-// 모바일 회원증 구현
+  // 모바일 회원증 구현
   Widget _buildBarcode() {
     // 여기에서 바코드 이미지를 가져오는 로직을 구현
     if (barcodeImageUrl.isNotEmpty) {
@@ -349,7 +538,7 @@ class _HomePageState extends State<HomePage> {
       return Container(
         width: double.infinity, // 원하는 너비로 설정
         height: 159, // 원하는 높이로 설정
-          decoration: BoxDecoration(
+        decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(6.0),),
         child: Column(
@@ -383,10 +572,6 @@ class _HomePageState extends State<HomePage> {
       );
     }
   }
-
-
-
-
 
 
   @override
@@ -433,7 +618,7 @@ class _HomePageState extends State<HomePage> {
               return IconButton(
                 icon: Icon(Icons.account_circle, color: Colors.cyan.shade800,),
                 onPressed: () {
-                  if (isLoggedIn) {
+                  if (MyApp.isLoggedIn) {
                     Scaffold.of(innerContext).openEndDrawer();
                   } else {
                     Navigator.push(
@@ -457,9 +642,14 @@ class _HomePageState extends State<HomePage> {
             UserAccountsDrawerHeader(
               currentAccountPicture: CircleAvatar(
                 backgroundColor: Colors.white,
+                child: Icon(
+                  Icons.person,
+                  size: 60.0, // Adjust the size as needed
+                  color: Colors.grey, // Adjust the color as needed
+                ),
               ),
               accountName: Text(widget.username ?? 'Guest'),
-              accountEmail: Text(widget.userid != null ? widget.userid.toString() : ''),
+              accountEmail: Text(MyApp.userId != null ? MyApp.userId.toString() : ''),
               decoration: BoxDecoration(
                 color: Colors.cyan[800],
                 borderRadius: BorderRadius.only(
@@ -486,7 +676,10 @@ class _HomePageState extends State<HomePage> {
               ),
               title: Text('나의 독서 로그'),
               onTap: () {
-                print('Q&A button is clicked!');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => MyLog()),
+                );
               },
               //trailing: Icon(Icons.add),
             ),
@@ -726,7 +919,7 @@ class _HomePageState extends State<HomePage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => MyLog()),
+                              builder: (context) => BookingList()),
                         );
                       },
                       child: Container(
@@ -845,24 +1038,15 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
-
-
-            Container(
-                child: Container(
-                    padding: EdgeInsets.only(left: 1, right: 1),
-                    margin: EdgeInsets.only(left: 10, right: 10),
-                    child: _buildTableCalendar(),
-                ),
-            ),
-            SizedBox(height: 20,)
-
-
+            _buildTableCalendar(),
+            SizedBox(height:10),
+            _buildEventList(),
+            SizedBox(height:10),
           ],
         ),
       ),
     );
   }
-
   // 웹 페이지로 이동하는 함수
   Future<void> _launchUrl() async {
     if (!await launchUrl(_url)) {
