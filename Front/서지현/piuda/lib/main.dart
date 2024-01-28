@@ -250,6 +250,7 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildTableCalendar() {
     return Container(
+      padding: EdgeInsets.only( bottom: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(12),
@@ -258,7 +259,7 @@ class _HomePageState extends State<HomePage> {
             bottomRight: Radius.circular(12),
           ),
           border: Border.all(
-            color: Colors.grey, // 테두리 색상
+            color: Colors.cyan.shade800, // 테두리 색상
             width: 1
           ),
     ),
@@ -307,7 +308,7 @@ class _HomePageState extends State<HomePage> {
         leftChevronIcon: Icon(Icons.chevron_left, size: 24, color: Colors.grey),
         rightChevronIcon: Icon(Icons.chevron_right, size: 24, color: Colors.grey),
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.grey)),
+          border: Border(bottom: BorderSide(color: Colors.cyan.shade800)),
           color: Colors.white,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(12),
@@ -315,6 +316,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
         headerPadding: EdgeInsets.symmetric(horizontal: 2.0, vertical: 0),
+        headerMargin: EdgeInsets.only(bottom: 5),
       ),
       daysOfWeekStyle: DaysOfWeekStyle(
         // 요일 행의 스타일 조정
@@ -334,20 +336,22 @@ class _HomePageState extends State<HomePage> {
 
 // 모바일 회원증 구현
   Widget _buildBarcode() {
-    // 여기에서 바코드 이미지를 가져오는 로직을 구현하고 반환합니다.
+    // 여기에서 바코드 이미지를 가져오는 로직을 구현
     if (barcodeImageUrl.isNotEmpty) {
       return Image.network(
         barcodeImageUrl,
-        width: double.infinity, // 원하는 너비로 설정
-        height: 100, // 원하는 높이로 설정
-        fit: BoxFit.contain, // 이미지를 컨테이너에 맞게 조절합니다.
+        width: double.infinity,
+        height: 100,
+        fit: BoxFit.contain, // 이미지를 컨테이너에 맞게 조절
       );
     } else {
-      // 바코드 이미지가 없는 경우, 흰색 컨테이너에 텍스트와 버튼을 추가합니다.
+      // 바코드 이미지가 없는 경우, 흰색 컨테이너에 텍스트와 버튼을 추가
       return Container(
         width: double.infinity, // 원하는 너비로 설정
         height: 159, // 원하는 높이로 설정
-        color: Colors.white,
+          decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(6.0),),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center, // 가운데 정렬
           children: [
