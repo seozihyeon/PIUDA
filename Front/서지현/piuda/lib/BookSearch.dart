@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:piuda/MyInterestBooksPage.dart';
 import 'main.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -15,12 +16,13 @@ class BookSearch extends StatefulWidget {
     required this.searchText,
     required this.searchOptions,
     required this.searchTarget,
-  }
-      );
+  });
 
   @override
   _BookSearchState createState() => _BookSearchState();
 }
+
+
 
 class _BookSearchState extends State<BookSearch> {
   Set<String> _selectedLibraries = {};
@@ -44,17 +46,13 @@ class _BookSearchState extends State<BookSearch> {
     _isbnController.text = widget.searchText; // 검색어 설정
     selectedOptions = widget.searchOptions; // 검색 옵션 설정
     searchBook(); // 페이지가 로드될 때 자동으로 검색 수행
-
-
   }
 
-  //
-  String _imageUrl = '';
 
-// _BookSearchState 클래스 내부에 추가할 상태 변수
+  String _imageUrl = '';
   List<Widget> _bookWidgets = [];
 
-// searchBook 함수
+  // searchBook 함수
   Future<void> searchBook() async {
     if (_isbnController.text.isEmpty) {
       // 검색어가 비어 있으면 SnackBar를 표시
@@ -190,6 +188,7 @@ class _BookSearchState extends State<BookSearch> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -318,6 +317,10 @@ class _BookSearchState extends State<BookSearch> {
   }
 }
 
+
+
+
+
 //책 정보박스
 class BookContainer extends StatelessWidget {
   final String id;
@@ -337,7 +340,6 @@ class BookContainer extends StatelessWidget {
   final String field_name;
   final String book_ii;
   final String? series; //null을 허용
-
 
 
   BookContainer({
@@ -360,6 +362,18 @@ class BookContainer extends StatelessWidget {
     this.series, //null 허용
   });
 
+  Future<void> addInterestBook(int userId, String bookId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('http://52.63.193.235:8080/api/user-interest-books/add'),
+        body: {'userId': userId, 'bookId': bookId},
+      );
+
+      print('Interest book added. Response status: ${response.statusCode}');
+    } catch (e) {
+      print('Error adding interest book: $e');
+    }
+  }
 
 
   @override
@@ -502,21 +516,27 @@ class BookContainer extends StatelessWidget {
                     SizedBox(height: 12,),
                     Row(
                       children: [
-                        Container(
-                          padding: EdgeInsets.all(5),
-                          decoration: BoxDecoration(
-                            color: Colors.white70,
-                            border: Border.all(
-                              color: Colors.grey.shade700, // 테두리 색상
-                              width: 1.0, // 테두리 두께
+                        GestureDetector(
+                          onTap: () {
+                            // 도서를 관심도서로 추가하는 로직을 추가
+                            addInterestBook(MyApp.userId??0, id); // bookId를 전달
+                          },
+                          child: Container(
+                            padding: EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: Colors.white70,
+                              border: Border.all(
+                                color: Colors.grey.shade700, // 테두리 색상
+                                width: 1.0, // 테두리 두께
+                              ),
+                              borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
                             ),
-                            borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
-                          ),
-                          child: Text(
-                            '관심도서담기',
-                            style: TextStyle(
-                              color: Colors.grey.shade700,
-                              fontSize: 17.5,
+                            child: Text(
+                              '관심도서담기',
+                              style: TextStyle(
+                                color: Colors.grey.shade700,
+                                fontSize: 17.5,
+                              ),
                             ),
                           ),
                         ),
@@ -556,7 +576,7 @@ class BookContainer extends StatelessWidget {
 
 
 
-//1. 체크박스
+//도서관 체크박스
 class LibraryOptions extends StatefulWidget {
 
   final Function(Set<String>) onSelectedLibrariesChanged;
@@ -586,28 +606,30 @@ class _LibraryOptionsState extends State<LibraryOptions> {
   Widget build(BuildContext context) {
     return Padding(padding: EdgeInsets.only(right: 10),
       child: Wrap(
-      spacing: 8.0, // 가로 간격 설정
-      runSpacing: 0.0, // 세로 간격 설정
-      children: libraries.map((library) {
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Checkbox(
-              value: selectedLibraries.contains(library),
-              onChanged: (bool? value) {
-                _onCheckboxChanged(value, library);
-              },
-            ),
+        spacing: 8.0,
+        runSpacing: 0.0,
+        children: libraries.map((library) {
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Checkbox(
+                value: selectedLibraries.contains(library),
+                onChanged: (bool? value) {
+                  _onCheckboxChanged(value, library);
+                },
+              ),
 
-            Text(library),
-          ],
-        );
-      }).toList(),
-    ),
+              Text(library),
+            ],
+          );
+        }).toList(),
+      ),
     );
   }
 }
 
+
+//작은도서관 체크박스
 class SmallLibraryOptions extends StatefulWidget {
   @override
   _SmallLibraryOptionsState createState() => _SmallLibraryOptionsState();
@@ -628,31 +650,31 @@ class _SmallLibraryOptionsState extends State<SmallLibraryOptions> {
     return
       Padding(padding:EdgeInsets.only(right: 10),
         child: Wrap(
-      spacing: 8.0, // 가로 간격 설정
-      runSpacing: 0.0, // 세로 간격 설정
-      children: libraries.map((library) {
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Checkbox(
-              value: selectedLibraries.contains(library),
-              onChanged: (bool? value) {
-                setState(() {
-                  if (value != null) {
-                    if (value) {
-                      selectedLibraries.add(library);
-                    } else {
-                      selectedLibraries.remove(library);
-                    }
-                  }
-                });
-              },
-            ),
-            Text(library),
-          ],
-        );
-      }).toList(),
-    ),
+          spacing: 8.0, // 가로 간격 설정
+          runSpacing: 0.0, // 세로 간격 설정
+          children: libraries.map((library) {
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Checkbox(
+                  value: selectedLibraries.contains(library),
+                  onChanged: (bool? value) {
+                    setState(() {
+                      if (value != null) {
+                        if (value) {
+                          selectedLibraries.add(library);
+                        } else {
+                          selectedLibraries.remove(library);
+                        }
+                      }
+                    });
+                  },
+                ),
+                Text(library),
+              ],
+            );
+          }).toList(),
+        ),
       );
   }
 }
