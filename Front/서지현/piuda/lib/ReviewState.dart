@@ -23,7 +23,8 @@ class BookStateReview extends StatelessWidget {
         ),
         backgroundColor: Colors.white,
       ),
-      body: Column(
+      body: SingleChildScrollView(
+      child: Column(
         children: [
           Container(
             margin: EdgeInsets.only(top:20, bottom: 10),
@@ -146,6 +147,7 @@ class BookStateReview extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }

@@ -83,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    var loginurl = Uri.parse('http://52.63.193.235:8080/login');
+    var loginurl = Uri.parse('http://10.0.2.2:8080/login');
 
     try {
       var param = {'user_name': username, 'user_id': userIdInt};

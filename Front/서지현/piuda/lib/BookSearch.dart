@@ -71,11 +71,11 @@ class _BookSearchState extends State<BookSearch> {
 
       String url;
       if (_selectedSearchTarget == '자료명') {
-        url = 'http://52.63.193.235:8080/api/books/search?title=$searchText';
+        url = 'http://10.0.2.2:8080/api/books/search?title=$searchText';
       } else if (_selectedSearchTarget == '저자명') {
-        url = 'http://52.63.193.235:8080/api/books/search?author=$searchText';
+        url = 'http://10.0.2.2:8080/api/books/search?author=$searchText';
       } else { // '발행처' 선택 시
-        url = 'http://52.63.193.235:8080/api/books/search?publisher=$searchText';
+        url = 'http://10.0.2.2:8080/api/books/search?publisher=$searchText';
       }
 
       final response = await http.get(Uri.parse(url));
@@ -365,7 +365,7 @@ class BookContainer extends StatelessWidget {
   Future<void> addInterestBook(int userId, String bookId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://52.63.193.235:8080/api/user-interest-books/add'),
+        Uri.parse('http://10.0.2.2:8080/api/user-interest-books/add'),
         body: {'userId': userId, 'bookId': bookId},
       );
 
