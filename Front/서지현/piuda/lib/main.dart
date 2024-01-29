@@ -51,6 +51,10 @@ class MyApp extends StatelessWidget {
   static bool isLoggedIn = false;
   static int? userId;
 
+  static void updateLoginStatus(bool status) {
+    isLoggedIn = status;
+  }
+
   Widget build(BuildContext context) {
     Intl.defaultLocale = 'ko_KR';
     return MaterialApp(
@@ -76,6 +80,45 @@ class MyApp extends StatelessWidget {
       return Users.fromJson(json.decode(userInfo));
     }
     return null;
+  }
+}
+
+void _checkLoginAndNavigate(BuildContext context, Widget nextPage) {
+  if (!MyApp.isLoggedIn) { // isLoggedIn은 현재 사용자의 로그인 상태를 나타내는 변수입니다.
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          contentPadding: EdgeInsets.only(right: 30, left:30, top:40),
+          // title: Text(''),
+          content: Text('로그인 후 이용 가능한 서비스입니다.',
+            style: TextStyle(
+              fontSize: 15.0, // 글씨 크기 설정
+            ),),
+          actions: <Widget>[
+            TextButton(
+              child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
+              onPressed: () {
+                Navigator.of(context).pop(); // 팝업 닫기
+              },
+            ),
+            TextButton(
+              child: Text('로그인하러 가기', style: TextStyle(color: Colors.cyan.shade800)),
+              onPressed: () {
+                Navigator.of(context).pop(); // 팝업 닫기
+                Navigator.push( // 로그인 페이지로 이동
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginPage()),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  } else {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => nextPage));
   }
 }
 
@@ -135,7 +178,7 @@ class _HomePageState extends State<HomePage> {
   List<Event> _selectedEvents = [];
 
   Future<void> fetchEvents(String libraryName) async {
-    final url = Uri.parse('http://52.63.193.235:8080/api/events/$libraryName');
+    final url = Uri.parse('http://10.0.2.2:8080/api/events/$libraryName');
     print("Requesting events from: $url");
 
     final response = await http.get(url);
@@ -250,7 +293,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> loadBarcodeImage(int userId) async {
     try {
       var response = await http.get(
-        Uri.parse('http://52.63.193.235:8080/b/$userId'),
+        Uri.parse('http://10.0.2.2:8080/b/$userId'),
       );
 
       if (response.statusCode == 200) {
@@ -267,7 +310,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<String> getUserStatus(int userId) async {
     var response = await http.get(
-      Uri.parse('http://52.63.193.235:8080/userstatus/$userId'),
+      Uri.parse('http://10.0.2.2:8080/userstatus/$userId'),
     );
 
     if (response.statusCode == 200) {
@@ -851,13 +894,8 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   Expanded(
                     child: GestureDetector(
-                      onTap: () {
-                        // '나의 대출 현황' 페이지로 이동
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => MyLoanPage()),
-                        );
-                      },
+                      onTap: () => _checkLoginAndNavigate(context, MyLoanPage()),
+
                       child: Container(
                         margin: EdgeInsets.only(top: 10, bottom: 5),
                         child: Center(
@@ -882,14 +920,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   Expanded(
                     child: GestureDetector(
-                      onTap: () {
-                        // '나의 관심 도서' 페이지로 이동
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => MyInterestBooksPage()),
-                        );
-                      },
+                      onTap: () => _checkLoginAndNavigate(context, MyInterestBooksPage()),
                       child: Container(
                         margin: EdgeInsets.only(top: 10, bottom: 5),
                         child: Center(
@@ -914,14 +945,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   Expanded(
                     child: GestureDetector(
-                      onTap: () {
-                        // '예약내역' 페이지로 이동
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => BookingList()),
-                        );
-                      },
+                      onTap: () => _checkLoginAndNavigate(context, BookingList()),
                       child: Container(
                         margin: EdgeInsets.only(top: 10, bottom: 5),
                         child: Center(
