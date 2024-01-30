@@ -21,7 +21,7 @@ class BookDetail extends StatefulWidget {
   final String classification;
   final String media;
   final String field_name;
-  final String id;
+  final String book_id;
   final String book_ii;
   final String? series;
 
@@ -40,7 +40,7 @@ class BookDetail extends StatefulWidget {
     required this.classification,
     required this.media,
     required this.field_name,
-    required this.id,
+    required this.book_id,
     required this.book_ii,
     this.series,
   });
@@ -88,6 +88,61 @@ class _BookDetailState extends State<BookDetail> {
       }
     } else {
       print('Failed to fetch book data');
+    }
+  }
+
+  Future<void> addInterestBook(BuildContext context, int userId, String bookId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:8080/api/userinterest/add'),
+        body: {'user_id': userId.toString(), 'book_id': bookId},
+      );
+
+      if (response.statusCode == 200) {
+        // 서버에서 성공적으로 응답을 받았을 때의 처리
+        print('Book added to user\'s interest list successfully');
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text('도서가 관심 도서에 추가되었습니다.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('확인'),
+                ),
+              ],
+            );
+          },
+        );
+      } else if (response.statusCode == 400) {
+        // 중복된 경우에 대한 처리
+        print('Failed to add book to user\'s interest list: Duplicate book');
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text('이미 관심 도서에 추가된 책입니다.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('확인'),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        // 서버에서 오류 응답을 받았을 때의 처리
+        print('Failed to add book to user\'s interest list');
+      }
+    } catch (e) {
+      // 네트워크 오류 등 예외가 발생했을 때의 처리
+      print('Error adding interest book: $e');
     }
   }
 
@@ -526,7 +581,7 @@ class _BookDetailState extends State<BookDetail> {
                                               ),
                                             ),
                                             TextSpan(
-                                              text: widget.id,
+                                              text: widget.book_id,
                                               style: TextStyle(
                                                 fontSize: 18.0,
                                                 color: Colors.grey.shade800, // 두 번째 텍스트의 글자색
@@ -590,21 +645,26 @@ class _BookDetailState extends State<BookDetail> {
                               SizedBox(height: 12,),
                               Row(
                                 children: [
-                                  Container(
-                                    padding: EdgeInsets.all(5),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white70,
-                                      border: Border.all(
-                                        color: Colors.grey.shade700, // 테두리 색상
-                                        width: 1.0, // 테두리 두께
+                                  GestureDetector(
+                                    onTap: () {
+                                      addInterestBook(context, MyApp.userId ?? 0, widget.book_id.toString());
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.all(5),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white70,
+                                        border: Border.all(
+                                          color: Colors.grey.shade700, // 테두리 색상
+                                          width: 1.0, // 테두리 두께
+                                        ),
+                                        borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
                                       ),
-                                      borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
-                                    ),
-                                    child: Text(
-                                      '관심도서담기',
-                                      style: TextStyle(
-                                        color: Colors.grey.shade700,
-                                        fontSize: 17.5,
+                                      child: Text(
+                                        '관심도서담기',
+                                        style: TextStyle(
+                                          color: Colors.grey.shade700,
+                                          fontSize: 17.5,
+                                        ),
                                       ),
                                     ),
                                   ),

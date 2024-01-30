@@ -24,8 +24,34 @@ class _LoginPageState extends State<LoginPage> {
 
     //비동기로 flutter secure storage 정보를 불러오는 작업.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _asyncMethod();
+      _loadLoginInfo();
     });
+  }
+
+  _loadLoginInfo() async {
+    try {
+      // 성명과 회원번호 정보를 불러옵니다.
+      String? username = await storage.read(key: 'username');
+      String? userId = await storage.read(key: 'userId');
+
+      if (username != null && userId != null) {
+        setState(() {
+          _UsernameController.text = username;
+          _UseridController.text = userId;
+        });
+      }
+    } catch (e) {
+      print('Error loading data: $e');
+    }
+
+    // 여기서 'login' 키를 사용하여 로그인 상태를 확인합니다.
+    userInfo = await storage.read(key: 'login');
+    if (userInfo != null) {
+      // 이미 로그인된 상태라면, 메인 페이지로 이동합니다.
+      Navigator.pushNamed(context, '/main');
+    } else {
+      print('로그인이 필요합니다');
+    }
   }
 
   _asyncMethod() async {
@@ -74,13 +100,13 @@ class _LoginPageState extends State<LoginPage> {
 
 
       if (response.statusCode == 200) {
-        var loginObject = Login(username, userIdInt);
-        var val = jsonEncode(loginObject.toJson());
+        try {
+          await storage.write(key: 'username', value: username);
+          await storage.write(key: 'userId', value: userId);
+        } catch (e) {
+          print('Error saving data: $e');
+        }
 
-        await storage.write(
-          key: 'login',
-          value: val,
-        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('로그인에 성공했습니다.'),

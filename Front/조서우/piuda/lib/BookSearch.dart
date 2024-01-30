@@ -108,7 +108,7 @@ class _BookSearchState extends State<BookSearch> {
 
             final bookWidget = BookContainer(
               imageUrl: _imageUrl.isNotEmpty ? _imageUrl : widget.iniimageUrl,
-              id: bookData['id'] as String? ?? '등록번호 없음',
+              book_id: bookData['id'] as String? ?? '등록번호 없음',
               book_ii : bookData['book_ii'] as String? ?? '청구기호 없음',
               bookTitle: bookData['title'] as String? ?? '제목 없음',
               author: bookData['author'] as String? ?? '저자 없음',
@@ -323,7 +323,7 @@ class _BookSearchState extends State<BookSearch> {
 
 //책 정보박스
 class BookContainer extends StatelessWidget {
-  final String id;
+  final String book_id;
   final String imageUrl;
   final String bookTitle;
   final String author;
@@ -343,7 +343,7 @@ class BookContainer extends StatelessWidget {
 
 
   BookContainer({
-    required this.id,
+    required this.book_id,
     required this.imageUrl,
     required this.bookTitle,
     required this.author,
@@ -362,15 +362,58 @@ class BookContainer extends StatelessWidget {
     this.series, //null 허용
   });
 
-  Future<void> addInterestBook(int userId, String bookId) async {
+
+  Future<void> addInterestBook(BuildContext context, int userId, String bookId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:8080/api/user-interest-books/add'),
-        body: {'userId': userId, 'bookId': bookId},
+        Uri.parse('http://10.0.2.2:8080/api/userinterest/add'),
+        body: {'user_id': userId.toString(), 'book_id': bookId},
       );
 
-      print('Interest book added. Response status: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        // 서버에서 성공적으로 응답을 받았을 때의 처리
+        print('Book added to user\'s interest list successfully');
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text('도서가 관심 도서에 추가되었습니다.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('확인'),
+                ),
+              ],
+            );
+          },
+        );
+      } else if (response.statusCode == 400) {
+        // 중복된 경우에 대한 처리
+        print('Failed to add book to user\'s interest list: Duplicate book');
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text('이미 관심 도서에 추가된 책입니다.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('확인'),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        // 서버에서 오류 응답을 받았을 때의 처리
+        print('Failed to add book to user\'s interest list');
+      }
     } catch (e) {
+      // 네트워크 오류 등 예외가 발생했을 때의 처리
       print('Error adding interest book: $e');
     }
   }
@@ -395,7 +438,7 @@ class BookContainer extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (context) => BookDetail(
-              id: id,
+              book_id: book_id,
               imageUrl: imageUrl,
               bookTitle: bookTitle,
               author: author,
@@ -518,8 +561,7 @@ class BookContainer extends StatelessWidget {
                       children: [
                         GestureDetector(
                           onTap: () {
-                            // 도서를 관심도서로 추가하는 로직을 추가
-                            addInterestBook(MyApp.userId??0, id); // bookId를 전달
+                            addInterestBook(context, MyApp.userId ?? 0, book_id.toString());
                           },
                           child: Container(
                             padding: EdgeInsets.all(5),

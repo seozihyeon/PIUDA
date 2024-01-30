@@ -23,6 +23,7 @@ public class UsersController {
     public UsersController(UsersMapper mapper) {
         this.mapper = mapper;
     }
+    
 
     @GetMapping("/user/{user_id}")
     public Users getUserProfile(@PathVariable("user_id") Long user_id) {
@@ -69,7 +70,7 @@ public class UsersController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         System.out.println("Received login request: " + loginRequest);
-        Users user = mapper.findByUserIdAndUserName(loginRequest.getId(), loginRequest.getName());
+        Users user = mapper.getByUserIdAndUserName(loginRequest.getId(), loginRequest.getName());
 
         if (user != null) {
             // 사용자가 데이터베이스에 존재하므로 인증 성공
@@ -92,6 +93,16 @@ public class UsersController {
         String userStatus = mapper.getUserStatus(user_id);
         if (userStatus != null) {
             return ResponseEntity.ok().body(userStatus);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
+    
+    @GetMapping("/b/{user_id}")
+    public ResponseEntity<String> getUserBarcode(@PathVariable("user_id") Long user_id) {
+        String userBarcode = mapper.getUserBarcode(user_id);
+        if (userBarcode != null) {
+            return ResponseEntity.ok().body(userBarcode);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
