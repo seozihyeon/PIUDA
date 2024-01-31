@@ -126,6 +126,7 @@ class MyInterestBooksPage extends StatefulWidget {
 
 class _MyInterestBooksPageState extends State<MyInterestBooksPage> {
   List<UserInterestBook> interestBooks = [];
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -181,17 +182,14 @@ class _MyInterestBooksPageState extends State<MyInterestBooksPage> {
         List<UserInterestBook> interestBooksData = jsonList.map((
             interestBook) => UserInterestBook.fromJson(interestBook)).toList();
 
-        print("Fetched interest books: $interestBooksData");
-
-        // Fetch book covers for each book
-        for (int i = 0; i < interestBooksData.length; i++) {
-          await fetchBookCover(interestBooksData[i].book.bookIsbn, i);
-        }
-
         setState(() {
           interestBooks = interestBooksData;
           print("Updated interest books: $interestBooks");
         });
+        for (int i = 0; i < interestBooksData.length; i++) {
+          await fetchBookCover(interestBooksData[i].book.bookIsbn, i);
+        }
+        isLoading = false;
       } else {
         throw Exception('Failed to load interest books');
       }
@@ -266,7 +264,11 @@ class _MyInterestBooksPageState extends State<MyInterestBooksPage> {
         ),
         backgroundColor: Colors.white,
       ),
-      body: interestBooks.isEmpty
+      body: isLoading
+          ? Center(
+        child: CircularProgressIndicator(),
+      )
+          : interestBooks.isEmpty
           ? Center(
         child: Text(
           '관심도서 목록이 비어있습니다.',

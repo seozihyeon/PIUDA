@@ -516,11 +516,7 @@ class _HomePageState extends State<HomePage> {
                   margin: EdgeInsets.symmetric(vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                    border: Border.all(
-                        color: Color(0xFFF0F0F0),
-                        width: 1.5
-                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(50)),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.2),
@@ -533,10 +529,18 @@ class _HomePageState extends State<HomePage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        "$selectedDateString일 ", // 선택된 날짜 표시
-                        style: TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.bold),
+                      Container(
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF69C1D7),
+                          shape: BoxShape.circle
+                        ),
+                        child: Text(
+                          "$selectedDateString일 ", // 선택된 날짜 표시
+                          style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                        ),
                       ),
+                      SizedBox(width: 5,),
                       Expanded(
                         child: Text(
                           event.name,
@@ -566,57 +570,6 @@ class _HomePageState extends State<HomePage> {
   }
 
 
-  // 모바일 회원증 구현
-  Widget _buildBarcode() {
-    // 여기에서 바코드 이미지를 가져오는 로직을 구현
-    if (barcodeImageUrl.isNotEmpty) {
-      return Image.network(
-        barcodeImageUrl,
-        width: double.infinity,
-        height: 100,
-        fit: BoxFit.contain, // 이미지를 컨테이너에 맞게 조절
-      );
-    } else {
-      // 바코드 이미지가 없는 경우, 흰색 컨테이너에 텍스트와 버튼을 추가
-      return Container(
-        width: double.infinity, // 원하는 너비로 설정
-        height: 159, // 원하는 높이로 설정
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(6.0),),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center, // 가운데 정렬
-          children: [
-            SizedBox(height: 40),
-            Text(
-              '로그인 후 이용 가능한 서비스입니다.',
-              style: TextStyle(
-                color: Colors.black, // 검정색 텍스트
-                fontSize: 16, // 원하는 폰트 크기로 설정
-              ),
-            ),
-            SizedBox(height: 20), // 간격 조절
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
-              },
-              style: ElevatedButton.styleFrom(
-                primary: Colors.cyan.shade800, // 버튼 배경색
-                onPrimary: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                // 버튼 텍스트색
-              ),
-              child: Text('로그인하러 가기'),
-            ),
-          ],
-        ),
-      );
-    }
-  }
-
-
   @override
   Widget build(BuildContext context) {
     var screenSize = MediaQuery.of(context).size;
@@ -631,7 +584,7 @@ class _HomePageState extends State<HomePage> {
               onTap: () {
                 _launchUrl();
               },
-              child: Icon(Icons.public, color: Colors.cyan.shade800,),
+              child: Icon(Icons.public, color: Colors.cyan.shade900,),
             ),
             Expanded(
               child: Row(
@@ -659,7 +612,7 @@ class _HomePageState extends State<HomePage> {
           Builder(
             builder: (BuildContext innerContext) {
               return IconButton(
-                icon: Icon(Icons.account_circle, color: Colors.cyan.shade800,),
+                icon: Icon(Icons.account_circle, color: Colors.cyan.shade900,),
                 onPressed: () {
                   if (MyApp.isLoggedIn) {
                     Scaffold.of(innerContext).openEndDrawer();
@@ -800,7 +753,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 Container(margin: EdgeInsets.only(top: 5),
                     height:50, width: screenSize.width * 0.1,
-                    color: Colors.cyan.shade800,
+                    decoration: BoxDecoration(color: Colors.cyan.shade800, border: Border.symmetric(horizontal: BorderSide(color: Colors.cyan.shade900, width: 2.5))),
                     child: Icon(Icons.arrow_back_ios_rounded, color: Colors.white)
                 ),
                 Container(
@@ -811,7 +764,7 @@ class _HomePageState extends State<HomePage> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(6.0),
                     border: Border.all(
-                      color: Colors.cyan.shade800, // 테두리 색상
+                      color: Colors.cyan.shade900, // 테두리 색상
                       width: 3.0, // 테두리 두께
                     ),
                   ),
@@ -822,11 +775,20 @@ class _HomePageState extends State<HomePage> {
                       Expanded(
                         flex: 1,
                         child: Container(
+                          decoration: BoxDecoration(color: Colors.cyan.shade800, border: Border(bottom: BorderSide(color: Colors.cyan.shade900, width: 2))),
                           width: screenSize.width * 0.8,
                           height: screenSize.height * 0.15,
                           padding: EdgeInsets.only(left: 15, top: 3),
-                          color: Colors.cyan.shade800,
-                          child: RichText(
+                          child:
+                          (barcodeImageUrl.isEmpty)?
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text("모바일 회원증", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),),
+                                  Text("로그인 후 이용 가능한 서비스 입니다", style: TextStyle(color: Colors.white, fontSize: 15),)
+                                ],
+                              )
+                          :RichText(
                             text: TextSpan(
                               children: [
                                 TextSpan(
@@ -870,7 +832,31 @@ class _HomePageState extends State<HomePage> {
                             bottomLeft: Radius.circular(12.0),
                             bottomRight: Radius.circular(12.0),
                           ),
-                          child: _buildBarcode(),
+                          child: (barcodeImageUrl.isNotEmpty)?
+                          Image.network(
+                            barcodeImageUrl,
+                            width: double.infinity,
+                            height: 100,
+                            fit: BoxFit.contain,
+                          )
+                          :Padding(
+                            padding: const EdgeInsets.all(25.0),
+                            child: Center(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  foregroundColor: Colors.cyan.shade900,
+                                  backgroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10),
+                                  side: BorderSide(color: Colors.cyan.shade800, width: 1.5),
+                                  ),
+                                ),
+                                child: Text('로그인하러 가기', style: TextStyle(fontWeight: FontWeight.bold),),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -878,7 +864,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 Container(margin: EdgeInsets.only(top: 5),
                     height:50, width:screenSize.width*0.1,
-                    color: Colors.cyan.shade800,
+                    decoration: BoxDecoration(color: Colors.cyan.shade800, border: Border.symmetric(horizontal: BorderSide(color: Colors.cyan.shade900, width: 2.5))),
                     child: Icon(Icons.arrow_forward_ios_rounded, color: Colors.white)
                 ),
               ],
@@ -1065,7 +1051,7 @@ class _HomePageState extends State<HomePage> {
             _buildTableCalendar(),
             SizedBox(height:10),
             _buildEventList(),
-            SizedBox(height:10),
+            SizedBox(height:30),
           ],
         ),
       ),

@@ -31,6 +31,7 @@ class _BookSearchState extends State<BookSearch> {
   TextEditingController _isbnController;
 
   _BookSearchState() : _isbnController = TextEditingController(); // 생성자에서 초기화
+  bool isLoading =true;
 
   void _updateSelectedLibraries(Set<String> selected) {
     setState(() {
@@ -64,6 +65,9 @@ class _BookSearchState extends State<BookSearch> {
       );
       return; // 함수를 여기서 종료
     }
+    setState(() {
+      isLoading = true; // 로딩 시작
+    });
     try {
       print("searchBook 함수 호출됨");
       final String searchText = _isbnController.text;
@@ -152,6 +156,10 @@ class _BookSearchState extends State<BookSearch> {
       }
     } catch (e) {
       print('searchBook 함수에서 오류 발생: $e');
+    } finally {
+      setState(() {
+        isLoading = false; // 로딩 종료
+      });
     }
   }
 
@@ -301,7 +309,7 @@ class _BookSearchState extends State<BookSearch> {
               ),
             ),
 
-
+            isLoading ? Center(child: CircularProgressIndicator(),) :
             ListView.builder(
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(), // 스크롤 가능성 제거

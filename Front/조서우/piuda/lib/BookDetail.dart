@@ -712,7 +712,7 @@ class _BookDetailState extends State<BookDetail> {
                 ),
                 Container(
                   width: double.infinity,
-                  child: Text("이 책이 마음에 드셨나요? 다양한 후기를 감상해보세요!", style: TextStyle(color: Colors.grey, fontSize: 14),)
+                  child: Text("이 책이 마음에 드셨나요? 다양한 후기를 감상해보세요!", style: TextStyle(color: Colors.grey.shade700, fontSize: 14),)
                 ),
                 Row(
                   children: [
@@ -775,10 +775,9 @@ class _BookReviewContentState extends State<BookReviewContent> {
     return Container(
       child: Column(
         children: [
-          ReviewBox(user_name: "서**", review_score: 5, review_content: "너무재밋어요~"),
-          ReviewBox(user_name: "서**", review_score: 5, review_content: "너무재밋어요~"),
-          ReviewBox(user_name: "서**", review_score: 5, review_content: "너무재밋어요~")
-
+          ReviewBox(user_name: "서**", review_date: "2024-01-05", review_score: 5, review_content: "너무재밋어요~"),
+          ReviewBox(user_name: "서**", review_date: "2024-01-05", review_score: 5, review_content: "너무재밋어요~"),
+          ReviewBox(user_name: "서**", review_date: "2024-01-05", review_score: 5, review_content: "너무재밋어요~"),
         ],
       ),
     );
@@ -801,9 +800,9 @@ class _StateReviewContentState extends State<StateReviewContent> {
     return Container(
       child: Column(
         children: [
-          StateReviewBox(user_name: "조**", lost_score: 4, taint_score: 3, condi_op: "깨끗해요! 관리 굿굿"),
-          StateReviewBox(user_name: "조**", lost_score: 4, taint_score: 3, condi_op: "깨끗해요! 관리 굿굿"),
-          StateReviewBox(user_name: "조**", lost_score: 4, taint_score: 3, condi_op: "깨끗해요! 관리 굿굿"),
+          StateReviewBox(user_name: "조**", state_date: "2024-01-02", lost_score: 4, taint_score: 3, condi_op: "깨끗해요! 관리 굿굿"),
+          StateReviewBox(user_name: "조**", state_date: "2024-01-02", lost_score: 4, taint_score: 3, condi_op: "깨끗해요! 관리 굿굿"),
+          StateReviewBox(user_name: "조**", state_date: "2024-01-02", lost_score: 4, taint_score: 3, condi_op: "깨끗해요! 관리 굿굿"),
         ],
       ),
     );
@@ -816,11 +815,13 @@ class ReviewBox extends StatelessWidget {
   final String user_name;
   final int review_score;
   final String review_content;
+  final String review_date;
   
   ReviewBox({
     required this.user_name,
     required this.review_score,
-    required this.review_content
+    required this.review_content,
+    required this.review_date,
   });
 
   @override
@@ -844,9 +845,10 @@ class ReviewBox extends StatelessWidget {
             children: [
               Text(user_name, style: TextStyle(fontWeight: FontWeight.bold),),
               SizedBox(width: 10,),
-              Text("별점 " + review_score.toString(), style: TextStyle(color: Colors.cyan.shade800), )
+              Text(review_date, style: TextStyle(color: Colors.grey.shade700),)
             ],
           ),
+          Text("별점 " + review_score.toString(), style: TextStyle(color: Colors.cyan.shade800), ),
           Text(review_content)
         ],
       ),
@@ -859,12 +861,14 @@ class StateReviewBox extends StatelessWidget {
   final int lost_score;
   final int taint_score;
   final String condi_op;
+  final String state_date;
 
   StateReviewBox({
     required this.user_name,
     required this.lost_score,
     required this.taint_score,
-    required this.condi_op
+    required this.condi_op,
+    required this.state_date,
   });
 
   @override
@@ -884,10 +888,16 @@ class StateReviewBox extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(user_name, style: TextStyle(fontWeight: FontWeight.bold),),
+          Row(
+            children: [
+              Text(user_name, style: TextStyle(fontWeight: FontWeight.bold),),
+              SizedBox(width: 10,),
+              Text(state_date, style: TextStyle(color: Colors.grey.shade700),)
+            ],
+          ),
           Text("손실도 " + lost_score.toString(), style: TextStyle(color: Colors.cyan.shade800), ),
           Text("오염도 " + taint_score.toString(), style: TextStyle(color: Colors.cyan.shade800), ),
-          Text(condi_op)
+          Text(condi_op),
         ],
       ),
     );
