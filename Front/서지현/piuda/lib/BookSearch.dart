@@ -4,6 +4,7 @@ import 'main.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'BookDetail.dart';
+import 'LoginPage.dart';
 
 
 class BookSearch extends StatefulWidget {
@@ -31,6 +32,7 @@ class _BookSearchState extends State<BookSearch> {
   TextEditingController _isbnController;
 
   _BookSearchState() : _isbnController = TextEditingController(); // 생성자에서 초기화
+  bool isLoading =true;
 
   void _updateSelectedLibraries(Set<String> selected) {
     setState(() {
@@ -64,6 +66,9 @@ class _BookSearchState extends State<BookSearch> {
       );
       return; // 함수를 여기서 종료
     }
+    setState(() {
+      isLoading = true; // 로딩 시작
+    });
     try {
       print("searchBook 함수 호출됨");
       final String searchText = _isbnController.text;
@@ -108,7 +113,7 @@ class _BookSearchState extends State<BookSearch> {
 
             final bookWidget = BookContainer(
               imageUrl: _imageUrl.isNotEmpty ? _imageUrl : widget.iniimageUrl,
-              id: bookData['id'] as String? ?? '등록번호 없음',
+              book_id: bookData['id'] as String? ?? '등록번호 없음',
               book_ii : bookData['book_ii'] as String? ?? '청구기호 없음',
               bookTitle: bookData['title'] as String? ?? '제목 없음',
               author: bookData['author'] as String? ?? '저자 없음',
@@ -124,6 +129,8 @@ class _BookSearchState extends State<BookSearch> {
               media: bookData['media'] as String ?? '매체구분 없음',
               field_name: bookData['field_name'] as String? ?? '분야 없음',
               series: bookData['series'] as String?,
+              onReservationCompleted: () => searchBook(),
+
             );
             bookWidgets.add(bookWidget);
           }
@@ -152,6 +159,10 @@ class _BookSearchState extends State<BookSearch> {
       }
     } catch (e) {
       print('searchBook 함수에서 오류 발생: $e');
+    } finally {
+      setState(() {
+        isLoading = false; // 로딩 종료
+      });
     }
   }
 
@@ -301,7 +312,7 @@ class _BookSearchState extends State<BookSearch> {
               ),
             ),
 
-
+            isLoading ? Center(child: CircularProgressIndicator(),) :
             ListView.builder(
               shrinkWrap: true,
               physics: NeverScrollableScrollPhysics(), // 스크롤 가능성 제거
@@ -323,7 +334,7 @@ class _BookSearchState extends State<BookSearch> {
 
 //책 정보박스
 class BookContainer extends StatelessWidget {
-  final String id;
+  final String book_id;
   final String imageUrl;
   final String bookTitle;
   final String author;
@@ -340,10 +351,12 @@ class BookContainer extends StatelessWidget {
   final String field_name;
   final String book_ii;
   final String? series; //null을 허용
+  final VoidCallback? onReservationCompleted;
+
 
 
   BookContainer({
-    required this.id,
+    required this.book_id,
     required this.imageUrl,
     required this.bookTitle,
     required this.author,
@@ -360,25 +373,209 @@ class BookContainer extends StatelessWidget {
     required this.field_name,
     required this.book_ii,
     this.series, //null 허용
+    this.onReservationCompleted,
+
   });
 
-  Future<void> addInterestBook(int userId, String bookId) async {
+
+  Future<void> addInterestBook(BuildContext context, int userId, String bookId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:8080/api/user-interest-books/add'),
-        body: {'userId': userId, 'bookId': bookId},
+        Uri.parse('http://10.0.2.2:8080/api/userinterest/add'),
+        body: {'user_id': userId.toString(), 'book_id': bookId},
       );
 
-      print('Interest book added. Response status: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        // 서버에서 성공적으로 응답을 받았을 때의 처리
+        print('Book added to user\'s interest list successfully');
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text('도서가 관심 도서에 추가되었습니다.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('확인'),
+                ),
+              ],
+            );
+          },
+        );
+      } else if (response.statusCode == 400) {
+        // 중복된 경우에 대한 처리
+        print('Failed to add book to user\'s interest list: Duplicate book');
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text('이미 관심 도서에 추가된 책입니다.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('확인'),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        // 서버에서 오류 응답을 받았을 때의 처리
+        print('Failed to add book to user\'s interest list');
+      }
     } catch (e) {
+      // 네트워크 오류 등 예외가 발생했을 때의 처리
       print('Error adding interest book: $e');
     }
   }
 
+  Future<void> reserveBook(BuildContext context, String userId, String bookId) async {
+    // 로그인 상태 확인
+    if (MyApp.userId == null) {
+      // 로그인하지 않은 경우, 로그인 유도 팝업 표시
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('알림'),
+            content: Text('로그인 후 이용 가능한 서비스입니다.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // 팝업 닫기
+                },
+                child: Text('확인'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // 팝업 닫기
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                  );
+                },
+                child: Text('로그인하러 가기'),
+              ),
+            ],
+          );
+        },
+      );
+      return; // 함수 종료
+    }
+else{
+    // 로그인 상태일 때의 예약 처리 로직
+    try {
+      // 현재 사용자의 예약 내역을 확인
+      final reservationsResponse = await http.get(
+        Uri.parse('http://10.0.2.2:8080/api/userbooking/reservations?user_id=$userId'),
+      );
+
+      if (reservationsResponse.statusCode == 200) {
+        final List<dynamic> reservations = json.decode(reservationsResponse.body);
+
+        // 최대 예약 가능 권수를 초과했을 경우
+        if (reservations.length >= 3) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: Text('예약은 최대 3권까지 가능합니다.'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // 팝업 닫기
+                    },
+                    child: Text('확인'),
+                  ),
+                ],
+              );
+            },
+          );
+          return; // 함수 종료
+        }
+      }
+
+      // 예약 가능한 경우 예약 요청 수행
+      final DateTime now = DateTime.now();
+      final String reserveDate = "${now.year}-${now.month}-${now.day}";
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:8080/api/userbooking/add'),
+        body: {
+          'user_id': userId,
+          'book_id': bookId,
+          'reserve_date': reserveDate,
+        },
+      );
+
+      // 예약 요청 응답 처리
+      if (response.statusCode == 200) {
+        // 예약 성공 메시지 표시
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text('예약이 완료되었습니다.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // 팝업 닫기
+                    onReservationCompleted?.call();
+                  },
+                  child: Text('확인'),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        // 예약 실패 메시지 표시
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text('예약은 최대 3권까지 가능합니다.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('확인'),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    } catch (e) {
+      // 네트워크 오류 등 예외 처리
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            content: Text('예약 처리 중 오류가 발생했습니다.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('확인'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }}
+
+
 
   @override
   Widget build(BuildContext context) {
-    String loanStatusText = loanstatus ? '대출가능' : '대출불가';
+    bool isUserLoggedIn = (MyApp.userId ?? 0) > 0;    String loanStatusText = loanstatus ? '대출가능' : '대출불가';
     String loanStatusBox = loanstatus ? '책누리신청' : '예약하기';
     Color loanStatusColor = loanstatus ? Colors.cyan.shade700 : Colors.red.shade400;
 
@@ -395,7 +592,7 @@ class BookContainer extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (context) => BookDetail(
-              id: id,
+              book_id: book_id,
               imageUrl: imageUrl,
               bookTitle: bookTitle,
               author: author,
@@ -518,8 +715,7 @@ class BookContainer extends StatelessWidget {
                       children: [
                         GestureDetector(
                           onTap: () {
-                            // 도서를 관심도서로 추가하는 로직을 추가
-                            addInterestBook(MyApp.userId??0, id); // bookId를 전달
+                            addInterestBook(context, MyApp.userId ?? 0, book_id.toString());
                           },
                           child: Container(
                             padding: EdgeInsets.all(5),
@@ -542,7 +738,11 @@ class BookContainer extends StatelessWidget {
                         ),
                         SizedBox(width: 10,),
                         if (!loanstatus && !reserved)
-                          Container(
+                          GestureDetector(
+                            onTap: () {
+                              reserveBook(context, MyApp.userId.toString(), book_id);
+                            },
+                          child: Container(
                             padding: EdgeInsets.all(5),
                             decoration: BoxDecoration(
                               color: loanStatusColor,
@@ -561,6 +761,7 @@ class BookContainer extends StatelessWidget {
                               ),
                             ),
                           ),
+    ),
                       ],
                     ),
                   ],

@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,18 +23,17 @@ import com.example.demo.model.Users;
 @RestController
 @RequestMapping("/api/userinterest")
 public class UserInterestBookController {
-	
-	
-
-    private final UsersMapper usersMapper;
-    private final BookMapper bookMapper;
-    private final UserInterestBookMapper userInterestBookMapper;
+   
+    private UsersMapper usersMapper;
+    private BookMapper bookMapper;
+    private UserInterestBookMapper userInterestBookMapper;
 
     public UserInterestBookController(UsersMapper usersMapper, BookMapper bookMapper, UserInterestBookMapper userInterestBookMapper) {
         this.usersMapper = usersMapper;
         this.bookMapper = bookMapper;
         this.userInterestBookMapper = userInterestBookMapper;
     }
+    
 
     @PostMapping("/add")
     public ResponseEntity<?> insertUserInterestBook(@RequestParam("user_id") Long user_id, @RequestParam("book_id") String book_id) {
@@ -43,6 +41,11 @@ public class UserInterestBookController {
         Book book = bookMapper.findByBookId(book_id);
 
         if (user != null && book != null) {
+           int duplicateCount = userInterestBookMapper.checkDuplicateInterest(user_id, book_id);
+            if (duplicateCount > 0) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Book is already in user's interest list");
+            }
+            
             int result = userInterestBookMapper.insertUserInterestBook(user, book);
             if (result > 0) {
                 return ResponseEntity.ok().body("Book added to user's interest list successfully");
@@ -54,8 +57,8 @@ public class UserInterestBookController {
         }
     }
 
-    @DeleteMapping("/remove")
-    public ResponseEntity<?> removeUserInterestBook(@RequestParam("user_id") Long user_id, @RequestParam("book_id") String book_id) {
+    @DeleteMapping("/remove/{user_id}/{book_id}")
+    public ResponseEntity<?> removeUserInterestBook(@PathVariable("user_id") Long user_id, @PathVariable("book_id") String book_id) {
         Users user = usersMapper.getUserProfile(user_id);
         Book book = bookMapper.findByBookId(book_id);
 

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'main.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'LoginPage.dart';
 
 class BookDetail extends StatefulWidget {
   final String bookTitle;
@@ -21,9 +22,11 @@ class BookDetail extends StatefulWidget {
   final String classification;
   final String media;
   final String field_name;
-  final String id;
+  final String book_id;
   final String book_ii;
   final String? series;
+  final VoidCallback? onReservationCompleted;
+
 
   BookDetail({
     required this.imageUrl,
@@ -40,9 +43,11 @@ class BookDetail extends StatefulWidget {
     required this.classification,
     required this.media,
     required this.field_name,
-    required this.id,
+    required this.book_id,
     required this.book_ii,
     this.series,
+    this.onReservationCompleted,
+
   });
 
   @override
@@ -91,6 +96,198 @@ class _BookDetailState extends State<BookDetail> {
     }
   }
 
+  Future<void> addInterestBook(BuildContext context, int userId, String bookId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:8080/api/userinterest/add'),
+        body: {'user_id': userId.toString(), 'book_id': bookId},
+      );
+
+      if (response.statusCode == 200) {
+        // 서버에서 성공적으로 응답을 받았을 때의 처리
+        print('Book added to user\'s interest list successfully');
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text('도서가 관심 도서에 추가되었습니다.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('확인'),
+                ),
+              ],
+            );
+          },
+        );
+      } else if (response.statusCode == 400) {
+        // 중복된 경우에 대한 처리
+        print('Failed to add book to user\'s interest list: Duplicate book');
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text('이미 관심 도서에 추가된 책입니다.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('확인'),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        // 서버에서 오류 응답을 받았을 때의 처리
+        print('Failed to add book to user\'s interest list');
+      }
+    } catch (e) {
+      // 네트워크 오류 등 예외가 발생했을 때의 처리
+      print('Error adding interest book: $e');
+    }
+  }
+
+  Future<void> reserveBook(BuildContext context, String userId, String bookId) async {
+    // 로그인 상태 확인
+    if (MyApp.userId == null) {
+      // 로그인하지 않은 경우, 로그인 유도 팝업 표시
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('알림'),
+            content: Text('로그인 후 이용 가능한 서비스입니다.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // 팝업 닫기
+                },
+                child: Text('확인'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // 팝업 닫기
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                  );
+                },
+                child: Text('로그인하러 가기'),
+              ),
+            ],
+          );
+        },
+      );
+      return; // 함수 종료
+    }
+    else{
+      // 로그인 상태일 때의 예약 처리 로직
+      try {
+        // 현재 사용자의 예약 내역을 확인
+        final reservationsResponse = await http.get(
+          Uri.parse('http://10.0.2.2:8080/api/userbooking/reservations?user_id=$userId'),
+        );
+
+        if (reservationsResponse.statusCode == 200) {
+          final List<dynamic> reservations = json.decode(reservationsResponse.body);
+
+          // 최대 예약 가능 권수를 초과했을 경우
+          if (reservations.length >= 3) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  content: Text('예약은 최대 3권까지 가능합니다.'),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // 팝업 닫기
+                      },
+                      child: Text('확인'),
+                    ),
+                  ],
+                );
+              },
+            );
+            return; // 함수 종료
+          }
+        }
+
+        // 예약 가능한 경우 예약 요청 수행
+        final DateTime now = DateTime.now();
+        final String reserveDate = "${now.year}-${now.month}-${now.day}";
+        final response = await http.post(
+          Uri.parse('http://10.0.2.2:8080/api/userbooking/add'),
+          body: {
+            'user_id': userId,
+            'book_id': bookId,
+            'reserve_date': reserveDate,
+          },
+        );
+
+        // 예약 요청 응답 처리
+        if (response.statusCode == 200) {
+          // 예약 성공 메시지 표시
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: Text('예약이 완료되었습니다.'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // 팝업 닫기
+                      widget.onReservationCompleted?.call();
+                    },
+                    child: Text('확인'),
+                  ),
+                ],
+              );
+            },
+          );
+        } else {
+          // 예약 실패 메시지 표시
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: Text('예약은 최대 3권까지 가능합니다.'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text('확인'),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      } catch (e) {
+        // 네트워크 오류 등 예외 처리
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text('예약 처리 중 오류가 발생했습니다.'),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: Text('확인'),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    }}
   @override
   Widget build(BuildContext context) {
     double Height = MediaQuery.of(context).size.height;
@@ -526,7 +723,7 @@ class _BookDetailState extends State<BookDetail> {
                                               ),
                                             ),
                                             TextSpan(
-                                              text: widget.id,
+                                              text: widget.book_id,
                                               style: TextStyle(
                                                 fontSize: 18.0,
                                                 color: Colors.grey.shade800, // 두 번째 텍스트의 글자색
@@ -590,27 +787,36 @@ class _BookDetailState extends State<BookDetail> {
                               SizedBox(height: 12,),
                               Row(
                                 children: [
-                                  Container(
-                                    padding: EdgeInsets.all(5),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white70,
-                                      border: Border.all(
-                                        color: Colors.grey.shade700, // 테두리 색상
-                                        width: 1.0, // 테두리 두께
+                                  GestureDetector(
+                                    onTap: () {
+                                      addInterestBook(context, MyApp.userId ?? 0, widget.book_id.toString());
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.all(5),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white70,
+                                        border: Border.all(
+                                          color: Colors.grey.shade700, // 테두리 색상
+                                          width: 1.0, // 테두리 두께
+                                        ),
+                                        borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
                                       ),
-                                      borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
-                                    ),
-                                    child: Text(
-                                      '관심도서담기',
-                                      style: TextStyle(
-                                        color: Colors.grey.shade700,
-                                        fontSize: 17.5,
+                                      child: Text(
+                                        '관심도서담기',
+                                        style: TextStyle(
+                                          color: Colors.grey.shade700,
+                                          fontSize: 17.5,
+                                        ),
                                       ),
                                     ),
                                   ),
                                   SizedBox(width: 10,),
                                   if (!widget.loanstatus && !widget.reserved)
-                                    Container(
+                                    GestureDetector(
+                                      onTap: () {
+                                        reserveBook(context, MyApp.userId.toString(), widget.book_id);
+                                      },
+                                     child: Container(
                                       padding: EdgeInsets.all(5),
                                       decoration: BoxDecoration(
                                         color: loanStatusColor,
@@ -629,6 +835,7 @@ class _BookDetailState extends State<BookDetail> {
                                         ),
                                       ),
                                     ),
+    ),
                                 ],
                               ),
                             ],
@@ -652,7 +859,7 @@ class _BookDetailState extends State<BookDetail> {
                 ),
                 Container(
                     width: double.infinity,
-                    child: Text("이 책이 마음에 드셨나요? 다양한 후기를 감상해보세요!", style: TextStyle(color: Colors.grey, fontSize: 14),)
+                    child: Text("이 책이 마음에 드셨나요? 다양한 후기를 감상해보세요!", style: TextStyle(color: Colors.grey.shade700, fontSize: 14),)
                 ),
                 Row(
                   children: [
@@ -715,10 +922,9 @@ class _BookReviewContentState extends State<BookReviewContent> {
     return Container(
       child: Column(
         children: [
-          ReviewBox(user_name: "서**", review_score: 5, review_content: "너무재밋어요~"),
-          ReviewBox(user_name: "서**", review_score: 5, review_content: "너무재밋어요~"),
-          ReviewBox(user_name: "서**", review_score: 5, review_content: "너무재밋어요~")
-
+          ReviewBox(user_name: "서**", review_date: "2024-01-05", review_score: 5, review_content: "너무재밋어요~"),
+          ReviewBox(user_name: "서**", review_date: "2024-01-05", review_score: 5, review_content: "너무재밋어요~"),
+          ReviewBox(user_name: "서**", review_date: "2024-01-05", review_score: 5, review_content: "너무재밋어요~"),
         ],
       ),
     );
@@ -741,9 +947,9 @@ class _StateReviewContentState extends State<StateReviewContent> {
     return Container(
       child: Column(
         children: [
-          StateReviewBox(user_name: "조**", lost_score: 4, taint_score: 3, condi_op: "깨끗해요! 관리 굿굿"),
-          StateReviewBox(user_name: "조**", lost_score: 4, taint_score: 3, condi_op: "깨끗해요! 관리 굿굿"),
-          StateReviewBox(user_name: "조**", lost_score: 4, taint_score: 3, condi_op: "깨끗해요! 관리 굿굿"),
+          StateReviewBox(user_name: "조**", state_date: "2024-01-02", lost_score: 4, taint_score: 3, condi_op: "깨끗해요! 관리 굿굿"),
+          StateReviewBox(user_name: "조**", state_date: "2024-01-02", lost_score: 4, taint_score: 3, condi_op: "깨끗해요! 관리 굿굿"),
+          StateReviewBox(user_name: "조**", state_date: "2024-01-02", lost_score: 4, taint_score: 3, condi_op: "깨끗해요! 관리 굿굿"),
         ],
       ),
     );
@@ -756,11 +962,13 @@ class ReviewBox extends StatelessWidget {
   final String user_name;
   final int review_score;
   final String review_content;
+  final String review_date;
 
   ReviewBox({
     required this.user_name,
     required this.review_score,
-    required this.review_content
+    required this.review_content,
+    required this.review_date,
   });
 
   @override
@@ -784,9 +992,10 @@ class ReviewBox extends StatelessWidget {
             children: [
               Text(user_name, style: TextStyle(fontWeight: FontWeight.bold),),
               SizedBox(width: 10,),
-              Text("별점 " + review_score.toString(), style: TextStyle(color: Colors.cyan.shade800), )
+              Text(review_date, style: TextStyle(color: Colors.grey.shade700),)
             ],
           ),
+          Text("별점 " + review_score.toString(), style: TextStyle(color: Colors.cyan.shade800), ),
           Text(review_content)
         ],
       ),
@@ -799,12 +1008,14 @@ class StateReviewBox extends StatelessWidget {
   final int lost_score;
   final int taint_score;
   final String condi_op;
+  final String state_date;
 
   StateReviewBox({
     required this.user_name,
     required this.lost_score,
     required this.taint_score,
-    required this.condi_op
+    required this.condi_op,
+    required this.state_date,
   });
 
   @override
@@ -824,10 +1035,16 @@ class StateReviewBox extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(user_name, style: TextStyle(fontWeight: FontWeight.bold),),
+          Row(
+            children: [
+              Text(user_name, style: TextStyle(fontWeight: FontWeight.bold),),
+              SizedBox(width: 10,),
+              Text(state_date, style: TextStyle(color: Colors.grey.shade700),)
+            ],
+          ),
           Text("손실도 " + lost_score.toString(), style: TextStyle(color: Colors.cyan.shade800), ),
           Text("오염도 " + taint_score.toString(), style: TextStyle(color: Colors.cyan.shade800), ),
-          Text(condi_op)
+          Text(condi_op),
         ],
       ),
     );
