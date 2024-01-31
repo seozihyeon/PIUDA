@@ -30,4 +30,7 @@ public interface UserInterestBookMapper {
             @Result(property = "book", column = "book_id", javaType = Book.class, one = @One(select = "com.example.demo.mapper.BookMapper.findByBookId"))
     })
     List<UserInterestBook> getUserInterestList(@Param("user_id") Long user_id);
+    
+    @Select("SELECT COUNT(*) FROM UserInterestBook WHERE user_id=#{user_id} AND book_id=#{book_id}")
+    int checkDuplicateInterest(@Param("user_id") Long user_id, @Param("book_id") String book_id);
 }
