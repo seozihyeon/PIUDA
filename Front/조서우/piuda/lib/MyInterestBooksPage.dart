@@ -186,15 +186,19 @@ class _MyInterestBooksPageState extends State<MyInterestBooksPage> {
           interestBooks = interestBooksData;
           print("Updated interest books: $interestBooks");
         });
+
         for (int i = 0; i < interestBooksData.length; i++) {
           await fetchBookCover(interestBooksData[i].book.bookIsbn, i);
         }
-        isLoading = false;
       } else {
         throw Exception('Failed to load interest books');
       }
     } catch (e) {
       print('Error loading interest books: $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 

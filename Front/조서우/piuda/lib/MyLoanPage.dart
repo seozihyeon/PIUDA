@@ -7,6 +7,101 @@ import 'BookDetail.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+class LoanBookContainerData {
+  final String? id;
+  String imageUrl;
+  final String bookTitle;
+  final String author;
+  final String library;
+  final String loan_date;
+  final String? return_date;
+  final int? remain_date;
+  final String? expect_date;
+  final bool returnstatus;
+  final String book_isbn;
+
+  LoanBookContainerData({
+    required this.id,
+    required this.imageUrl,
+    required this.bookTitle,
+    required this.author,
+    required this.library,
+    required this.loan_date,
+    required this.return_date,
+    required this.remain_date,
+    required this.expect_date,
+    required this.returnstatus,
+    required this.book_isbn,
+  });
+
+  static Future<String> fetchBookCover(String bookIsbn) async {
+    final String clientId = 'uFwwNh4yYFgq3WtAYl6S';
+    final String clientSecret = 'WElJXwZDhV';
+
+    print('API 요청 시작');
+
+    try {
+      final response = await http.get(
+        Uri.parse('https://openapi.naver.com/v1/search/book_adv.json?d_isbn=$bookIsbn'),
+        headers: {
+          'X-Naver-Client-Id': clientId,
+          'X-Naver-Client-Secret': clientSecret,
+        },
+      );
+
+      print('API 응답 받음');
+
+      if (response.statusCode == 200) {
+        final decodedData = json.decode(response.body);
+
+        // 확인을 위해 표지 이미지 URL 출력
+        print('이미지 URL: ${decodedData['items'][0]['image']}');
+
+        return decodedData['items'][0]['image'] ?? '';
+      } else {
+        print('Failed to fetch book cover. Status code: ${response.statusCode}');
+        return '';
+      }
+    } catch (e) {
+      print('fetchBookCover 함수에서 오류 발생: $e');
+      return '';
+    }
+  }
+
+  static String extractDateOnly(String? dateTimeString) {
+    if (dateTimeString != null && dateTimeString.isNotEmpty) {
+      DateTime dateTime = DateTime.parse(dateTimeString);
+      return "${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}";
+    }
+    return '';
+  }
+
+  factory LoanBookContainerData.fromJson(Map<String, dynamic> json) {
+    final user = json['user'];
+    final book = json['book'];
+
+    return LoanBookContainerData(
+      id: json['loan_id'].toString(),
+      imageUrl: '', // 이미지 URL fetchBookCover 함수로 가져옴
+      bookTitle: book['title'],
+      author: book['author'],
+      library: book['library'],
+      loan_date: extractDateOnly(json['loan_date']),
+      return_date: extractDateOnly(json['return_date']),
+      remain_date: null, // 남은 날짜 정보가 없는 경우 수정 필요
+      expect_date: extractDateOnly(json['expect_date']),
+      returnstatus: json['return_status'],
+      book_isbn: book['book_isbn'],
+    );
+  }
+
+  Future<void> fetchAndSetImageUrl() async {
+    imageUrl = await fetchBookCover(book_isbn);
+  }
+}
+
+
+
 
 class MyLoanPage extends StatefulWidget {
   const MyLoanPage({super.key});
@@ -15,21 +110,66 @@ class MyLoanPage extends StatefulWidget {
   State<MyLoanPage> createState() => _MyLoanPageState();
 }
 
+
 class _MyLoanPageState extends State<MyLoanPage> {
   bool showFirstContent = true;
   ScrollController _pageController = ScrollController();
+  List<LoanBookContainerData> loanData = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _pageController.addListener(() {
-      // 스크롤 위치가 일정량 이상 내려가면 다음 페이지로 이동
-      if (_pageController.offset > 500) {
-        setState(() {
-
-        });
+      if (_pageController.offset > 500) { // 스크롤 위치가 일정량 이상 내려가면 다음 페이지로 이동
+        setState(() {});
       }
     });
+
+    fetchLoanData();
+  }
+
+
+  Future<void> fetchLoanData() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:8080/loan/list/${MyApp.userId}'),
+      );
+
+      if (response.statusCode == 200) {
+        final decodedBody = utf8.decode(response.bodyBytes);
+        final List<dynamic> jsonData = jsonDecode(decodedBody);
+
+        List<LoanBookContainerData> updatedLoanData = [];
+        for (final data in jsonData) {
+          LoanBookContainerData loanBook = LoanBookContainerData.fromJson(data);
+
+          await loanBook.fetchAndSetImageUrl();
+
+          updatedLoanData.add(loanBook);
+        }
+
+        // 정렬을 수행: 가장 최근 대출이 맨 위에 오도록
+        updatedLoanData.sort((a, b) {
+          DateTime aLoanDate = DateTime.parse(a.loan_date);
+          DateTime bLoanDate = DateTime.parse(b.loan_date);
+          return bLoanDate.compareTo(aLoanDate);
+        });
+
+        setState(() {
+          loanData = updatedLoanData;
+        });
+      } else {
+        print('Failed to fetch loan data.');
+      }
+    } catch (e) {
+      print('Error fetching loan data: $e');
+      // Handle the error as needed
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
 
@@ -97,9 +237,16 @@ class _MyLoanPageState extends State<MyLoanPage> {
                   ),
                 ],
               ),
-              showFirstContent
-                  ? FirstContent(pageController: _pageController)
-                  : SecondContent(pageController: _pageController),
+              isLoading
+                  ? Column(
+                    children: [
+                      SizedBox(height: 200,),
+                      CircularProgressIndicator(),
+                    ],
+                  )
+                  : showFirstContent
+                  ? FirstContent(pageController: _pageController, loanData: loanData, onLoanExtended: (){fetchLoanData();})
+                  : SecondContent(pageController: _pageController, loanData: loanData, onLoanExtended: (){fetchLoanData();},)
             ],
           ),
         ),
@@ -114,13 +261,20 @@ class _MyLoanPageState extends State<MyLoanPage> {
 
 class FirstContent extends StatefulWidget {
   final ScrollController pageController;
-  FirstContent({required this.pageController});
+  final List<LoanBookContainerData> loanData;
+  final VoidCallback onLoanExtended;
+
+  FirstContent({required this.pageController, required this.loanData, required this.onLoanExtended,});
 
   @override
   _FirstContentState createState() => _FirstContentState();
 }
 
 class _FirstContentState extends State<FirstContent> {
+  List<LoanBookContainerData> get filteredLoanData {
+    // Return only items with return_status set to false
+    return widget.loanData.where((data) => !data.returnstatus).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -130,51 +284,29 @@ class _FirstContentState extends State<FirstContent> {
         padding: EdgeInsets.only(top: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.all(Radius.circular(10)),
-          border: Border.all(color: Colors.cyan.shade800, width: 2)
+          border: Border.all(color: Colors.cyan.shade800, width: 2),
         ),
         child: Column(
-          children: [
-            LoanBookContainer(
-              id: null,
-              imageUrl: Image.asset('assets/images/나미야.jpg'),
-              bookTitle: '나미야 잡화점의 기적',
-              author: '히가시노게이고',
-              library: '성동구립도서관',
-              loan_date: '2022-02-28',
-              return_date: null,
-              remain_date: '3',
-              expect_date: '2022-02-28',
-              returnstatus: false,
-              book_isbn: null,
-            ),
-            LoanBookContainer(
-              id: null,
-              imageUrl: Image.asset('assets/images/나미야.jpg'),
-              bookTitle: '나미야 잡화점의 기적',
-              author: '히가시노게이고',
-              library: '성동구립도서관',
-              loan_date: '2022-02-28',
-              return_date: null,
-              remain_date: '3',
-              expect_date: '2022-02-28',
-              returnstatus: false,
-              book_isbn: null,
-            ),
-            LoanBookContainer(
-              id: null,
-              imageUrl: Image.asset('assets/images/나미야.jpg'),
-              bookTitle: '나미야 잡화점의 기적',
-              author: '히가시노게이고',
-              library: '성동구립도서관',
-              loan_date: '2022-02-28',
-              return_date: null,
-              remain_date: '3',
-              expect_date: '2022-02-28',
-              returnstatus: false,
-              book_isbn: null,
-            ),
-
-          ],
+          children: filteredLoanData.map((data) {
+            return LoanBookContainer(
+              id: data.id,
+              imageUrl: data.imageUrl,
+              bookTitle: data.bookTitle,
+              author: data.author,
+              library: data.library,
+              loan_date: data.loan_date,
+              return_date: data.return_date,
+              remain_date: data.remain_date,
+              expect_date: data.expect_date,
+              returnstatus: data.returnstatus,
+              book_isbn: data.book_isbn,
+              onLoanExtended: () {
+                // Trigger UI update when loan is extended
+                widget.onLoanExtended();
+                setState(() {});
+              },
+            );
+          }).toList(),
         ),
       ),
     );
@@ -184,7 +316,10 @@ class _FirstContentState extends State<FirstContent> {
 
 class SecondContent extends StatefulWidget {
   final ScrollController pageController;
-  SecondContent({required this.pageController});
+  final List<LoanBookContainerData> loanData;
+  final VoidCallback onLoanExtended;
+
+  SecondContent({required this.pageController, required this.loanData,  required this.onLoanExtended,});
 
   @override
   State<SecondContent> createState() => _SecondContentState();
@@ -192,6 +327,12 @@ class SecondContent extends StatefulWidget {
 
 class _SecondContentState extends State<SecondContent> {
   String selectedYear = '2024';
+
+  List<LoanBookContainerData> get filteredLoanDataByYear {
+    return widget.loanData.where((data) {
+      return data.loan_date != null && data.loan_date!.startsWith(selectedYear);
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -203,23 +344,21 @@ class _SecondContentState extends State<SecondContent> {
         padding: EdgeInsets.only(top: 10),
         decoration: BoxDecoration(
             borderRadius: BorderRadius.all(Radius.circular(10)),
-            border: Border.all(color: Colors.cyan.shade800, width: 2)
-        ),
+            border: Border.all(color: Colors.cyan.shade800, width: 2)),
         child: Column(
           children: [
             Container(
               margin: EdgeInsets.symmetric(horizontal: 10),
               padding: EdgeInsets.symmetric(horizontal: 20),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.cyan.shade800),
-                borderRadius: BorderRadius.circular(10)
-              ),
+                  border: Border.all(color: Colors.cyan.shade800),
+                  borderRadius: BorderRadius.circular(10)),
               child: DropdownButton<String>(
                 value: selectedYear,
                 onChanged: (String? newValue) {
                   setState(() {
                     selectedYear = newValue!;
-                    // Perform any additional actions based on the selected year
+                    // 선택한 연도에 기반한 추가 작업 수행
                   });
                 },
                 items: years.map<DropdownMenuItem<String>>((String value) {
@@ -233,75 +372,28 @@ class _SecondContentState extends State<SecondContent> {
                 isExpanded: true,
               ),
             ),
-            SizedBox(height: 10,),
-            LoanBookContainer(
-              id: null,
-              imageUrl: Image.asset('assets/images/나미야.jpg'),
-              bookTitle: '나미야 잡화점의 기적',
-              author: '히가시노게이고',
-              library: '성동구립도서관',
-              loan_date: '2022-02-28',
-              return_date: null,
-              remain_date: null,
-              expect_date: '2022-02-28',
-              returnstatus: true,
-              book_isbn: null,
-            ),
-            LoanBookContainer(
-              id: null,
-              imageUrl: Image.asset('assets/images/나미야.jpg'),
-              bookTitle: '나미야 잡화점의 기적',
-              author: '히가시노게이고',
-              library: '성동구립도서관',
-              loan_date: '2022-02-28',
-              return_date: null,
-              remain_date: '3',
-              expect_date: '2022-02-28',
-              returnstatus: false,
-              book_isbn: null,
-            ),
-            LoanBookContainer(
-              id: null,
-              imageUrl: Image.asset('assets/images/나미야.jpg'),
-              bookTitle: '나미야 잡화점의 기적',
-              author: '히가시노게이고',
-              library: '성동구립도서관',
-              loan_date: '2022-02-28',
-              return_date: null,
-              remain_date: '3',
-              expect_date: '2022-02-28',
-              returnstatus: false,
-              book_isbn: null,
-            ),
-            LoanBookContainer(
-              id: null,
-              imageUrl: Image.asset('assets/images/나미야.jpg'),
-              bookTitle: '나미야 잡화점의 기적',
-              author: '히가시노게이고',
-              library: '성동구립도서관',
-              loan_date: '2022-02-28',
-              return_date: null,
-              remain_date: null,
-              expect_date: '2022-02-28',
-              returnstatus: true,
-              book_isbn: null,
-            ),
-            LoanBookContainer(
-              id: null,
-              imageUrl: Image.asset('assets/images/나미야.jpg'),
-              bookTitle: '나미야 잡화점의 기적',
-              author: '히가시노게이고',
-              library: '성동구립도서관',
-              loan_date: '2022-02-28',
-              return_date: null,
-              remain_date: null,
-              expect_date: '2022-02-28',
-              returnstatus: true,
-              book_isbn: null,
-            ),
-
+            SizedBox(height: 10),
+            ...filteredLoanDataByYear.map((data) {
+              return LoanBookContainer(
+                id: data.id,
+                imageUrl: data.imageUrl,
+                bookTitle: data.bookTitle,
+                author: data.author,
+                library: data.library,
+                loan_date: data.loan_date,
+                return_date: data.return_date,
+                remain_date: data.remain_date,
+                expect_date: data.expect_date,
+                returnstatus: data.returnstatus,
+                book_isbn: data.book_isbn,
+                onLoanExtended: () {
+                  // 대출 연장 시 UI 업데이트를 트리거
+                  widget.onLoanExtended();
+                  setState(() {});
+                },
+              );
+            }).toList(),
           ],
-
         ),
       ),
     );
@@ -310,21 +402,24 @@ class _SecondContentState extends State<SecondContent> {
 
 
 
+
+
+
 //대출현황: 표지, 제목, 도서관, 대출일자, 반납예정일(남은기간), 반납상태, [[반납연기버튼, 상태평가버튼, 도서리뷰버튼]]
 //대출내역: 표지, 제목, 도서관, 대출일자, 반납일자, 반납상태, [[상태평가버튼, 도서리뷰버튼]]
 class LoanBookContainer extends StatelessWidget {
   final String? id;
-  final Image imageUrl;
+  final String imageUrl;
   final String bookTitle;
   final String author;
   final String library;
   final String loan_date;
   final String? return_date;
-  final String? remain_date; //남은날짜
+  int? remain_date; //남은날짜
   final String? expect_date; //반납예정일
   final bool returnstatus; //반납상태 t-반납완료, f-대출중
-  final String? book_isbn;
-
+  final String book_isbn;
+  final VoidCallback? onLoanExtended;
 
 
   LoanBookContainer({
@@ -339,9 +434,68 @@ class LoanBookContainer extends StatelessWidget {
     required this.expect_date,
     required this.returnstatus,
     required this.book_isbn,
-  });
+    required this.onLoanExtended,
 
+  }) {
+    remain_date = calculateRemainingDays();
+  }
 
+  int calculateRemainingDays() {
+    if (expect_date != null && loan_date.isNotEmpty) {
+      DateTime expectDate = DateTime.parse(expect_date!);
+      DateTime loanDate = DateTime.parse(loan_date);
+
+      Duration difference = expectDate.difference(loanDate);
+
+      return difference.inDays;
+    }
+    return 0; // Default value when either expect_date is null or loan_date is empty
+  }
+
+  void extendLoan(String? loanId, BuildContext context) async {
+    try {
+      final response = await http.put(
+        Uri.parse('http://10.0.2.2:8080/loan/extend/$loanId'),
+      );
+
+      if (response.statusCode == 200) {
+        print('성공적으로 연장되었습니다');
+        showDialog(context: context, builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text('대출도서가 성공적으로 연장되었습니다.'),
+              actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인'),),],);},);
+
+        onLoanExtended?.call();
+      } else {
+        print('Failed to extend the loan. Status code: ${response.statusCode}');
+
+        // Handling different messages from the API
+        if (response.body == "대출은 한 번만 연장할 수 있습니다!") {
+          print("대출은 한 번만 연장할 수 있습니다!");
+          showDialog(context: context, builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text('대출도서는 한 번만 연장할 수 있습니다.'),
+              actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인'),),],);},);
+        } else if (response.body == "대출 당일은 연장할 수 없습니다!") {
+          print("대출 당일은 연장할 수 없습니다!");
+          showDialog(context: context, builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text('대출 당일은 연장할 수 없습니다.'),
+              actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인'),),],);},);
+        } else if (response.body == "반납예정일 이후에는 연장할 수 없습니다!") {
+          print("반납예정일 이후에는 연장할 수 없습니다!");
+          showDialog(context: context, builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text('반납예정일 이후에는 연장할 수 없습니다.'),
+              actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인'),),],);},);
+        } else {
+          print('Unknown error: ${response.body}');
+        }
+      }
+    } catch (e) {
+      print('Error extending loan: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -365,7 +519,18 @@ class LoanBookContainer extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(child: imageUrl, height: Height*0.25*0.6),
+            Container(
+              child: imageUrl.isNotEmpty
+                  ? Image.network(
+                imageUrl, // Use the imageUrl here
+                height: Height * 0.25 * 0.6,
+                errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+                  print('Error building image: $error');
+                  return Placeholder(); // 에러 발생 시 Placeholder 표시
+                },
+              )
+                  : Placeholder(), // 이미지가 없을 경우 Placeholder 표시
+            ),
             SizedBox(width: 20,),
             Expanded(
               child: Column(
@@ -381,11 +546,10 @@ class LoanBookContainer extends StatelessWidget {
                       ],),
                       if (!returnstatus )
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 10),
-                          decoration: BoxDecoration(border: Border.all(color: Colors.red.shade400, width: 2), borderRadius: BorderRadius.circular(15)),
-
-                            
-                            child: Text('D-' + (remain_date ?? ''), style: TextStyle(fontWeight: FontWeight.w700),))
+                            padding: EdgeInsets.symmetric(horizontal: 10),
+                            decoration: BoxDecoration(border: Border.all(color: Colors.red.shade400, width: 2), borderRadius: BorderRadius.circular(15)),
+                            child: Text('D-' + (remain_date.toString() ?? ''), style: TextStyle(fontWeight: FontWeight.w700),)
+                        )
                     ],
                   ),
                   Row(
@@ -463,23 +627,28 @@ class LoanBookContainer extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: Container(
-                            padding: EdgeInsets.all(5),
-                            decoration: BoxDecoration(
-                              color: returnStatusColor,
-                              border: Border.all(
-                                color: Colors.white, // 테두리 색상
-                                width: 1.0, // 테두리 두께
+                          child: GestureDetector(
+                            onTap: () {
+                              extendLoan(id, context);
+                            },
+                            child: Container(
+                              padding: EdgeInsets.all(5),
+                              decoration: BoxDecoration(
+                                color: returnStatusColor,
+                                border: Border.all(
+                                  color: Colors.white, // 테두리 색상
+                                  width: 1.0, // 테두리 두께
+                                ),
+                                borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
                               ),
-                              borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
-                            ),
-                            child: Text(
-                              '반납연기',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 17.5,
-                                fontWeight: FontWeight.bold
+                              child: Text(
+                                '반납연기',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 17.5,
+                                    fontWeight: FontWeight.bold
+                                ),
                               ),
                             ),
                           ),
@@ -563,13 +732,3 @@ class LoanBookContainer extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
