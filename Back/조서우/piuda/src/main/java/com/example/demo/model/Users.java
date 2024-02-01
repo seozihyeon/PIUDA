@@ -11,6 +11,10 @@ public class Users {
 	private String user_status;
 	private String barcode_img;
 	
+	public Users() {
+        // Default constructor
+    }
+	
 	public Users(Long user_id, String user_name, String user_status, String barcode_img) {
 		super();
 		this.user_id = user_id;

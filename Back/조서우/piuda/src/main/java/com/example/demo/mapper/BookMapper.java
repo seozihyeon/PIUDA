@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import com.example.demo.model.Book;
 
@@ -21,4 +22,8 @@ public interface BookMapper {
     
     @Select("SELECT * FROM books WHERE book_id = #{book_id}")
     Book findByBookId(@Param("book_id") String book_id);
+    
+    @Update("UPDATE books SET reserved = #{reserved} WHERE book_id = #{book_id}")
+    int updateBookReservedStatus(@Param("book_id") String book_id, @Param("reserved") boolean reserved);
+
 }
