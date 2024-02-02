@@ -6,6 +6,11 @@ import 'main.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'LoginPage.dart';
+import 'review.dart';
+import 'review_service.dart';
+
+var reviewService = ReviewService();
+
 
 class BookDetail extends StatefulWidget {
   final String bookTitle;
@@ -66,10 +71,25 @@ class _BookDetailState extends State<BookDetail> {
     });
   }
 
+  List<Review> reviews = [];
+
   @override
   void initState() {
     super.initState();
     fetchBookDescription(widget.book_isbn);
+    fetchReviews();
+  }
+
+  void fetchReviews() async {
+    try {
+      var reviewService = ReviewService();
+      var fetchedReviews = await reviewService.fetchReviews(widget.book_isbn);
+      setState(() {
+        reviews = fetchedReviews;
+      });
+    } catch (e) {
+      print('Error fetching reviews: $e');
+    }
   }
 
   Future<void> fetchBookDescription(String isbn) async {
@@ -816,26 +836,26 @@ class _BookDetailState extends State<BookDetail> {
                                       onTap: () {
                                         reserveBook(context, MyApp.userId.toString(), widget.book_id);
                                       },
-                                     child: Container(
-                                      padding: EdgeInsets.all(5),
-                                      decoration: BoxDecoration(
-                                        color: loanStatusColor,
-                                        border: Border.all(
-                                          color: Colors.white, // 테두리 색상
-                                          width: 1.0, // 테두리 두께
+                                      child: Container(
+                                        padding: EdgeInsets.all(5),
+                                        decoration: BoxDecoration(
+                                          color: loanStatusColor,
+                                          border: Border.all(
+                                            color: Colors.white, // 테두리 색상
+                                            width: 1.0, // 테두리 두께
+                                          ),
+                                          borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
                                         ),
-                                        borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
-                                      ),
-                                      child: Text(
-                                        loanStatusBox,
-                                        style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 17.5,
-                                            fontWeight: FontWeight.bold
+                                        child: Text(
+                                          loanStatusBox,
+                                          style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 17.5,
+                                              fontWeight: FontWeight.bold
+                                          ),
                                         ),
                                       ),
                                     ),
-    ),
                                 ],
                               ),
                             ],
@@ -897,7 +917,9 @@ class _BookDetailState extends State<BookDetail> {
                     ),
                   ],
                 ),
-                showBookReviewContent ? BookReviewContent(pageController: _pageController) : StateReviewContent(pageController: _pageController),
+                showBookReviewContent
+                    ? BookReviewContent(pageController: _pageController, reviews: reviews)
+                    : StateReviewContent(pageController: _pageController),
               ],
             ),
           ),
@@ -910,7 +932,8 @@ class _BookDetailState extends State<BookDetail> {
 
 class BookReviewContent extends StatefulWidget {
   final ScrollController pageController;
-  BookReviewContent({required this.pageController});
+  final List<Review> reviews;
+  BookReviewContent({required this.pageController, required this.reviews});
 
   @override
   State<BookReviewContent> createState() => _BookReviewContentState();
@@ -921,11 +944,14 @@ class _BookReviewContentState extends State<BookReviewContent> {
   Widget build(BuildContext context) {
     return Container(
       child: Column(
-        children: [
-          ReviewBox(user_name: "서**", review_date: "2024-01-05", review_score: 5, review_content: "너무재밋어요~"),
-          ReviewBox(user_name: "서**", review_date: "2024-01-05", review_score: 5, review_content: "너무재밋어요~"),
-          ReviewBox(user_name: "서**", review_date: "2024-01-05", review_score: 5, review_content: "너무재밋어요~"),
-        ],
+        children: widget.reviews.map((review) {
+          return ReviewBox(
+            user_name: review.userName ?? "익명", // null 처리
+            review_date: review.reviewDate ?? "", // null 처리
+            review_score: review.reviewScore ?? 0, // null 처리
+            review_content: review.reviewContent ?? "", // null 처리
+          );
+        }).toList(),
       ),
     );
   }
@@ -1050,4 +1076,3 @@ class StateReviewBox extends StatelessWidget {
     );
   }
 }
-
