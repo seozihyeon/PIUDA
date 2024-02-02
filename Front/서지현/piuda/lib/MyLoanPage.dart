@@ -666,7 +666,8 @@ class LoanBookContainer extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => BookReview()),
+                                  builder: (context) => BookReview(bookTitle: bookTitle, bookIsbn: book_isbn, bookAuthor: author, imageUrl: imageUrl, loanId: loan_id,),
+                              ),
                             );
                           },
                           child: Container(

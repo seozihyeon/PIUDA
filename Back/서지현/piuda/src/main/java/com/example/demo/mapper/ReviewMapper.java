@@ -26,16 +26,17 @@ public interface ReviewMapper {
 
 	
 
+	@Insert("INSERT INTO review (loan_id, review_content, review_score, review_date) " +
+	        "VALUES (#{loan.loan_id}, #{review_content}, #{review_score}, #{review_date})")
+	@Options(useGeneratedKeys = true, keyProperty = "review_id")
+	void insertReview(Review review);
 
-    @Insert("INSERT INTO review (loan_id, review_text) " +
-            "VALUES (#{loan.id}, #{reviewText})")
-    @Options(useGeneratedKeys = true, keyProperty = "review_id")
-    void insertReview(Review review);
+
 
     @Delete("DELETE FROM review WHERE review_id = #{review_id}")
     int deleteReview(@Param("review_id") Long review_id);
     
-    @Update("UPDATE review SET review_text = #{reviewText} WHERE review_id = #{review_id}")
+    @Update("UPDATE review SET review_content = #{review_content} WHERE review_id = #{review_id}")
     int updateReview(Review review);
     
     
