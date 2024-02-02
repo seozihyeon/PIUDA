@@ -587,8 +587,8 @@ class BookContainer extends StatelessWidget {
     double Width = MediaQuery.of(context).size.width;
 
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        final result = await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => BookDetail(
@@ -612,6 +612,9 @@ class BookContainer extends StatelessWidget {
             ),
           ),
         );
+        if (result == true) {
+          onReservationCompleted?.call();
+        }
       },
       child:  Container(
           width: Width *0.95,
@@ -660,15 +663,49 @@ class BookContainer extends StatelessWidget {
                               text: TextSpan(
                                   children: [
                                     TextSpan(
-                                      text: '저자 ', style: TextStyle(fontSize: 18.0, color: Colors.grey.shade600,),),
+                                      text: '저자 ',
+                                      style: TextStyle(
+                                        fontSize: 18.0,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
                                     TextSpan(
-                                      text: author, style: TextStyle(fontSize: 18.0,color: Colors.grey.shade900,),),
+                                      text: author,
+                                      style: TextStyle(
+                                        fontSize: 18.0,
+                                        color: Colors.grey.shade900, // 두 번째 텍스트의 글자색
+                                      ),
+                                    ),
                                     TextSpan(text: '\n'),
-                                    TextSpan(text: '발행처 ', style: TextStyle(fontSize: 18.0, color: Colors.grey.shade600, ),),
-                                    TextSpan(text: publisher, style: TextStyle(fontSize: 18.0, color: Colors.black,),),
+                                    TextSpan(
+                                      text: '발행처 ',
+                                      style: TextStyle(
+                                        fontSize: 18.0,
+                                        color: Colors.grey.shade600, // 세 번째 텍스트의 글자색
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: publisher,
+                                      style: TextStyle(
+                                        fontSize: 18.0,
+                                        color: Colors.black, // 네 번째 텍스트의 글자색
+                                      ),
+                                    ),
                                     TextSpan(text: '\n'),
-                                    TextSpan(text: '자료위치 ', style: TextStyle(fontSize: 18.0, color: Colors.grey.shade600,),),
-                                    TextSpan(text: location, style: TextStyle(fontSize: 18.0, color: Colors.grey.shade900,),),
+                                    TextSpan(
+                                      text: '자료위치 ',
+                                      style: TextStyle(
+                                        fontSize: 18.0,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: location,
+                                      style: TextStyle(
+                                        fontSize: 18.0,
+                                        color: Colors.grey.shade900, // 두 번째 텍스트의 글자색
+                                      ),
+                                    ),
                                   ]
                               ),
                             ),
@@ -688,10 +725,10 @@ class BookContainer extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: Colors.white70,
                               border: Border.all(
-                                color: Colors.grey.shade700,
-                                width: 1.0,
+                                color: Colors.grey.shade700, // 테두리 색상
+                                width: 1.0, // 테두리 두께
                               ),
-                              borderRadius: BorderRadius.circular(2.0),
+                              borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
                             ),
                             child: Text(
                               '관심도서담기',

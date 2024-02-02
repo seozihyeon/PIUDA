@@ -95,31 +95,29 @@ public class LoanController {
     
     //연장
     @PutMapping("/extend/{loan_id}")
-    public String extendLoan(@PathVariable("loan_id") Long loan_id) {
+    public ResponseEntity<String> extendLoan(@PathVariable("loan_id") Long loan_id) {
         Loan loan = loanMapper.getLoanById(loan_id);
 
         if (loan == null) {
-            return "대출을 찾을 수 없습니다!";
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("대출을 찾을 수 없습니다!");
         }
 
         if (loan.getReturn_status()) {
-            return "이미 반납된 대출입니다!";
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이미 반납된 대출입니다!");
         }
 
         if (loan.getExtend_status()) {
-            return "대출은 한 번만 연장할 수 있습니다!";
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("대출은 한 번만 연장할 수 있습니다!");
         }
 
-        //대출 당일 연장 불가
         LocalDate currentLocalDate = loan.getLoan_date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         if (currentLocalDate.isEqual(LocalDate.now())) {
-            return "대출 당일은 연장할 수 없습니다!";
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("대출 당일은 연장할 수 없습니다!");
         }
 
-        // 반납예정일 당일까지만 연장되도록
         LocalDate returnDate = loan.getExpect_date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         if (LocalDate.now().isAfter(returnDate)) {
-            return "반납예정일 이후에는 연장할 수 없습니다!";
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("반납예정일 이후에는 연장할 수 없습니다!");
         }
 
         Date currentReturnDate = loan.getExpect_date();
@@ -129,6 +127,6 @@ public class LoanController {
 
         loanMapper.extendLoan(loan);
 
-        return "대출이 성공적으로 연장되었습니다!";
+        return ResponseEntity.ok("대출이 성공적으로 연장되었습니다!");
     }
 }

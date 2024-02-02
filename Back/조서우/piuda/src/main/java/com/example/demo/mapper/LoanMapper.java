@@ -41,4 +41,14 @@ public interface LoanMapper {
     //연장
     @Update("UPDATE loan SET expect_date = #{expect_date, jdbcType=DATE}, extend_status = #{extend_status} WHERE loan_id = #{loan_id, jdbcType=BIGINT}")
     void extendLoan(Loan loan);
+    
+    @Select("SELECT b.book_isbn FROM loan l JOIN books b ON l.book_id = b.book_id WHERE l.loan_id = #{loan_id}")
+    String getIsbnByLoanId(@Param("loan_id") Long loan_id);
+    
+    @Select("SELECT b.book_isbn " +
+            "FROM loan l " +
+            "JOIN books b ON l.book_id = b.book_id " +
+            "WHERE l.loan_id = #{loan_id}")
+    String getBookIsbnByLoanId(@Param("loan_id") Long loan_id);
+
 }

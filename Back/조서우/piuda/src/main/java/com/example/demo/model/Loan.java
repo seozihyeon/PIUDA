@@ -15,7 +15,7 @@ import jakarta.persistence.TemporalType;
 
 @Entity	
 public class Loan {
-
+	
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "loan_id")

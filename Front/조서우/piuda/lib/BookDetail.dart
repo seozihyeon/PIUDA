@@ -6,6 +6,11 @@ import 'main.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'LoginPage.dart';
+import 'review.dart';
+import 'review_service.dart';
+
+var reviewService = ReviewService();
+
 
 class BookDetail extends StatefulWidget {
   final String bookTitle;
@@ -66,10 +71,39 @@ class _BookDetailState extends State<BookDetail> {
     });
   }
 
+  List<Review> reviews = [];
+  List<ReviewConditionBox> reviewconditions = [];
+
   @override
   void initState() {
     super.initState();
     fetchBookDescription(widget.book_isbn);
+    fetchReviews();
+    fetchReviewconditions();
+  }
+
+  void fetchReviews() async {
+    try {
+      var reviewService = ReviewService();
+      var fetchedReviews = await reviewService.fetchReviews(widget.book_isbn);
+      setState(() {
+        reviews = fetchedReviews;
+      });
+    } catch (e) {
+      print('Error fetching reviews: $e');
+    }
+  }
+
+  void fetchReviewconditions() async {
+    try {
+      var conditionService = ConditionService();
+      var fetchedReviewconditions = await conditionService.fetchConditions(widget.book_id);
+      setState(() {
+        reviewconditions = fetchedReviewconditions;
+      });
+    } catch (e) {
+      print('Error fetching review conditions: $e');
+    }
   }
 
   Future<void> fetchBookDescription(String isbn) async {
@@ -897,7 +931,9 @@ class _BookDetailState extends State<BookDetail> {
                     ),
                   ],
                 ),
-                showBookReviewContent ? BookReviewContent(pageController: _pageController) : StateReviewContent(pageController: _pageController),
+                showBookReviewContent
+                    ? BookReviewContent(pageController: _pageController, reviews: reviews)
+                    : StateReviewContent(pageController: _pageController, reviewconditions: reviewconditions,),
               ],
             ),
           ),
@@ -910,7 +946,8 @@ class _BookDetailState extends State<BookDetail> {
 
 class BookReviewContent extends StatefulWidget {
   final ScrollController pageController;
-  BookReviewContent({required this.pageController});
+  final List<Review> reviews;
+  BookReviewContent({required this.pageController, required this.reviews});
 
   @override
   State<BookReviewContent> createState() => _BookReviewContentState();
@@ -921,11 +958,14 @@ class _BookReviewContentState extends State<BookReviewContent> {
   Widget build(BuildContext context) {
     return Container(
       child: Column(
-        children: [
-          ReviewBox(user_name: "서**", review_date: "2024-01-05", review_score: 5, review_content: "너무재밋어요~"),
-          ReviewBox(user_name: "서**", review_date: "2024-01-05", review_score: 5, review_content: "너무재밋어요~"),
-          ReviewBox(user_name: "서**", review_date: "2024-01-05", review_score: 5, review_content: "너무재밋어요~"),
-        ],
+        children: widget.reviews.map((review) {
+          return ReviewBox(
+            user_name: review.userName ?? "익명", // null 처리
+            review_date: review.reviewDate ?? "", // null 처리
+            review_score: review.reviewScore ?? 0, // null 처리
+            review_content: review.reviewContent ?? "", // null 처리
+          );
+        }).toList(),
       ),
     );
   }
@@ -935,7 +975,8 @@ class _BookReviewContentState extends State<BookReviewContent> {
 
 class StateReviewContent extends StatefulWidget {
   final ScrollController pageController;
-  StateReviewContent({required this.pageController});
+  final List<ReviewConditionBox> reviewconditions;
+  StateReviewContent({required this.pageController, required this.reviewconditions});
 
   @override
   State<StateReviewContent> createState() => _StateReviewContentState();
@@ -946,11 +987,15 @@ class _StateReviewContentState extends State<StateReviewContent> {
   Widget build(BuildContext context) {
     return Container(
       child: Column(
-        children: [
-          StateReviewBox(user_name: "조**", state_date: "2024-01-02", lost_score: 4, taint_score: 3, condi_op: "깨끗해요! 관리 굿굿"),
-          StateReviewBox(user_name: "조**", state_date: "2024-01-02", lost_score: 4, taint_score: 3, condi_op: "깨끗해요! 관리 굿굿"),
-          StateReviewBox(user_name: "조**", state_date: "2024-01-02", lost_score: 4, taint_score: 3, condi_op: "깨끗해요! 관리 굿굿"),
-        ],
+        children: widget.reviewconditions.map((reviewcon) {
+          return StateReviewBox(
+            user_name: reviewcon.userName ?? "익명", // null 처리
+            state_date: reviewcon.conditionDate ?? "", // null 처리
+            lost_score: reviewcon.lossScore ?? 0,
+            taint_score: reviewcon.taintScore ?? 0,// null 처리
+            condi_op: reviewcon.conditionOp ?? "", // null 처리
+          );
+        }).toList(),
       ),
     );
   }

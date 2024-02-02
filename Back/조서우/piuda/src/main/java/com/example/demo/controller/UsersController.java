@@ -70,7 +70,7 @@ public class UsersController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         System.out.println("Received login request: " + loginRequest);
-        Users user = mapper.getByUserIdAndUserName(loginRequest.getId(), loginRequest.getName());
+        Users user = mapper.findByUserIdAndUserName(loginRequest.getId(), loginRequest.getName());
 
         if (user != null) {
             // 사용자가 데이터베이스에 존재하므로 인증 성공
