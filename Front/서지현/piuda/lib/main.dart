@@ -785,7 +785,7 @@ class _HomePageState extends State<HomePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text("모바일 회원증", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),),
-                              Text("로그인 후 이용 가능한 서비스 입니다", style: TextStyle(color: Colors.white, fontSize: 15),)
+                              Text("로그인 후 이용 가능한 서비스입니다", style: TextStyle(color: Colors.white, fontSize: 15),)
                             ],
                           )
                               :RichText(

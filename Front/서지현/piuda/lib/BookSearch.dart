@@ -587,8 +587,8 @@ else{
     double Width = MediaQuery.of(context).size.width;
 
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        final result = await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => BookDetail(
@@ -612,6 +612,9 @@ else{
             ),
           ),
         );
+        if (result == true) {
+          onReservationCompleted?.call();
+        }
       },
       child:  Container(
           width: Width *0.95,

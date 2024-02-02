@@ -8,9 +8,11 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+import org.springframework.stereotype.Repository;
 
 import com.example.demo.model.Users;
 
+@Repository
 @Mapper
 public interface UsersMapper {
 	@Select("SELECT * FROM users WHERE user_id=#{user_id}")
@@ -36,4 +38,8 @@ public interface UsersMapper {
 	
 	@Select("SELECT barcode_img FROM users WHERE user_id = #{user_id}")
     String getUserBarcode(@Param("user_id") Long user_id);
+	
+	@Select("SELECT user_name FROM users WHERE user_id = #{user_id}")
+	String getUserNameById(@Param("user_id") Long user_id);
+
 }
