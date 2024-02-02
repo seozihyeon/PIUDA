@@ -34,6 +34,12 @@ public class Review {
 	@JoinColumn(name = "loan_id")
 	private Loan loan;
 
+	 public Long getLoan_id() {
+	        if (loan != null) {
+	            return loan.getLoan_id();
+	        }
+	        return null; // 대출 정보가 없을 경우 null 반환
+	    }
 	
     public Long getUserId() {
         if (loan != null && loan.getUser() != null) {
@@ -57,7 +63,7 @@ public class Review {
 		return review_date;
 	}
 	
-	public void SetReview_date(LocalDate review_date) {
+	public void setReview_date(LocalDate review_date) {
 		this.review_date = review_date;
 	}
 	

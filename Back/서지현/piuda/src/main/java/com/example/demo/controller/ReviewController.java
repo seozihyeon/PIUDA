@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,25 +50,24 @@ public class ReviewController {
         }
     }
 
-
-
     @PostMapping("/add")
-    public ResponseEntity<?> insertReview(@RequestParam("loan_id") Long loan_id, @RequestParam("review_text") String review_text) {
+    public ResponseEntity<?> insertReview(
+        @RequestParam("loan_id") Long loan_id,
+        @RequestParam("review_content") String review_content,
+        @RequestParam("review_score") int review_score // 별점 추가
+    ) {
+        // 대출 정보 가져오기
         Loan loan = loanMapper.getLoanById(loan_id);
+        
+        System.out.println("insertReview method called with loan_id: " + loan_id + ", review_content: " + review_content + ", review_score: " + review_score);
 
         if (loan != null) {
-            // 리뷰를 작성하고 리뷰 객체를 생성
+            // 리뷰 객체 생성
             Review review = new Review();
             review.setLoan(loan);
-            review.setReview_content(review_text);
-
-            // 사용자 이름 설정
-            Users user = loan.getUser();
-            if (user != null) {
-                review.setUser_name(user.getName());
-            } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to add review: User not found");
-            }
+            review.setReview_content(review_content);
+            review.setReview_score(review_score); // 별점 설정
+            review.setReview_date(LocalDate.now()); // 리뷰 등록 날짜 설정
 
             // 리뷰를 데이터베이스에 저장
             reviewMapper.insertReview(review);
@@ -77,6 +77,8 @@ public class ReviewController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to add review: Loan not found");
         }
     }
+
+    
 
     @DeleteMapping("/remove/{review_id}")
     public ResponseEntity<?> removeReview(@PathVariable("review_id") Long review_id) {
