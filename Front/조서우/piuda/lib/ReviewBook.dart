@@ -1,7 +1,59 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:http/http.dart' as http;
 
-class BookReview extends StatelessWidget {
+Future<void> sendReviewToServer(int loanId, String reviewText, int reviewScore) async {
+  final url = Uri.parse('http://10.0.2.2:8080/api/review/add'); // 서버의 API 엔드포인트 URL로 대체
+
+  try {
+    final currentDate = DateTime.now();
+    final response = await http.post(
+      url,
+      body: {
+        'loan_id': loanId.toString(), // loanId를 문자열로 변환
+        'review_content': reviewText,
+        'review_score': reviewScore.toString(),
+        'review_date': currentDate.toIso8601String()// reviewScore를 문자열로 변환
+      },
+    );
+
+    if (response.statusCode == 200) {
+      // 성공적으로 리뷰를 서버에 보냈을 때의 동작
+      print('Review added successfully');
+    } else {
+      // 리뷰 전송 실패 시의 동작
+      print('Failed to add review');
+    }
+  } catch (e) {
+    // 예외 처리: HTTP 요청 실패 시의 동작
+    print('Error sending review: $e');
+  }
+}
+
+class BookReview extends StatefulWidget {
+  final String bookTitle;
+  final String bookAuthor;
+  final String imageUrl;
+  final String bookIsbn;
+  final int loanId;
+
+  BookReview({
+    required this.bookTitle,
+    required this.bookAuthor,
+    required this.imageUrl,
+    required this.bookIsbn,
+    required this.loanId,
+  });
+
+  @override
+  _BookReviewState createState() => _BookReviewState();
+}
+
+class _BookReviewState extends State<BookReview> {
+  TextEditingController reviewController = TextEditingController(); // reviewController 정의
+
+  int rating = 3; // rating 변수를 int 형식으로 변경
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -9,16 +61,15 @@ class BookReview extends StatelessWidget {
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            // 뒤로가기 동작
             Navigator.pop(context);
           },
-          color: Colors.black, // 뒤로가기 버튼의 색상
+          color: Colors.black,
         ),
         title: Text(
           '도서 리뷰',
           textAlign: TextAlign.start,
           style: TextStyle(
-            color: Colors.black, // 글자색 설정
+            color: Colors.black,
           ),
         ),
         backgroundColor: Colors.white,
@@ -27,13 +78,13 @@ class BookReview extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              margin: EdgeInsets.only(top:20, bottom: 8),
+              margin: EdgeInsets.only(top: 20, bottom: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset(
-                    'assets/images/파피용.jpg', // 사진 경로
-                    fit: BoxFit.cover, // 사진의 크기 조절 방식
+                  Image.network(
+                    widget.imageUrl, // widget을 사용하여 부모 클래스의 속성에 접근
+                    fit: BoxFit.cover,
                     height: 200.0,
                   ),
                 ],
@@ -54,14 +105,14 @@ class BookReview extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 18.0,
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey.shade500, // 첫 번째 텍스트의 글자색
+                            color: Colors.grey.shade500,
                           ),
                         ),
                         TextSpan(
-                          text: '파피용\n',
+                          text: widget.bookTitle + '\n', // widget을 사용하여 부모 클래스의 속성에 접근
                           style: TextStyle(
                             fontSize: 18.0,
-                            color: Colors.black, // 두 번째 텍스트의 글자색
+                            color: Colors.black,
                           ),
                         ),
                         TextSpan(
@@ -69,14 +120,14 @@ class BookReview extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 18.0,
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey.shade500, // 세 번째 텍스트의 글자색
+                            color: Colors.grey.shade500,
                           ),
                         ),
                         TextSpan(
-                          text: '베르나르 베르베르',
+                          text: widget.bookAuthor + '\n', // widget을 사용하여 부모 클래스의 속성에 접근
                           style: TextStyle(
                             fontSize: 18.0,
-                            color: Colors.black, // 네 번째 텍스트의 글자색
+                            color: Colors.black,
                           ),
                         ),
                       ],
@@ -87,20 +138,21 @@ class BookReview extends StatelessWidget {
             ),
             Container(
               child: RatingBar.builder(
-                initialRating: 3,
+                initialRating: rating.toDouble(), // rating을 double로 변환
                 minRating: 1,
                 direction: Axis.horizontal,
-                allowHalfRating: true,
                 itemCount: 5,
                 itemBuilder: (context, _) {
                   return Icon(
                     Icons.star,
                     color: Colors.amber.shade400,
-                    size: 15, // 별 크기 조절
+                    size: 15,
                   );
                 },
-                onRatingUpdate: (rating) {
-                  // 별점이 업데이트될 때의 로직을 추가할 수 있습니다.
+                onRatingUpdate: (newRating) {
+                  setState(() {
+                    rating = newRating.toInt(); // newRating을 int로 변환
+                  });
                 },
               ),
             ),
@@ -118,10 +170,11 @@ class BookReview extends StatelessWidget {
                   ),
                   SizedBox(height: 4.0),
                   TextField(
-                    maxLines: 7, // 여러 줄 입력 가능하도록 설정
+                    controller: reviewController,
+                    maxLines: 7,
                     decoration: InputDecoration(
-                      hintText: '의견을 입력하세요...',
-                      border: OutlineInputBorder(), // 외곽선 추가
+                      hintText: '리뷰를 작성하세요...',
+                      border: OutlineInputBorder(),
                     ),
                   ),
                 ],
@@ -129,14 +182,18 @@ class BookReview extends StatelessWidget {
             ),
             SizedBox(height: 8),
             ElevatedButton(
-              onPressed: () {
-                // '등록' 버튼을 눌렀을 때의 동작 정의
+              onPressed: () async {
+                String reviewText = reviewController.text;
+                int loanId = widget.loanId; // widget을 사용하여 부모 클래스의 속성에 접근
+
+                await sendReviewToServer(loanId, reviewText, rating);
+
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                primary: Colors.cyan.shade800, // 버튼의 배경색을 파란색으로 설정
+                primary: Colors.cyan.shade800,
               ),
-              child: Text('등록'),
+              child: Text('등록', style: TextStyle(color: Colors.white)),
             ),
           ],
         ),

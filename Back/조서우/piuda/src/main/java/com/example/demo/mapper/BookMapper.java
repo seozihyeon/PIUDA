@@ -26,4 +26,16 @@ public interface BookMapper {
     @Update("UPDATE books SET reserved = #{reserved} WHERE book_id = #{book_id}")
     int updateBookReservedStatus(@Param("book_id") String book_id, @Param("reserved") boolean reserved);
 
+    //
+    @Select("SELECT * FROM books WHERE book_title LIKE CONCAT('%', #{book_title}, '%') ORDER BY book_id LIMIT #{pageSize} OFFSET #{offset}")
+    List<Book> findByBookTitlePaged(@Param("book_title") String book_title, @Param("pageSize") int pageSize, @Param("offset") int offset);
+    
+    @Select("SELECT * FROM books WHERE author LIKE CONCAT('%', #{author}, '%') ORDER BY book_id LIMIT #{pageSize} OFFSET #{offset}")
+    List<Book> findByAuthorPaged(@Param("author") String author, @Param("pageSize") int pageSize, @Param("offset") int offset);
+    
+    @Select("SELECT * FROM books WHERE publisher LIKE CONCAT('%', #{publisher}, '%') ORDER BY book_id LIMIT #{pageSize} OFFSET #{offset}")
+    List<Book> findByPublisherPaged(@Param("publisher") String publisher, @Param("pageSize") int pageSize, @Param("offset") int offset);
+    
+    @Select("SELECT COUNT(*) FROM books WHERE book_title LIKE CONCAT('%', #{book_title}, '%') OR author LIKE CONCAT('%', #{author}, '%') OR publisher LIKE CONCAT('%', #{publisher}, '%')")
+    long countBooksPaged(@Param("book_title") String bookTitle, @Param("author") String author, @Param("publisher") String publisher);
 }

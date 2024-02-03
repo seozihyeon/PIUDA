@@ -97,12 +97,41 @@ class _BookStateReviewState extends State<BookStateReview> {
 
       if (response.statusCode == 200) {
         print('리뷰 조건이 성공적으로 생성되었습니다!');
+        Future.delayed(Duration.zero, () {
+          _showSuccessDialog();
+        });
       } else {
         print('리뷰 조건 생성에 실패했습니다. 상태 코드: ${response.statusCode}');
       }
     } catch (e) {
       print('HTTP 요청 중 오류 발생: $e');
     }
+  }
+
+  Future<void> _showSuccessDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('해당도서에 상태평가가 등록되었습니다'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
