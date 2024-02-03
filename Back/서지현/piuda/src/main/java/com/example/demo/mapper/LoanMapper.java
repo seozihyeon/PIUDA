@@ -32,7 +32,17 @@ public interface LoanMapper {
 
     
     @Select("SELECT * FROM loan WHERE loan_id = #{loan_id}")
+    @Results({
+        @Result(property = "loan_id", column = "loan_id"),
+        @Result(property = "user", column = "user_id", 
+                javaType = Users.class, 
+                one = @One(select = "com.example.demo.mapper.UsersMapper.getUserById")),
+        @Result(property = "book", column = "book_id", 
+                javaType = Book.class, 
+                one = @One(select = "com.example.demo.mapper.BookMapper.findByBookId"))
+    })
     Loan getLoanById(@Param("loan_id") Long loan_id);
+
     
     //반납
     @Update("UPDATE loan SET return_date = #{return_date}, return_status = #{return_status} WHERE loan_id = #{loan_id}")
@@ -50,5 +60,7 @@ public interface LoanMapper {
             "JOIN books b ON l.book_id = b.book_id " +
             "WHERE l.loan_id = #{loan_id}")
     String getBookIsbnByLoanId(@Param("loan_id") Long loan_id);
+    
+    
 
 }

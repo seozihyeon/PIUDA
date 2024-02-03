@@ -23,7 +23,7 @@ import com.example.demo.model.Users;
 @RestController
 @RequestMapping("/api/userinterest")
 public class UserInterestBookController {
-   
+	
     private UsersMapper usersMapper;
     private BookMapper bookMapper;
     private UserInterestBookMapper userInterestBookMapper;
@@ -41,7 +41,7 @@ public class UserInterestBookController {
         Book book = bookMapper.findByBookId(book_id);
 
         if (user != null && book != null) {
-           int duplicateCount = userInterestBookMapper.checkDuplicateInterest(user_id, book_id);
+        	int duplicateCount = userInterestBookMapper.checkDuplicateInterest(user_id, book_id);
             if (duplicateCount > 0) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Book is already in user's interest list");
             }

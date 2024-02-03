@@ -23,6 +23,7 @@ public class UsersController {
     public UsersController(UsersMapper mapper) {
         this.mapper = mapper;
     }
+    
 
     @GetMapping("/user/{user_id}")
     public Users getUserProfile(@PathVariable("user_id") Long user_id) {
@@ -107,6 +108,5 @@ public class UsersController {
         }
     }
     
-    
-   
+  
 }

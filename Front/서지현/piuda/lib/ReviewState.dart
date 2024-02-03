@@ -76,30 +76,34 @@ class _BookStateReviewState extends State<BookStateReview> {
       ) async {
     final String apiUrl = 'http://10.0.2.2:8080/reviewCondition/write';
 
-    final BookCondition bookCondition = BookCondition(
-      loanId: widget.loan_id,
-      lossScore: yourLossScore,
-      taintScore: yourTaintScore,
-      conditionOp: yourConditionOp,
-    );
+    final Map<String, dynamic> requestData = {
+      'loan_id': widget.loan_id,
+      'loss_score': yourLossScore,
+      'taint_score': yourTaintScore,
+      'condition_op': yourConditionOp,
+    };
 
     try {
+      print('서버로 데이터 전송 중: $requestData');
       final http.Response response = await http.post(
         Uri.parse(apiUrl),
-        body: jsonEncode(bookCondition.toJson()),
-        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(requestData),
+        headers: {
+          'Content-Type': 'application/json',
+        },
       );
 
+      print('loanId: ${widget.loan_id}');
+
       if (response.statusCode == 200) {
-        print('ReviewCondition created successfully!');
+        print('리뷰 조건이 성공적으로 생성되었습니다!');
       } else {
-        print('Failed to create ReviewCondition. Status code: ${response.statusCode}');
+        print('리뷰 조건 생성에 실패했습니다. 상태 코드: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error during HTTP request: $e');
+      print('HTTP 요청 중 오류 발생: $e');
     }
   }
-
 
   @override
 
@@ -159,7 +163,6 @@ class _BookStateReviewState extends State<BookStateReview> {
                       initialRating: taintScore,
                       minRating: 1,
                       direction: Axis.horizontal,
-                      allowHalfRating: true,
                       itemCount: 5,
                       itemBuilder: (context, _) {
                         return Icon(
@@ -198,7 +201,6 @@ class _BookStateReviewState extends State<BookStateReview> {
                       initialRating: lossScore,
                       minRating: 1,
                       direction: Axis.horizontal,
-                      allowHalfRating: true,
                       itemCount: 5,
                       itemBuilder: (context, _) {
                         return Icon(
@@ -208,7 +210,6 @@ class _BookStateReviewState extends State<BookStateReview> {
                         );
                       },
                       onRatingUpdate: (rating) {
-                        // 사용자가 선택한 별점을 lossScore 변수에 저장
                         setState(() {
                           lossScore = rating;
                         });
@@ -232,6 +233,7 @@ class _BookStateReviewState extends State<BookStateReview> {
                   ),
                   SizedBox(height: 6.0),
                   TextField(
+                    controller: conditionOpController,
                     maxLines: 3, // 여러 줄 입력 가능하도록 설정
                     decoration: InputDecoration(
                       hintText: '의견을 입력하세요...',
@@ -272,13 +274,13 @@ class BookCondition {
   final int loanId;
   final int lossScore;
   final int taintScore;
-  final String conditionOp;
+  final String? conditionOp;
 
   BookCondition({
     required this.loanId,
     required this.lossScore,
     required this.taintScore,
-    required this.conditionOp,
+    this.conditionOp,
   });
 
   Map<String, dynamic> toJson() {
