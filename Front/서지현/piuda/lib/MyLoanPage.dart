@@ -497,6 +497,32 @@ class LoanBookContainer extends StatelessWidget {
     }
   }
 
+  Future<bool> checkReviewStatus(int loanId) async {
+    try {
+      // 서버로부터 리뷰 상태를 확인하는 API 호출
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:8080/reviewCondition/check/$loanId'),
+      );
+
+      if (response.statusCode == 200) {
+        // 리뷰 조건이 없는 경우 (리뷰를 작성한 적이 없음)
+        return false;
+      } else if (response.statusCode == 400) {
+        // 리뷰 조건이 이미 존재하는 경우 (리뷰를 이미 작성함)
+        return true;
+      } else {
+        // 다른 예외 상황에 대한 처리
+        print('Failed to check review condition. Status code: ${response.statusCode}');
+        return false; // 혹은 예외 처리에 맞게 반환값 설정
+      }
+    } catch (e) {
+      // 에러 발생 시 처리
+      print('Error checking review condition: $e');
+      return false; // 혹은 예외 처리에 맞게 반환값 설정
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     String returnStatusText = returnstatus ? '반납완료' : '대출중';
@@ -666,7 +692,7 @@ class LoanBookContainer extends StatelessWidget {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => BookReview(bookTitle: bookTitle, bookIsbn: book_isbn, bookAuthor: author, imageUrl: imageUrl, loanId: loan_id,),
+                                builder: (context) => BookReview(bookTitle: bookTitle, bookIsbn: book_isbn, bookAuthor: author, imageUrl: imageUrl, loanId: loan_id,),
                               ),
                             );
                           },
@@ -693,22 +719,48 @@ class LoanBookContainer extends StatelessWidget {
                       ),
                       SizedBox(width: 6,),
                       Expanded(
-                        child: Container(
-                          padding: EdgeInsets.only(top: 2, bottom: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.white70,
-                            border: Border.all(
-                              color: Colors.grey.shade800, // 테두리 색상
-                              width: 1.0, // 테두리 두께
+                        child: GestureDetector(
+                          onTap: () async {
+                            bool hasReviewed = await checkReviewStatus(loan_id);
+
+                            if (hasReviewed) {
+                              showDialog(context: context, builder: (BuildContext context) {
+                                return AlertDialog(
+                                  content: Text('이미 작성한 상태평가 입니다'),
+                                  actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인'),),],);},);
+                            } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => BookStateReview(
+                                    loan_id: loan_id,
+                                    imageUrl: imageUrl,
+                                    bookTitle: bookTitle,
+                                    author: author,
+                                    library: library,
+                                    book_isbn: book_isbn,
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                          child: Container(
+                            padding: EdgeInsets.only(top: 2, bottom: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.white70,
+                              border: Border.all(
+                                color: Colors.grey.shade800, // 테두리 색상
+                                width: 1.0, // 테두리 두께
+                              ),
+                              borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
                             ),
-                            borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
-                          ),
-                          child: Text(
-                            '상태 평가',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.grey.shade900,
-                              fontSize: 17.5,
+                            child: Text(
+                              '상태 평가',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.grey.shade900,
+                                fontSize: 17.5,
+                              ),
                             ),
                           ),
                         ),

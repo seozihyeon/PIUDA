@@ -1,10 +1,10 @@
 package com.example.demo.model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 
@@ -12,7 +12,7 @@ import jakarta.persistence.ManyToOne;
 public class UserInterestBook {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long interest_id;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
@@ -22,12 +22,12 @@ public class UserInterestBook {
     @JoinColumn(name = "book_id")
     private Book book;
 
-    public Long getId() {
-        return id;
+    public Long getInterest_id() {
+        return interest_id;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setInterest_id(Long interest_id) {
+        this.interest_id = interest_id;
     }
 
     public Users getUser() {

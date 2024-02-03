@@ -3,32 +3,30 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:http/http.dart' as http;
 
 Future<void> sendReviewToServer(int loanId, String reviewText, int reviewScore) async {
-  final url = Uri.parse('http://10.0.2.2:8080/api/review/add'); // 서버의 API 엔드포인트 URL로 대체
+  final url = Uri.parse('http://10.0.2.2:8080/api/review/add');
 
   try {
-    final currentDate = DateTime.now();
     final response = await http.post(
       url,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
       body: {
-        'loan_id': loanId.toString(), // loanId를 문자열로 변환
+        'loan_id': loanId.toString(),
         'review_content': reviewText,
         'review_score': reviewScore.toString(),
-        'review_date': currentDate.toIso8601String()// reviewScore를 문자열로 변환
       },
     );
 
-    if (response.statusCode == 200) {
-      // 성공적으로 리뷰를 서버에 보냈을 때의 동작
-      print('Review added successfully');
-    } else {
-      // 리뷰 전송 실패 시의 동작
-      print('Failed to add review');
+    if (response.statusCode != 200) {
+      // 서버로부터 오류 응답이 온 경우 예외 발생
+      throw Exception('Failed to add review');
     }
   } catch (e) {
-    // 예외 처리: HTTP 요청 실패 시의 동작
-    print('Error sending review: $e');
+    throw Exception('Error sending review: $e');
   }
 }
+
 
 class BookReview extends StatefulWidget {
   final String bookTitle;
@@ -184,11 +182,15 @@ class _BookReviewState extends State<BookReview> {
             ElevatedButton(
               onPressed: () async {
                 String reviewText = reviewController.text;
-                int loanId = widget.loanId; // widget을 사용하여 부모 클래스의 속성에 접근
+                int loanId = widget.loanId;
 
-                await sendReviewToServer(loanId, reviewText, rating);
-
-                Navigator.pop(context);
+                try {
+                  await sendReviewToServer(loanId, reviewText, rating);
+                  _showSnackBar(context, "리뷰가 성공적으로 추가되었습니다.");
+                  Navigator.pop(context);
+                } catch (e) {
+                  _showAlertDialog(context, "이미 리뷰를 작성한 책입니다.");
+                }
               },
               style: ElevatedButton.styleFrom(
                 primary: Colors.cyan.shade800,
@@ -199,5 +201,29 @@ class _BookReviewState extends State<BookReview> {
         ),
       ),
     );
+  }
+
+  void _showAlertDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('알림'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: Text('확인'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 }

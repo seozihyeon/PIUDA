@@ -8,12 +8,19 @@ import org.springframework.stereotype.Service;
 import com.example.demo.mapper.BookMapper;
 import com.example.demo.model.Book;
 
+
 @Service
 public class BookService{
 	
 	@Autowired
     private BookMapper bookMapper;
 	
+	public Book getBookById(String book_id) {
+        // 적절한 메서드로 수정해주세요.
+        return bookMapper.findByBookId(book_id);
+    }
+
+
 	 public List<Book> findByBookTitle(String book_title) {
 	        String preparedTitle = prepareSearchTerm(book_title);
 	        return bookMapper.findByBookTitle(preparedTitle);
@@ -43,6 +50,4 @@ public class BookService{
 	        }
 	        return searchTerm.toString();
 	    }
-
-	
 }

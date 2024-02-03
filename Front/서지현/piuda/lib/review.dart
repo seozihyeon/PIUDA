@@ -20,3 +20,38 @@ class Review {
     );
   }
 }
+
+
+class ReviewConditionBox {
+  final String? userName; // 널이 될 수 있음을 표시
+  final int? lossScore;
+  final int? taintScore;// 널이 될 수 있음을 표시
+  final String? conditionOp; // 널이 될 수 있음을 표시
+  final String? conditionDate; // 널이 될 수 있음을 표시
+
+  ReviewConditionBox({
+    this.userName,
+    this.lossScore,
+    this.taintScore,
+    this.conditionOp,
+    this.conditionDate,
+  });
+
+  factory ReviewConditionBox.fromJson(Map<String, dynamic> json) {
+    return ReviewConditionBox(
+      userName: json['user_name'] as String?,
+      lossScore: json['loss_score'] as int?,
+      taintScore: json['taint_score'] as int?,
+      conditionOp: json['condition_op'] as String?,
+      conditionDate: extractDateOnly(json['condition_date']),
+    );
+  }
+
+  static String extractDateOnly(String? dateTimeString) {
+    if (dateTimeString != null && dateTimeString.isNotEmpty) {
+      DateTime dateTime = DateTime.parse(dateTimeString);
+      return "${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}";
+    }
+    return '';
+  }
+}

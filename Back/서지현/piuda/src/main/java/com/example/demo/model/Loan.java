@@ -13,9 +13,9 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 
-@Entity   
+@Entity	
 public class Loan {
-   
+	
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "loan_id")
@@ -49,67 +49,67 @@ public class Loan {
 
     
     
-   public Users getUser() {
-      return user;
-   }
+	public Users getUser() {
+		return user;
+	}
 
-   public void setUser(Users user) {
-      this.user = user;
-   }
+	public void setUser(Users user) {
+		this.user = user;
+	}
 
-   public Book getBook() {
-      return book;
-   }
+	public Book getBook() {
+		return book;
+	}
 
-   public void setBook(Book book) {
-      this.book = book;
-   }
+	public void setBook(Book book) {
+		this.book = book;
+	}
 
-   public Long getLoan_id() {
-      return loan_id;
-   }
+	public Long getLoan_id() {
+		return loan_id;
+	}
 
-   public void setLoan_id(Long loan_id) {
-      this.loan_id = loan_id;
-   }
+	public void setLoan_id(Long loan_id) {
+		this.loan_id = loan_id;
+	}
 
-   public Date getLoan_date() {
-      return loan_date;
-   }
+	public Date getLoan_date() {
+		return loan_date;
+	}
 
-   public void setLoan_date(Date loan_date) {
-      this.loan_date = loan_date;
-   }
+	public void setLoan_date(Date loan_date) {
+		this.loan_date = loan_date;
+	}
 
-   public Date getExpect_date() {
-      return expect_date;
-   }
+	public Date getExpect_date() {
+		return expect_date;
+	}
 
-   public void setExpect_date(Date expect_date) {
-      this.expect_date = expect_date;
-   }
+	public void setExpect_date(Date expect_date) {
+		this.expect_date = expect_date;
+	}
 
-   public Date getReturn_date() {
-      return return_date;
-   }
+	public Date getReturn_date() {
+		return return_date;
+	}
 
-   public void setReturn_date(Date return_date) {
-      this.return_date = return_date;
-   }
-   
-   public boolean getExtend_status() {
-      return extend_status;
-   }
+	public void setReturn_date(Date return_date) {
+		this.return_date = return_date;
+	}
+	
+	public boolean getExtend_status() {
+		return extend_status;
+	}
 
-   public void setExtend_status(boolean extend_status) {
-      this.extend_status = extend_status;
-   }
+	public void setExtend_status(boolean extend_status) {
+		this.extend_status = extend_status;
+	}
 
-   public Boolean getReturn_status() {
-      return return_status;
-   }
+	public Boolean getReturn_status() {
+		return return_status;
+	}
 
-   public void setReturn_status(Boolean return_status) {
-      this.return_status = return_status;
-   }
+	public void setReturn_status(Boolean return_status) {
+		this.return_status = return_status;
+	}
 }
