@@ -223,8 +223,14 @@ class _LoginPageState extends State<LoginPage> {
                         controller: _UsernameController,
                         decoration: InputDecoration(
                           labelText: '성명',
+                          labelStyle: TextStyle(
+                            color: Colors.grey.shade800, // 기본 라벨 색상
+                          ),
+                          floatingLabelStyle: TextStyle(
+                            color: Colors.grey.shade800, // 포커스 상태의 라벨 색상
+                          ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.blue),
+                            borderSide: BorderSide(color: Colors.cyan.shade700),
                           ),
                         ),
                       ),
@@ -232,8 +238,14 @@ class _LoginPageState extends State<LoginPage> {
                       TextField(
                         controller: _UseridController,
                         decoration: InputDecoration(labelText: '회원번호',
+                            labelStyle: TextStyle(
+                              color: Colors.grey.shade800, // 기본 라벨 색상
+                            ),
+                            floatingLabelStyle: TextStyle(
+                              color: Colors.grey.shade800, // 포커스 상태의 라벨 색상
+                            ),
                             focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.blue),)
+                              borderSide: BorderSide(color: Colors.cyan.shade700),)
                         ),
                       ),
                       SizedBox(height: 20.0),

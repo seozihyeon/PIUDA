@@ -463,7 +463,7 @@ class LoanBookContainer extends StatelessWidget {
         showDialog(context: context, builder: (BuildContext context) {
           return AlertDialog(
             content: Text('대출도서가 성공적으로 연장되었습니다.'),
-            actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인'),),],);},);
+            actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),),],);},);
 
         onLoanExtended?.call();
       } else {
@@ -475,19 +475,19 @@ class LoanBookContainer extends StatelessWidget {
           showDialog(context: context, builder: (BuildContext context) {
             return AlertDialog(
               content: Text('대출도서는 한 번만 연장할 수 있습니다.'),
-              actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인'),),],);},);
+              actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),),],);},);
         } else if (response.body == "대출 당일은 연장할 수 없습니다!") {
           print("대출 당일은 연장할 수 없습니다!");
           showDialog(context: context, builder: (BuildContext context) {
             return AlertDialog(
               content: Text('대출 당일은 연장할 수 없습니다.'),
-              actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인'),),],);},);
+              actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),),],);},);
         } else if (response.body == "반납예정일 이후에는 연장할 수 없습니다!") {
           print("반납예정일 이후에는 연장할 수 없습니다!");
           showDialog(context: context, builder: (BuildContext context) {
             return AlertDialog(
               content: Text('반납예정일 이후에는 연장할 수 없습니다.'),
-              actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인'),),],);},);
+              actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),),],);},);
         } else {
           print('Unknown error: ${response.body}');
         }
@@ -726,8 +726,8 @@ class LoanBookContainer extends StatelessWidget {
                             if (hasReviewed) {
                               showDialog(context: context, builder: (BuildContext context) {
                                 return AlertDialog(
-                                  content: Text('이미 작성한 상태평가 입니다'),
-                                  actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인'),),],);},);
+                                  content: Text('이미 상태 평가를 완료한 도서입니다'),
+                                  actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),),],);},);
                             } else {
                               Navigator.push(
                                 context,
