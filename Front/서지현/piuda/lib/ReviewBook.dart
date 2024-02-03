@@ -168,11 +168,14 @@ class _BookReviewState extends State<BookReview> {
                   ),
                   SizedBox(height: 4.0),
                   TextField(
+
                     controller: reviewController,
                     maxLines: 7,
                     decoration: InputDecoration(
                       hintText: '리뷰를 작성하세요...',
                       border: OutlineInputBorder(),
+                        focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.cyan.shade700),)
                     ),
                   ),
                 ],
@@ -212,7 +215,7 @@ class _BookReviewState extends State<BookReview> {
           content: Text(message),
           actions: <Widget>[
             TextButton(
-              child: Text('확인'),
+              child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
               onPressed: () {
                 Navigator.of(context).pop();
               },

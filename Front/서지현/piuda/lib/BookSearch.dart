@@ -398,7 +398,7 @@ class BookContainer extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('확인'),
+                  child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
                 ),
               ],
             );
@@ -417,7 +417,7 @@ class BookContainer extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('확인'),
+                  child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
                 ),
               ],
             );
@@ -448,7 +448,7 @@ class BookContainer extends StatelessWidget {
                 onPressed: () {
                   Navigator.of(context).pop(); // 팝업 닫기
                 },
-                child: Text('확인'),
+                child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
               ),
               TextButton(
                 onPressed: () {
@@ -458,7 +458,7 @@ class BookContainer extends StatelessWidget {
                     MaterialPageRoute(builder: (context) => LoginPage()),
                   );
                 },
-                child: Text('로그인하러 가기'),
+                child: Text('로그인하러 가기', style: TextStyle(color: Colors.cyan.shade800)),
               ),
             ],
           );
@@ -489,7 +489,7 @@ else{
                     onPressed: () {
                       Navigator.of(context).pop(); // 팝업 닫기
                     },
-                    child: Text('확인'),
+                    child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
                   ),
                 ],
               );
@@ -525,7 +525,7 @@ else{
                     Navigator.of(context).pop(); // 팝업 닫기
                     onReservationCompleted?.call();
                   },
-                  child: Text('확인'),
+                  child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
                 ),
               ],
             );
@@ -543,7 +543,7 @@ else{
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('확인'),
+                  child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
                 ),
               ],
             );
@@ -562,7 +562,7 @@ else{
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
-                child: Text('확인'),
+                child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
               ),
             ],
           );
@@ -575,11 +575,15 @@ else{
 
   @override
   Widget build(BuildContext context) {
-    bool isUserLoggedIn = (MyApp.userId ?? 0) > 0;    String loanStatusText = loanstatus ? '대출가능' : '대출불가';
-    String loanStatusBox = loanstatus ? '책누리신청' : '예약하기';
-    Color loanStatusColor = loanstatus ? Colors.cyan.shade700 : Colors.red.shade400;
+    bool isUserLoggedIn = (MyApp.userId ?? 0) > 0;
+    // String loanStatusText = loanstatus ? '대출가능' : '대출불가';
+    String loanStatusText = (loanstatus && !reserved) ? '대출가능' : '대출불가';
+    // String loanStatusBox = loanstatus ? '책누리신청' : '예약하기';
+    String loanStatusBox = (loanstatus || reserved) ? '책누리신청' : '예약하기';
+    Color loanStatusColor = (loanstatus && !reserved) ? Colors.cyan.shade700 : Colors.red.shade400;
 
-    if (!loanstatus && reserved) {
+    if (reserved) {
+      //if reserved
       loanStatusText += '(예약중)';
     }
 
@@ -638,7 +642,7 @@ else{
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
-                      loanstatus ? Icon(Icons.check, color: Colors.cyan.shade700, weight: 20) : Icon(Icons.clear, color: Colors.red.shade400),
+                      (loanstatus && !reserved) ? Icon(Icons.check, color: Colors.cyan.shade700, weight: 20) : Icon(Icons.clear, color: Colors.red.shade400),
                       Text(loanStatusText, style: TextStyle(color: loanStatusColor, fontSize: 16, fontWeight: FontWeight.bold,
                       )),
                     ],),
@@ -817,6 +821,14 @@ class _LibraryOptionsState extends State<LibraryOptions> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Checkbox(
+                checkColor: Colors.white, // 체크 표시 색상은 항상 흰색
+                fillColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
+                  if (states.contains(MaterialState.selected)) {
+                    return Color(0xFF00838F); // 선택됐을 때 배경색 cyan 800
+                  }
+                  return Colors.white; // 선택되지 않았을 때 배경색 흰색
+                }),
+                side: BorderSide(color: Color(0xFF00838F), width: 1.0), // 모든 상태에서 테두리 색상 cyan 800
                 value: selectedLibraries.contains(library),
                 onChanged: (bool? value) {
                   _onCheckboxChanged(value, library);

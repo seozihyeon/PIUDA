@@ -237,7 +237,10 @@ class _BookStateReviewState extends State<BookStateReview> {
                     maxLines: 3, // 여러 줄 입력 가능하도록 설정
                     decoration: InputDecoration(
                       hintText: '의견을 입력하세요...',
-                      border: OutlineInputBorder(), // 외곽선 추가
+                      border: OutlineInputBorder(),
+                      // 외곽선 추가
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.cyan.shade700),)
                     ),
                   ),
                 ],

@@ -58,6 +58,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     Intl.defaultLocale = 'ko_KR';
     return MaterialApp(
+      theme: ThemeData(
+        textSelectionTheme: TextSelectionThemeData(
+          cursorColor: Colors.cyan.shade800,
+          selectionColor: Colors.cyan.shade100, // 드래그하여 선택한 텍스트의 배경 색상
+          selectionHandleColor: Colors.cyan.shade800, // 선택 핸들의 색상
+        ),
+        // 다른 테마 설정들...
+      ),
       locale: Locale('ko', 'KR'),
       home: FutureBuilder(
         future: checkLoginStatus(),
