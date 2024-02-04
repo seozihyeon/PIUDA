@@ -1056,6 +1056,49 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
+            Container(
+              padding: EdgeInsets.only(left: 35, bottom: 5),
+              child: Row(
+                children: [
+                  // 빨간 점
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.red[400],
+                    ),
+                  ),
+                  SizedBox(width: 4), // 간격
+                  Text('오늘'),
+                  SizedBox(width: 15), // 추가 간격
+                  // 회색 점
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  SizedBox(width: 4), // 간격
+                  Text('휴관일'),
+                  SizedBox(width: 15), // 추가 간격
+                  // 파란 점
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  SizedBox(width: 4), // 간격
+                  Text('행사일'),
+
+                ],
+              ),
+            ),
             _buildTableCalendar(),
             SizedBox(height:10),
             _buildEventList(),

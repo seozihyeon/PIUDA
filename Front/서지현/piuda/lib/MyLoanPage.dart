@@ -497,6 +497,61 @@ class LoanBookContainer extends StatelessWidget {
     }
   }
 
+  //도서리뷰 중복체크
+  void onReviewButtonPressed(BuildContext context) async {
+    try {
+      int userId = MyApp.userId ?? 0;
+      print('Checking review status for ISBN: $book_isbn and UserID: $userId');
+      bool hasReviewed = await checkIfUserReviewed(book_isbn, userId);
+      if (hasReviewed) {
+        print('User already reviewed this book');
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              content: Text('이미 이 책에 대한 리뷰를 작성하셨습니다.'),
+              actions: <Widget>[TextButton(onPressed: () {Navigator.of(context).pop();}, child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
+              ),
+              ],
+            );
+          },
+        );
+      } else {
+        print('Navigating to review page');
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BookReview(
+              bookTitle: bookTitle,
+              bookIsbn: book_isbn,
+              bookAuthor: author,
+              imageUrl: imageUrl,
+              loanId: loan_id,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error while checking review status: $e');
+    }
+  }
+
+  Future<bool> checkIfUserReviewed(String isbn, int userId) async {
+    final url = Uri.parse('http://10.0.2.2:8080/api/review/check/review/$userId/$isbn');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as bool;
+      } else {
+        throw Exception('Failed to check if user reviewed');
+      }
+    } catch (e) {
+      throw Exception('Error occurred while checking if user reviewed: $e');
+    }
+  }
+
+
+
   Future<bool> checkReviewStatus(int loanId) async {
     try {
       // 서버로부터 리뷰 상태를 확인하는 API 호출
@@ -507,7 +562,7 @@ class LoanBookContainer extends StatelessWidget {
       if (response.statusCode == 200) {
         // 리뷰 조건이 없는 경우 (리뷰를 작성한 적이 없음)
         return false;
-      } else if (response.statusCode == 400) {
+      } else if (response.body == "이미 작성한 상태평가 입니다") {
         // 리뷰 조건이 이미 존재하는 경우 (리뷰를 이미 작성함)
         return true;
       } else {
@@ -519,6 +574,27 @@ class LoanBookContainer extends StatelessWidget {
       // 에러 발생 시 처리
       print('Error checking review condition: $e');
       return false; // 혹은 예외 처리에 맞게 반환값 설정
+    }
+  }
+
+  Future<bool> check30Status(int loanId) async {
+    try {
+      // 서버로부터 리뷰 상태를 확인하는 API 호출
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:8080/reviewCondition/check/$loanId'),
+      );
+
+      if (response.statusCode == 200) {
+        return false;
+      } else if (response.body == "상태평가는 반납일로부터 30일 이내에만 작성 가능합니다") {
+        return true;
+      } else {
+        print('Failed to check review condition. Status code: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      print('Error checking review condition: $e');
+      return false;
     }
   }
 
@@ -687,15 +763,7 @@ class LoanBookContainer extends StatelessWidget {
                     children: [
                       Expanded(
                         child: GestureDetector(
-                          onTap: () {
-                            // '도서리뷰' 페이지로 이동
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => BookReview(bookTitle: bookTitle, bookIsbn: book_isbn, bookAuthor: author, imageUrl: imageUrl, loanId: loan_id,),
-                              ),
-                            );
-                          },
+                          onTap: () => onReviewButtonPressed(context), // 이벤트 연결
                           child: Container(
                             padding: EdgeInsets.only(top: 2, bottom: 2),
                             decoration: BoxDecoration(
@@ -722,11 +790,17 @@ class LoanBookContainer extends StatelessWidget {
                         child: GestureDetector(
                           onTap: () async {
                             bool hasReviewed = await checkReviewStatus(loan_id);
+                            bool out30 = await check30Status(loan_id);
 
                             if (hasReviewed) {
                               showDialog(context: context, builder: (BuildContext context) {
                                 return AlertDialog(
                                   content: Text('이미 상태 평가를 완료한 도서입니다'),
+                                  actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),),],);},);
+                            } else if (out30) {
+                              showDialog(context: context, builder: (BuildContext context) {
+                                return AlertDialog(
+                                  content: Text('상태평가는 반납일로부터 30일 이내에만 작성 가능합니다'),
                                   actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),),],);},);
                             } else {
                               Navigator.push(

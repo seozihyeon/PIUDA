@@ -235,7 +235,7 @@ class _BookingListState extends State<BookingList> {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('확인'),
+                  child: Text('확인', style: TextStyle(color: Colors.cyan.shade800),),
                 ),
               ],
             );

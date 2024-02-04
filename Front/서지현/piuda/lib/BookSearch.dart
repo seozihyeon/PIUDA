@@ -31,6 +31,9 @@ class _BookSearchState extends State<BookSearch> {
   Set<String> selectedOptions = Set<String>();
   TextEditingController _isbnController;
 
+  String _imageUrl = '';
+  List<Widget> _bookWidgets = [];
+
   _BookSearchState() : _isbnController = TextEditingController(); // 생성자에서 초기화
   bool isLoading =true;
 
@@ -41,46 +44,90 @@ class _BookSearchState extends State<BookSearch> {
     searchBook();
   }
 
+
   @override
   void initState() {
     super.initState();
     _selectedSearchTarget = widget.searchTarget;
-    _isbnController.text = widget.searchText; // 검색어 설정
-    selectedOptions = widget.searchOptions; // 검색 옵션 설정
-    searchBook(); // 페이지가 로드될 때 자동으로 검색 수행
+    _isbnController.text = widget.searchText;
+    selectedOptions = widget.searchOptions;
+    searchBook();
+
+    // _scrollController를 초기화
+    _scrollController = ScrollController();
+    _scrollController.addListener(_scrollListener);
   }
 
+  int currentPage = 1;
+  int pageSize = 10;
+  bool hasMoreData = true;
+  late ScrollController _scrollController;
+  int totalPages = 1;
 
-  String _imageUrl = '';
-  List<Widget> _bookWidgets = [];
+
+  int calculateTotalPages(http.Response response) {
+    final totalHeader = response.headers['total-pages'];
+    if (totalHeader != null) {
+      final totalPages = int.tryParse(totalHeader);
+      print('total-pages header value: $totalPages');
+      return totalPages ?? 1;
+    } else {
+      print('total-pages header not found');
+      return 1;
+    }
+  }
+
+  void _scrollListener() {
+    print("Current Page: $currentPage, Total Pages: $totalPages");
+    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+      if (hasMoreData && currentPage < totalPages) {
+        goToPage(currentPage + 1);
+      }
+    }
+  }
+
+  void goToPage(int page) {
+    if (page < 1 || page > totalPages) {
+      return;
+    }
+
+    setState(() {
+      currentPage = page;
+    });
+
+    searchBook();
+  }
+
 
   // searchBook 함수
   Future<void> searchBook() async {
     if (_isbnController.text.isEmpty) {
-      // 검색어가 비어 있으면 SnackBar를 표시
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("검색어를 입력하세요"),
           duration: Duration(seconds: 2),
         ),
       );
-      return; // 함수를 여기서 종료
+      return;
     }
     setState(() {
-      isLoading = true; // 로딩 시작
+      isLoading = true;
     });
     try {
-      print("searchBook 함수 호출됨");
       final String searchText = _isbnController.text;
       print("검색어: $searchText");
 
       String url;
       if (_selectedSearchTarget == '자료명') {
-        url = 'http://10.0.2.2:8080/api/books/search?title=$searchText';
+        url = 'http://10.0.2.2:8080/api/books/search?title=$searchText&page=$currentPage';
       } else if (_selectedSearchTarget == '저자명') {
-        url = 'http://10.0.2.2:8080/api/books/search?author=$searchText';
-      } else { // '발행처' 선택 시
-        url = 'http://10.0.2.2:8080/api/books/search?publisher=$searchText';
+        url = 'http://10.0.2.2:8080/api/books/search?author=$searchText&page=$currentPage';
+      } else {
+        url = 'http://10.0.2.2:8080/api/books/search?publisher=$searchText&page=$currentPage';
+      }
+
+      if (pageSize > 0) {
+        url += '&pageSize=$pageSize';
       }
 
       final response = await http.get(Uri.parse(url));
@@ -92,6 +139,15 @@ class _BookSearchState extends State<BookSearch> {
 
       if (response.statusCode == 200) {
         final List<dynamic> responseData = json.decode(decodedResponse);
+
+        totalPages = calculateTotalPages(response); // 실제로는 서버 응답에서 페이지 정보를 추출하여 계산해야 합니다.
+
+        if (responseData.isEmpty) {
+          // 더 이상 가져올 데이터가 없음
+          setState(() {
+            hasMoreData = false;
+          });
+        }
         final filteredData = responseData.where((bookData) {
           if (_selectedLibraries.isEmpty) {
             return true;
@@ -311,15 +367,51 @@ class _BookSearchState extends State<BookSearch> {
                 ],
               ),
             ),
-
-            isLoading ? Center(child: CircularProgressIndicator(),) :
-            ListView.builder(
+            isLoading
+                ? Container(height: MediaQuery.of(context).size.height * 0.7, child: Center(child: CircularProgressIndicator()))
+                : ListView.builder(
+              controller: _scrollController,
               shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(), // 스크롤 가능성 제거
               itemCount: _bookWidgets.length,
               itemBuilder: (context, index) {
                 return _bookWidgets[index];
               },
+            ),
+
+            Container(
+              child: Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (currentPage > 1)
+                      ElevatedButton(
+                        onPressed: () => goToPage(currentPage - 1),
+                        child: Text('이전'),
+                        style: ElevatedButton.styleFrom(foregroundColor: Colors.black),
+                      ),
+                    for (int i = 1; i <= totalPages; i++)
+                      if (i >= (currentPage - 1) ~/ 3 * 3 + 1 && i <= (currentPage - 1) ~/ 3 * 3 + 3)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                          child: ElevatedButton(
+                            onPressed: () => goToPage(i),
+                            child: Text('$i'),
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: i == currentPage ? Colors.white : Colors.black,
+                              backgroundColor: i == currentPage ? Colors.cyan.shade700 : null,
+                            ),
+                          ),
+                        ),
+                    if (currentPage < totalPages)
+                      ElevatedButton(
+                        onPressed: () => goToPage(currentPage + 1),
+                        child: Text('다음'),
+                        style: ElevatedButton.styleFrom(foregroundColor: Colors.black),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -327,9 +419,6 @@ class _BookSearchState extends State<BookSearch> {
     );
   }
 }
-
-
-
 
 
 //책 정보박스
