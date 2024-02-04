@@ -19,7 +19,7 @@ class BookDetail extends StatefulWidget {
   final String location;
   final bool loanstatus;
   final String book_isbn;
-  final bool reserved;
+  bool reserved;
   final String imageUrl;
   final String publisher;
   final String size;
@@ -265,7 +265,13 @@ class _BookDetailState extends State<BookDetail> {
 
         // 예약 요청 응답 처리
         if (response.statusCode == 200) {
-          // 예약 성공 메시지 표시
+          // 예약 성공 시, 상태 업데이트
+          setState(() {
+            widget.reserved = true; // 예약 상태를 true로 설정
+            // 다른 필요한 상태 업데이트도 여기서 수행
+          });
+
+          // 성공 메시지 표시
           showDialog(
             context: context,
             builder: (BuildContext context) {
@@ -322,6 +328,10 @@ class _BookDetailState extends State<BookDetail> {
         );
       }
     }}
+
+
+
+
   @override
   Widget build(BuildContext context) {
     double Height = MediaQuery.of(context).size.height;
@@ -337,7 +347,7 @@ class _BookDetailState extends State<BookDetail> {
           icon: Icon(Icons.arrow_back),
           onPressed: () {
             // 뒤로가기 동작
-            Navigator.pop(context);
+            Navigator.pop(context, true);
           },
           color: Colors.black, // 뒤로가기 버튼의 색상
         ),

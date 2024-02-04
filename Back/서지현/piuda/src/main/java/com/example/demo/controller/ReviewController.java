@@ -96,4 +96,14 @@ public class ReviewController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to remove review");
         }
     }
+    
+    @GetMapping("/check/review/{userId}/{isbn}")
+    public ResponseEntity<?> checkUserReview(
+        @PathVariable("userId") Long userId,
+        @PathVariable("isbn") String isbn
+    ) {
+        int reviewCount = reviewMapper.countReviewsByUserIdAndIsbn(userId, isbn);
+        return ResponseEntity.ok(reviewCount > 0);
+    }
+
 }
