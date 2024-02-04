@@ -58,6 +58,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     Intl.defaultLocale = 'ko_KR';
     return MaterialApp(
+      theme: ThemeData(
+        textSelectionTheme: TextSelectionThemeData(
+          cursorColor: Colors.cyan.shade800,
+          selectionColor: Colors.cyan.shade100, // 드래그하여 선택한 텍스트의 배경 색상
+          selectionHandleColor: Colors.cyan.shade800, // 선택 핸들의 색상
+        ),
+        // 다른 테마 설정들...
+      ),
       locale: Locale('ko', 'KR'),
       home: FutureBuilder(
         future: checkLoginStatus(),
@@ -532,8 +540,8 @@ class _HomePageState extends State<HomePage> {
                       Container(
                         padding: EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Color(0xFF69C1D7),
-                          shape: BoxShape.circle
+                            color: Color(0xFF69C1D7),
+                            shape: BoxShape.circle
                         ),
                         child: Text(
                           "$selectedDateString일 ", // 선택된 날짜 표시
@@ -781,14 +789,14 @@ class _HomePageState extends State<HomePage> {
                           padding: EdgeInsets.only(left: 15, top: 3),
                           child:
                           (barcodeImageUrl.isEmpty)?
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text("모바일 회원증", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),),
-                                  Text("로그인 후 이용 가능한 서비스 입니다", style: TextStyle(color: Colors.white, fontSize: 15),)
-                                ],
-                              )
-                          :RichText(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text("모바일 회원증", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),),
+                              Text("로그인 후 이용 가능한 서비스입니다", style: TextStyle(color: Colors.white, fontSize: 15),)
+                            ],
+                          )
+                              :RichText(
                             text: TextSpan(
                               children: [
                                 TextSpan(
@@ -839,7 +847,7 @@ class _HomePageState extends State<HomePage> {
                             height: 100,
                             fit: BoxFit.contain,
                           )
-                          :Padding(
+                              :Padding(
                             padding: const EdgeInsets.all(25.0),
                             child: Center(
                               child: ElevatedButton(
@@ -850,7 +858,7 @@ class _HomePageState extends State<HomePage> {
                                   foregroundColor: Colors.cyan.shade900,
                                   backgroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10),
-                                  side: BorderSide(color: Colors.cyan.shade800, width: 1.5),
+                                    side: BorderSide(color: Colors.cyan.shade800, width: 1.5),
                                   ),
                                 ),
                                 child: Text('로그인하러 가기', style: TextStyle(fontWeight: FontWeight.bold),),
@@ -1047,6 +1055,49 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ],
+            ),
+            Container(
+              padding: EdgeInsets.only(left: 35, bottom: 5),
+              child: Row(
+                children: [
+                  // 빨간 점
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.red[400],
+                    ),
+                  ),
+                  SizedBox(width: 4), // 간격
+                  Text('오늘'),
+                  SizedBox(width: 15), // 추가 간격
+                  // 회색 점
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  SizedBox(width: 4), // 간격
+                  Text('휴관일'),
+                  SizedBox(width: 15), // 추가 간격
+                  // 파란 점
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  SizedBox(width: 4), // 간격
+                  Text('행사일'),
+
+                ],
+              ),
             ),
             _buildTableCalendar(),
             SizedBox(height:10),

@@ -47,20 +47,32 @@ public class ReviewController {
     public ResponseEntity<?> insertReview(
         @RequestParam("loan_id") Long loan_id,
         @RequestParam("review_content") String review_content,
-        @RequestParam("review_score") int review_score // 별점 추가
+        @RequestParam("review_score") int review_score
     ) {
         // 대출 정보 가져오기
         Loan loan = loanMapper.getLoanById(loan_id);
         
-        System.out.println("insertReview method called with loan_id: " + loan_id + ", review_content: " + review_content + ", review_score: " + review_score);
-
         if (loan != null) {
-            // 리뷰 객체 생성
+            if (loan.getUser() == null) {
+                // User 객체가 null인 경우의 로깅
+                System.out.println("User object is null for loan_id: " + loan_id);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Loan found but user not found");
+            }
+           Long userId = loan.getUser().getId(); // 사용자 ID 가져오기
+            String isbn = loan.getBook().getBook_isbn(); // ISBN 가져오기
+
+            // 중복 리뷰 확인
+            int existingReviewsCount = reviewMapper.countReviewsByUserIdAndIsbn(userId, isbn);
+            if (existingReviewsCount > 0) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User has already reviewed this book");
+            }
+
+            // 리뷰 객체 생성 및 설정
             Review review = new Review();
             review.setLoan(loan);
             review.setReview_content(review_content);
-            review.setReview_score(review_score); // 별점 설정
-            review.setReview_date(LocalDate.now()); // 리뷰 등록 날짜 설정
+            review.setReview_score(review_score);
+            review.setReview_date(LocalDate.now());
 
             // 리뷰를 데이터베이스에 저장
             reviewMapper.insertReview(review);
@@ -84,4 +96,14 @@ public class ReviewController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to remove review");
         }
     }
+    
+    @GetMapping("/check/review/{userId}/{isbn}")
+    public ResponseEntity<?> checkUserReview(
+        @PathVariable("userId") Long userId,
+        @PathVariable("isbn") String isbn
+    ) {
+        int reviewCount = reviewMapper.countReviewsByUserIdAndIsbn(userId, isbn);
+        return ResponseEntity.ok(reviewCount > 0);
+    }
+
 }

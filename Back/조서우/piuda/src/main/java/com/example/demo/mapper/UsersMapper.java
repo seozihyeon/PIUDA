@@ -41,5 +41,9 @@ public interface UsersMapper {
    
    @Select("SELECT user_name FROM users WHERE user_id = #{user_id}")
    String getUserNameById(@Param("user_id") Long user_id);
+   
+
+   @Select("SELECT * FROM users WHERE user_id = #{userId}")
+   Users getUserById(@Param("user_id") Long user_id);
 
 }

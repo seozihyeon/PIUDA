@@ -97,41 +97,12 @@ class _BookStateReviewState extends State<BookStateReview> {
 
       if (response.statusCode == 200) {
         print('리뷰 조건이 성공적으로 생성되었습니다!');
-        Future.delayed(Duration.zero, () {
-          _showSuccessDialog();
-        });
       } else {
         print('리뷰 조건 생성에 실패했습니다. 상태 코드: ${response.statusCode}');
       }
     } catch (e) {
       print('HTTP 요청 중 오류 발생: $e');
     }
-  }
-
-  Future<void> _showSuccessDialog() async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // user must tap button!
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text('해당도서에 상태평가가 등록되었습니다'),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('확인'),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override
@@ -265,8 +236,11 @@ class _BookStateReviewState extends State<BookStateReview> {
                     controller: conditionOpController,
                     maxLines: 3, // 여러 줄 입력 가능하도록 설정
                     decoration: InputDecoration(
-                      hintText: '의견을 입력하세요...',
-                      border: OutlineInputBorder(), // 외곽선 추가
+                        hintText: '의견을 입력하세요...',
+                        border: OutlineInputBorder(),
+                        // 외곽선 추가
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Colors.cyan.shade700),)
                     ),
                   ),
                 ],
@@ -284,6 +258,7 @@ class _BookStateReviewState extends State<BookStateReview> {
                   yourTaintScore,
                   yourConditionOp,
                 );
+                _showSnackBar(context, "상태평가가 성공적으로 작성되었습니다");
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
@@ -295,6 +270,10 @@ class _BookStateReviewState extends State<BookStateReview> {
         ),
       ),
     );
+  }
+
+  void _showSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 }
 

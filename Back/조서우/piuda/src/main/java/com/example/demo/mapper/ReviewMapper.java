@@ -38,5 +38,15 @@ public interface ReviewMapper {
     @Update("UPDATE review SET review_content = #{review_content} WHERE review_id = #{review_id}")
     int updateReview(Review review);
     
+    @Select("SELECT COUNT(*) FROM review r " +
+            "JOIN loan l ON r.loan_id = l.loan_id " +
+            "JOIN users u ON l.user_id = u.user_id " +
+            "JOIN books b ON l.book_id = b.book_id " +
+            "WHERE u.user_id = #{user_id} AND b.book_isbn = #{book_isbn}")
+    int countReviewsByUserIdAndIsbn(@Param("user_id") Long user_id, @Param("book_isbn") String book_isbn);
+
+
+
+    
     
 }

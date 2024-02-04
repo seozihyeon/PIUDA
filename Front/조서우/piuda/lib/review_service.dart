@@ -11,6 +11,8 @@ class ReviewService {
       },
     );
 
+
+
     if (response.statusCode == 200) {
       // UTF-8 인코딩으로 디코딩
       final String decodedResponse = utf8.decode(response.bodyBytes);
@@ -18,6 +20,24 @@ class ReviewService {
       return data.map((json) => Review.fromJson(json)).toList();
     } else {
       throw Exception('Failed to load reviews');
+    }
+  }
+
+  Future<void> addReview(int loanId, String reviewText, int reviewScore) async {
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:8080/api/review/add'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: json.encode({
+        'loan_id': loanId,
+        'review_content': reviewText,
+        'review_score': reviewScore,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to add review');
     }
   }
 }
@@ -38,7 +58,7 @@ class ConditionService {
       List<dynamic> data = json.decode(decodedResponse);
       return data.map((json) => ReviewConditionBox.fromJson(json)).toList();
     } else {
-      throw Exception('Failed to load reviews');
+      throw Exception('Failed to load conditions');
     }
   }
 }

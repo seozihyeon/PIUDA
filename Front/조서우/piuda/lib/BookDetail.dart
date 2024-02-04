@@ -19,7 +19,7 @@ class BookDetail extends StatefulWidget {
   final String location;
   final bool loanstatus;
   final String book_isbn;
-  final bool reserved;
+  bool reserved;
   final String imageUrl;
   final String publisher;
   final String size;
@@ -150,7 +150,7 @@ class _BookDetailState extends State<BookDetail> {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('확인'),
+                  child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
                 ),
               ],
             );
@@ -169,7 +169,7 @@ class _BookDetailState extends State<BookDetail> {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('확인'),
+                  child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
                 ),
               ],
             );
@@ -200,7 +200,7 @@ class _BookDetailState extends State<BookDetail> {
                 onPressed: () {
                   Navigator.of(context).pop(); // 팝업 닫기
                 },
-                child: Text('확인'),
+                child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
               ),
               TextButton(
                 onPressed: () {
@@ -210,7 +210,7 @@ class _BookDetailState extends State<BookDetail> {
                     MaterialPageRoute(builder: (context) => LoginPage()),
                   );
                 },
-                child: Text('로그인하러 가기'),
+                child: Text('로그인하러 가기' ,  style: TextStyle(color: Colors.cyan.shade800)),
               ),
             ],
           );
@@ -241,7 +241,7 @@ class _BookDetailState extends State<BookDetail> {
                       onPressed: () {
                         Navigator.of(context).pop(); // 팝업 닫기
                       },
-                      child: Text('확인'),
+                      child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
                     ),
                   ],
                 );
@@ -265,7 +265,13 @@ class _BookDetailState extends State<BookDetail> {
 
         // 예약 요청 응답 처리
         if (response.statusCode == 200) {
-          // 예약 성공 메시지 표시
+          // 예약 성공 시, 상태 업데이트
+          setState(() {
+            widget.reserved = true; // 예약 상태를 true로 설정
+            // 다른 필요한 상태 업데이트도 여기서 수행
+          });
+
+          // 성공 메시지 표시
           showDialog(
             context: context,
             builder: (BuildContext context) {
@@ -277,7 +283,7 @@ class _BookDetailState extends State<BookDetail> {
                       Navigator.of(context).pop(); // 팝업 닫기
                       widget.onReservationCompleted?.call();
                     },
-                    child: Text('확인'),
+                    child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
                   ),
                 ],
               );
@@ -295,7 +301,7 @@ class _BookDetailState extends State<BookDetail> {
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
-                    child: Text('확인'),
+                    child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
                   ),
                 ],
               );
@@ -314,7 +320,7 @@ class _BookDetailState extends State<BookDetail> {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('확인'),
+                  child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
                 ),
               ],
             );
@@ -322,14 +328,18 @@ class _BookDetailState extends State<BookDetail> {
         );
       }
     }}
+
+
+
+
   @override
   Widget build(BuildContext context) {
     double Height = MediaQuery.of(context).size.height;
     double Width = MediaQuery.of(context).size.width;
 
-    String loanStatusText = widget.loanstatus ? '대출가능' : '대출불가';
-    Color loanStatusColor = widget.loanstatus ? Colors.cyan.shade700 : Colors.red.shade400;
-    String loanStatusBox = widget.loanstatus ? '책누리신청' : '예약하기';
+    String loanStatusText = (widget.loanstatus && !widget.reserved) ? '대출가능' : '대출불가';
+    Color loanStatusColor = (widget.loanstatus && !widget.reserved) ? Colors.cyan.shade700 : Colors.red.shade400;
+    String loanStatusBox = (widget.loanstatus || widget.reserved) ? '책누리신청' : '예약하기';
 
     return Scaffold(
       appBar: AppBar(
@@ -337,7 +347,7 @@ class _BookDetailState extends State<BookDetail> {
           icon: Icon(Icons.arrow_back),
           onPressed: () {
             // 뒤로가기 동작
-            Navigator.pop(context);
+            Navigator.pop(context, true);
           },
           color: Colors.black, // 뒤로가기 버튼의 색상
         ),
@@ -735,7 +745,7 @@ class _BookDetailState extends State<BookDetail> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(children: [
-                                widget.loanstatus ? Icon(Icons.check, color: Colors.cyan.shade700, weight: 20) : Icon(Icons.clear, color: Colors.red.shade400),
+                                (widget.loanstatus && !widget.reserved) ? Icon(Icons.check, color: Colors.cyan.shade700, weight: 20) : Icon(Icons.clear, color: Colors.red.shade400),
                                 Text(loanStatusText, style: TextStyle(color: loanStatusColor, fontSize: 16, fontWeight: FontWeight.bold,)),
                               ],),
                               SizedBox(height: 4,),

@@ -44,6 +44,7 @@ class _BookSearchState extends State<BookSearch> {
     searchBook();
   }
 
+
   @override
   void initState() {
     super.initState();
@@ -221,8 +222,6 @@ class _BookSearchState extends State<BookSearch> {
     }
   }
 
-
-
   Future<void> fetchBookCover(String book_isbn) async {
     final String clientId = 'uFwwNh4yYFgq3WtAYl6S';
     final String clientSecret = 'WElJXwZDhV';
@@ -255,8 +254,6 @@ class _BookSearchState extends State<BookSearch> {
       print('fetchBookCover 함수에서 오류 발생: $e');
     }
   }
-
-
 
 
   @override
@@ -370,7 +367,6 @@ class _BookSearchState extends State<BookSearch> {
                 ],
               ),
             ),
-
             isLoading
                 ? Container(height: MediaQuery.of(context).size.height * 0.7, child: Center(child: CircularProgressIndicator()))
                 : ListView.builder(
@@ -423,9 +419,6 @@ class _BookSearchState extends State<BookSearch> {
     );
   }
 }
-
-
-
 
 
 //책 정보박스
@@ -494,7 +487,7 @@ class BookContainer extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('확인'),
+                  child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
                 ),
               ],
             );
@@ -513,7 +506,7 @@ class BookContainer extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('확인'),
+                  child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
                 ),
               ],
             );
@@ -544,7 +537,7 @@ class BookContainer extends StatelessWidget {
                 onPressed: () {
                   Navigator.of(context).pop(); // 팝업 닫기
                 },
-                child: Text('확인'),
+                child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
               ),
               TextButton(
                 onPressed: () {
@@ -554,7 +547,7 @@ class BookContainer extends StatelessWidget {
                     MaterialPageRoute(builder: (context) => LoginPage()),
                   );
                 },
-                child: Text('로그인하러 가기'),
+                child: Text('로그인하러 가기', style: TextStyle(color: Colors.cyan.shade800)),
               ),
             ],
           );
@@ -585,7 +578,7 @@ class BookContainer extends StatelessWidget {
                       onPressed: () {
                         Navigator.of(context).pop(); // 팝업 닫기
                       },
-                      child: Text('확인'),
+                      child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
                     ),
                   ],
                 );
@@ -621,7 +614,7 @@ class BookContainer extends StatelessWidget {
                       Navigator.of(context).pop(); // 팝업 닫기
                       onReservationCompleted?.call();
                     },
-                    child: Text('확인'),
+                    child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
                   ),
                 ],
               );
@@ -639,7 +632,7 @@ class BookContainer extends StatelessWidget {
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
-                    child: Text('확인'),
+                    child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
                   ),
                 ],
               );
@@ -658,7 +651,7 @@ class BookContainer extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('확인'),
+                  child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
                 ),
               ],
             );
@@ -671,11 +664,15 @@ class BookContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    bool isUserLoggedIn = (MyApp.userId ?? 0) > 0;    String loanStatusText = loanstatus ? '대출가능' : '대출불가';
-    String loanStatusBox = loanstatus ? '책누리신청' : '예약하기';
-    Color loanStatusColor = loanstatus ? Colors.cyan.shade700 : Colors.red.shade400;
+    bool isUserLoggedIn = (MyApp.userId ?? 0) > 0;
+    // String loanStatusText = loanstatus ? '대출가능' : '대출불가';
+    String loanStatusText = (loanstatus && !reserved) ? '대출가능' : '대출불가';
+    // String loanStatusBox = loanstatus ? '책누리신청' : '예약하기';
+    String loanStatusBox = (loanstatus || reserved) ? '책누리신청' : '예약하기';
+    Color loanStatusColor = (loanstatus && !reserved) ? Colors.cyan.shade700 : Colors.red.shade400;
 
-    if (!loanstatus && reserved) {
+    if (reserved) {
+      //if reserved
       loanStatusText += '(예약중)';
     }
 
@@ -734,7 +731,7 @@ class BookContainer extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(children: [
-                      loanstatus ? Icon(Icons.check, color: Colors.cyan.shade700, weight: 20) : Icon(Icons.clear, color: Colors.red.shade400),
+                      (loanstatus && !reserved) ? Icon(Icons.check, color: Colors.cyan.shade700, weight: 20) : Icon(Icons.clear, color: Colors.red.shade400),
                       Text(loanStatusText, style: TextStyle(color: loanStatusColor, fontSize: 16, fontWeight: FontWeight.bold,
                       )),
                     ],),
@@ -913,6 +910,14 @@ class _LibraryOptionsState extends State<LibraryOptions> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Checkbox(
+                checkColor: Colors.white, // 체크 표시 색상은 항상 흰색
+                fillColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
+                  if (states.contains(MaterialState.selected)) {
+                    return Color(0xFF00838F); // 선택됐을 때 배경색 cyan 800
+                  }
+                  return Colors.white; // 선택되지 않았을 때 배경색 흰색
+                }),
+                side: BorderSide(color: Color(0xFF00838F), width: 1.0), // 모든 상태에서 테두리 색상 cyan 800
                 value: selectedLibraries.contains(library),
                 onChanged: (bool? value) {
                   _onCheckboxChanged(value, library);
