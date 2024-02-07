@@ -83,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    var loginurl = Uri.parse('http://10.0.2.2:8080/login');
+    var loginurl = Uri.parse('http://13.210.68.246:8080/login');
 
     try {
       var param = {'user_name': username, 'user_id': userIdInt};
@@ -115,12 +115,23 @@ class _LoginPageState extends State<LoginPage> {
         );
         MyApp.isLoggedIn = true;
         MyApp.userId = userIdInt;
+        MyApp.userName = username;
+
+        String barcodeImageUrl = await loadBarcodeImage(userIdInt);
+        String userStatus = await fetchUserStatus(userIdInt);
+
+        // MyApp 클래스에 데이터를 저장합니다.
+        MyApp.barcodeImageUrl = barcodeImageUrl;
+        MyApp.userStatus = userStatus;
+
+
+
         // 로그인 성공 후 처리, 예를 들면 홈 페이지로 이동
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => HomePage(username: username, userid: userIdInt)), // 로그인 성공 후 이동할 페이지
-              (route) => false,
-        );
+        Navigator.pop(context, {
+          'isLoggedIn': true,
+          'username': username,
+          'userId': userIdInt,
+        });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -136,6 +147,25 @@ class _LoginPageState extends State<LoginPage> {
           duration: Duration(seconds: 3),
         ),
       );
+    }
+  }
+
+  Future<String> loadBarcodeImage(int userId) async {
+    var response = await http.get(Uri.parse('http://13.210.68.246:8080/b/$userId'));
+    if (response.statusCode == 200) {
+      return response.body; // 바코드 이미지 URL 반환
+    } else {
+      throw Exception('Failed to load barcode image');
+    }
+  }
+
+  Future<String> fetchUserStatus(int userId) async {
+    var response = await http.get(
+        Uri.parse('http://13.210.68.246:8080/userstatus/$userId'));
+    if (response.statusCode == 200) {
+      return response.body; // 회원 상태 반환
+    } else {
+      throw Exception('Failed to load user status');
     }
   }
 

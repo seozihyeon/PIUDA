@@ -133,7 +133,7 @@ class _BookDetailState extends State<BookDetail> {
   Future<void> addInterestBook(BuildContext context, int userId, String bookId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:8080/api/userinterest/add'),
+        Uri.parse('http://13.210.68.246:8080/api/userinterest/add'),
         body: {'user_id': userId.toString(), 'book_id': bookId},
       );
 
@@ -223,7 +223,7 @@ class _BookDetailState extends State<BookDetail> {
       try {
         // 현재 사용자의 예약 내역을 확인
         final reservationsResponse = await http.get(
-          Uri.parse('http://10.0.2.2:8080/api/userbooking/reservations?user_id=$userId'),
+          Uri.parse('http://13.210.68.246:8080/api/userbooking/reservations?user_id=$userId'),
         );
 
         if (reservationsResponse.statusCode == 200) {
@@ -255,7 +255,7 @@ class _BookDetailState extends State<BookDetail> {
         final DateTime now = DateTime.now();
         final String reserveDate = "${now.year}-${now.month}-${now.day}";
         final response = await http.post(
-          Uri.parse('http://10.0.2.2:8080/api/userbooking/add'),
+          Uri.parse('http://13.210.68.246:8080/api/userbooking/add'),
           body: {
             'user_id': userId,
             'book_id': bookId,
@@ -341,7 +341,12 @@ class _BookDetailState extends State<BookDetail> {
     Color loanStatusColor = (widget.loanstatus && !widget.reserved) ? Colors.cyan.shade700 : Colors.red.shade400;
     String loanStatusBox = (widget.loanstatus || widget.reserved) ? '책누리신청' : '예약하기';
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+         onPopInvoked: (diPop) async {
+        Navigator.pop(context, true);
+      },
+      child: Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
@@ -949,6 +954,7 @@ class _BookDetailState extends State<BookDetail> {
           ),
         ),
       ),
+    ),
     );
   }
 }

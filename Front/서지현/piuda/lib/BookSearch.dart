@@ -59,7 +59,7 @@ class _BookSearchState extends State<BookSearch> {
   }
 
   int currentPage = 1;
-  int pageSize = 10;
+  int pageSize = 4;
   bool hasMoreData = true;
   late ScrollController _scrollController;
   int totalPages = 1;
@@ -119,11 +119,11 @@ class _BookSearchState extends State<BookSearch> {
 
       String url;
       if (_selectedSearchTarget == '자료명') {
-        url = 'http://10.0.2.2:8080/api/books/search?title=$searchText&page=$currentPage';
+        url = 'http://13.210.68.246:8080/api/books/search?title=$searchText&page=$currentPage';
       } else if (_selectedSearchTarget == '저자명') {
-        url = 'http://10.0.2.2:8080/api/books/search?author=$searchText&page=$currentPage';
+        url = 'http://13.210.68.246:8080/api/books/search?author=$searchText&page=$currentPage';
       } else {
-        url = 'http://10.0.2.2:8080/api/books/search?publisher=$searchText&page=$currentPage';
+        url = 'http://13.210.68.246:8080/api/books/search?publisher=$searchText&page=$currentPage';
       }
 
       if (pageSize > 0) {
@@ -470,7 +470,7 @@ class BookContainer extends StatelessWidget {
   Future<void> addInterestBook(BuildContext context, int userId, String bookId) async {
     try {
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:8080/api/userinterest/add'),
+        Uri.parse('http://13.210.68.246:8080/api/userinterest/add'),
         body: {'user_id': userId.toString(), 'book_id': bookId},
       );
 
@@ -555,19 +555,73 @@ class BookContainer extends StatelessWidget {
       );
       return; // 함수 종료
     }
-else{
-    // 로그인 상태일 때의 예약 처리 로직
-    try {
-      // 현재 사용자의 예약 내역을 확인
-      final reservationsResponse = await http.get(
-        Uri.parse('http://10.0.2.2:8080/api/userbooking/reservations?user_id=$userId'),
-      );
+    else{
+      // 로그인 상태일 때의 예약 처리 로직
+      try {
+        // 현재 사용자의 예약 내역을 확인
+        final reservationsResponse = await http.get(
+          Uri.parse('http://13.210.68.246:8080/api/userbooking/reservations?user_id=$userId'),
+        );
 
-      if (reservationsResponse.statusCode == 200) {
-        final List<dynamic> reservations = json.decode(reservationsResponse.body);
+        if (reservationsResponse.statusCode == 200) {
+          final List<dynamic> reservations = json.decode(reservationsResponse.body);
 
-        // 최대 예약 가능 권수를 초과했을 경우
-        if (reservations.length >= 3) {
+          // 최대 예약 가능 권수를 초과했을 경우
+          if (reservations.length >= 3) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  content: Text('예약은 최대 3권까지 가능합니다.'),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // 팝업 닫기
+                      },
+                      child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
+                    ),
+                  ],
+                );
+              },
+            );
+            return; // 함수 종료
+          }
+        }
+
+        // 예약 가능한 경우 예약 요청 수행
+        final DateTime now = DateTime.now();
+        final String reserveDate = "${now.year}-${now.month}-${now.day}";
+        final response = await http.post(
+          Uri.parse('http://13.210.68.246:8080/api/userbooking/add'),
+          body: {
+            'user_id': userId,
+            'book_id': bookId,
+            'reserve_date': reserveDate,
+          },
+        );
+
+        // 예약 요청 응답 처리
+        if (response.statusCode == 200) {
+          // 예약 성공 메시지 표시
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: Text('예약이 완료되었습니다.'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // 팝업 닫기
+                      onReservationCompleted?.call();
+                    },
+                    child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
+                  ),
+                ],
+              );
+            },
+          );
+        } else {
+          // 예약 실패 메시지 표시
           showDialog(
             context: context,
             builder: (BuildContext context) {
@@ -576,57 +630,22 @@ else{
                 actions: <Widget>[
                   TextButton(
                     onPressed: () {
-                      Navigator.of(context).pop(); // 팝업 닫기
+                      Navigator.of(context).pop();
                     },
-                    child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
+                    child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
                   ),
                 ],
               );
             },
           );
-          return; // 함수 종료
         }
-      }
-
-      // 예약 가능한 경우 예약 요청 수행
-      final DateTime now = DateTime.now();
-      final String reserveDate = "${now.year}-${now.month}-${now.day}";
-      final response = await http.post(
-        Uri.parse('http://10.0.2.2:8080/api/userbooking/add'),
-        body: {
-          'user_id': userId,
-          'book_id': bookId,
-          'reserve_date': reserveDate,
-        },
-      );
-
-      // 예약 요청 응답 처리
-      if (response.statusCode == 200) {
-        // 예약 성공 메시지 표시
+      } catch (e) {
+        // 네트워크 오류 등 예외 처리
         showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              content: Text('예약이 완료되었습니다.'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(); // 팝업 닫기
-                    onReservationCompleted?.call();
-                  },
-                  child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
-                ),
-              ],
-            );
-          },
-        );
-      } else {
-        // 예약 실패 메시지 표시
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              content: Text('예약은 최대 3권까지 가능합니다.'),
+              content: Text('예약 처리 중 오류가 발생했습니다.'),
               actions: <Widget>[
                 TextButton(
                   onPressed: () {
@@ -639,26 +658,7 @@ else{
           },
         );
       }
-    } catch (e) {
-      // 네트워크 오류 등 예외 처리
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            content: Text('예약 처리 중 오류가 발생했습니다.'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
-              ),
-            ],
-          );
-        },
-      );
-    }
-  }}
+    }}
 
 
 
@@ -838,26 +838,26 @@ else{
                             onTap: () {
                               reserveBook(context, MyApp.userId.toString(), book_id);
                             },
-                          child: Container(
-                            padding: EdgeInsets.all(5),
-                            decoration: BoxDecoration(
-                              color: loanStatusColor,
-                              border: Border.all(
-                                color: Colors.white, // 테두리 색상
-                                width: 1.0, // 테두리 두께
+                            child: Container(
+                              padding: EdgeInsets.all(5),
+                              decoration: BoxDecoration(
+                                color: loanStatusColor,
+                                border: Border.all(
+                                  color: Colors.white, // 테두리 색상
+                                  width: 1.0, // 테두리 두께
+                                ),
+                                borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
                               ),
-                              borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
-                            ),
-                            child: Text(
-                              loanStatusBox,
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 17.5,
-                                  fontWeight: FontWeight.bold
+                              child: Text(
+                                loanStatusBox,
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 17.5,
+                                    fontWeight: FontWeight.bold
+                                ),
                               ),
                             ),
                           ),
-    ),
                       ],
                     ),
                   ],
