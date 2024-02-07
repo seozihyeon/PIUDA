@@ -133,7 +133,7 @@ class _MyLoanPageState extends State<MyLoanPage> {
   Future<void> fetchLoanData() async {
     try {
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8080/loan/list/${MyApp.userId}'),
+        Uri.parse('http://13.210.68.246:8080/loan/list/${MyApp.userId}'),
       );
 
       if (response.statusCode == 200) {
@@ -455,7 +455,7 @@ class LoanBookContainer extends StatelessWidget {
   void extendLoan(int? loanId, BuildContext context) async {
     try {
       final response = await http.put(
-        Uri.parse('http://10.0.2.2:8080/loan/extend/$loanId'),
+        Uri.parse('http://13.210.68.246:8080/loan/extend/$loanId'),
       );
 
       if (response.statusCode == 200) {
@@ -537,7 +537,7 @@ class LoanBookContainer extends StatelessWidget {
   }
 
   Future<bool> checkIfUserReviewed(String isbn, int userId) async {
-    final url = Uri.parse('http://10.0.2.2:8080/api/review/check/review/$userId/$isbn');
+    final url = Uri.parse('http://13.210.68.246:8080/api/review/check/review/$userId/$isbn');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -556,7 +556,7 @@ class LoanBookContainer extends StatelessWidget {
     try {
       // 서버로부터 리뷰 상태를 확인하는 API 호출
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8080/reviewCondition/check/$loanId'),
+        Uri.parse('http://13.210.68.246:8080/reviewCondition/check/$loanId'),
       );
 
       if (response.statusCode == 200) {
@@ -581,7 +581,7 @@ class LoanBookContainer extends StatelessWidget {
     try {
       // 서버로부터 리뷰 상태를 확인하는 API 호출
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8080/reviewCondition/check/$loanId'),
+        Uri.parse('http://13.210.68.246:8080/reviewCondition/check/$loanId'),
       );
 
       if (response.statusCode == 200) {

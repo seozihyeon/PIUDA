@@ -167,7 +167,7 @@ class _MyInterestBooksPageState extends State<MyInterestBooksPage> {
   }
 
   Future<void> loadInterestBooks() async {
-    final url = Uri.parse('http://10.0.2.2:8080/api/userinterest/list/${MyApp.userId}');
+    final url = Uri.parse('http://13.210.68.246:8080/api/userinterest/list/${MyApp.userId}');
 
     try {
       final response = await http.get(url);
@@ -207,7 +207,7 @@ class _MyInterestBooksPageState extends State<MyInterestBooksPage> {
       print('Removing interest book. User ID: $userId, Book ID: $bookId');
 
       final response = await http.delete(
-        Uri.parse('http://10.0.2.2:8080/api/userinterest/remove/$userId/$bookId'),
+        Uri.parse('http://13.210.68.246:8080/api/userinterest/remove/$userId/$bookId'),
       );
 
       print('Response status: ${response.statusCode}');

@@ -74,7 +74,7 @@ class _BookStateReviewState extends State<BookStateReview> {
       int yourTaintScore,
       String yourConditionOp,
       ) async {
-    final String apiUrl = 'http://10.0.2.2:8080/reviewCondition/write';
+    final String apiUrl = 'http://52.63.193.235:8080/reviewCondition/write';
 
     final Map<String, dynamic> requestData = {
       'loan_id': widget.loan_id,
@@ -236,9 +236,9 @@ class _BookStateReviewState extends State<BookStateReview> {
                     controller: conditionOpController,
                     maxLines: 3, // 여러 줄 입력 가능하도록 설정
                     decoration: InputDecoration(
-                      hintText: '의견을 입력하세요...',
-                      border: OutlineInputBorder(),
-                      // 외곽선 추가
+                        hintText: '의견을 입력하세요...',
+                        border: OutlineInputBorder(),
+                        // 외곽선 추가
                         focusedBorder: OutlineInputBorder(
                           borderSide: BorderSide(color: Colors.cyan.shade700),)
                     ),
@@ -258,6 +258,7 @@ class _BookStateReviewState extends State<BookStateReview> {
                   yourTaintScore,
                   yourConditionOp,
                 );
+                _showSnackBar(context, "상태평가가 성공적으로 작성되었습니다");
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
@@ -269,6 +270,10 @@ class _BookStateReviewState extends State<BookStateReview> {
         ),
       ),
     );
+  }
+
+  void _showSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 }
 

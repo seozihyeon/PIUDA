@@ -50,10 +50,18 @@ void main() {
 class MyApp extends StatelessWidget {
   static bool isLoggedIn = false;
   static int? userId;
+  static String? userName;
+  static String? barcodeImageUrl;
+  static String? userStatus;
+
+
+
 
   static void updateLoginStatus(bool status) {
     isLoggedIn = status;
   }
+
+
 
   Widget build(BuildContext context) {
     Intl.defaultLocale = 'ko_KR';
@@ -91,44 +99,8 @@ class MyApp extends StatelessWidget {
   }
 }
 
-void _checkLoginAndNavigate(BuildContext context, Widget nextPage) {
-  if (!MyApp.isLoggedIn) { // isLoggedIn은 현재 사용자의 로그인 상태를 나타내는 변수입니다.
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          contentPadding: EdgeInsets.only(right: 30, left:30, top:40),
-          // title: Text(''),
-          content: Text('로그인 후 이용 가능한 서비스입니다.',
-            style: TextStyle(
-              fontSize: 15.0, // 글씨 크기 설정
-            ),),
-          actions: <Widget>[
-            TextButton(
-              child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
-              onPressed: () {
-                Navigator.of(context).pop(); // 팝업 닫기
-              },
-            ),
-            TextButton(
-              child: Text('로그인하러 가기', style: TextStyle(color: Colors.cyan.shade800)),
-              onPressed: () {
-                Navigator.of(context).pop(); // 팝업 닫기
-                Navigator.push( // 로그인 페이지로 이동
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginPage()),
-                );
-              },
-            ),
-          ],
-        );
-      },
-    );
-  } else {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => nextPage));
-  }
-}
+
+
 
 
 class HomePage extends StatefulWidget {
@@ -144,7 +116,70 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String barcodeImageUrl = '';
+
+  bool isLoggedIn = false;
+  int? userId;
+  String? userName;
+
+
+  // 로그인 상태를 업데이트하는 함수
+  void updateLoginStatus(Map<String, dynamic> loginResult) {
+    setState(() {
+      isLoggedIn = loginResult['isLoggedIn'];
+      userName = loginResult['username'];
+      userId = loginResult['userId'];
+
+    });
+  }
+
+  void _checkLoginAndNavigate(BuildContext context, Widget nextPage) {
+    if (!MyApp.isLoggedIn) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            contentPadding: EdgeInsets.only(right: 30, left:30, top:40),
+            content: Text('로그인 후 이용 가능한 서비스입니다.',
+              style: TextStyle(fontSize: 15.0),),
+            actions: <Widget>[
+              TextButton(
+                child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
+                onPressed: () {
+                  Navigator.of(context).pop(); // 팝업 닫기
+                },
+              ),
+              TextButton(
+                child: Text('로그인하러 가기', style: TextStyle(color: Colors.cyan.shade800)),
+                onPressed: () {
+                  Navigator.of(context).pop(); // 팝업 닫기
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                  ).then((result) {
+                    // 로그인 페이지에서 반환된 데이터 처리
+                    if (result != null && result['isLoggedIn']) {
+                      setState(() {
+                        MyApp.isLoggedIn = result['isLoggedIn'];
+                        MyApp.userName = result['username'];
+                        MyApp.userId = result['userId'];
+                         // 필요한 경우 여기에서 추가 UI 업데이트 로직을 구현합니다.
+                      });
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => nextPage)); // 로그인 성공 후 다음 페이지로 이동
+                    }
+                  });
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => nextPage)); // 이미 로그인된 경우 다음 페이지로 이동
+    }
+  }
+
+
   late final ValueNotifier<DateTime> _selectedDay;
   late final ValueNotifier<DateTime> _focusedDay;
   String selectedLibrary = '성동구립';
@@ -186,7 +221,7 @@ class _HomePageState extends State<HomePage> {
   List<Event> _selectedEvents = [];
 
   Future<void> fetchEvents(String libraryName) async {
-    final url = Uri.parse('http://10.0.2.2:8080/api/events/$libraryName');
+    final url = Uri.parse('http://13.210.68.246:8080/api/events/$libraryName');
     print("Requesting events from: $url");
 
     final response = await http.get(url);
@@ -278,10 +313,7 @@ class _HomePageState extends State<HomePage> {
     _focusedDay = ValueNotifier(DateTime.now());
     fetchEvents(selectedLibrary);
     _selectedEvents = _getEventsForDay(_selectedDay.value);
-    fetchUserStatus(); // 앱이 시작될 때 사용자 상태를 가져옴
-    if (widget.userid != null) {
-      loadBarcodeImage(widget.userid!); // 사용자 ID를 사용하여 바코드 이미지 로드
-    }
+
   }
 
   void _onLibraryChanged(String newValue) {
@@ -298,50 +330,10 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  Future<void> loadBarcodeImage(int userId) async {
-    try {
-      var response = await http.get(
-        Uri.parse('http://10.0.2.2:8080/b/$userId'),
-      );
-
-      if (response.statusCode == 200) {
-        setState(() { // setState 내에서 barcodeImageUrl 업데이트
-          barcodeImageUrl = response.body;
-        });
-      } else {
-        print('Failed to load barcode image');
-      }
-    } catch (e) {
-      print('Error fetching barcode image: $e');
-    }
-  }
-
-  Future<String> getUserStatus(int userId) async {
-    var response = await http.get(
-      Uri.parse('http://10.0.2.2:8080/userstatus/$userId'),
-    );
-
-    if (response.statusCode == 200) {
-      return response.body;
-    } else {
-      throw Exception('Failed to load user status');
-    }
-  }
-
-  Future<void> fetchUserStatus() async {
-    try {
-      String status = await getUserStatus(MyApp.userId ?? 0);
-      setState(() {
-        userStatus = status; // 상태를 업데이트하고 다시 렌더링
-      });
-    } catch (e) {
-      print('Error fetching user status: $e');
-    }
-  }
 
   Future<void> _logout() async {
     var response = await http.post(
-      Uri.parse('http://10.0.2.2:8080/logout'),
+      Uri.parse('http://13.210.68.246:8080/logout'),
     );
 
     if (response.statusCode == 200) {
@@ -628,7 +620,18 @@ class _HomePageState extends State<HomePage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => LoginPage()),
-                    );
+                    ).then((result) {
+                      // 로그인 페이지에서 반환된 데이터 처리
+                      if (result != null && result['isLoggedIn']) {
+                        setState(() {
+                          MyApp.isLoggedIn = result['isLoggedIn'];
+                          MyApp.userName = result['username'];
+                          MyApp.userId = result['userId'];
+
+                                // 필요한 경우 여기에서 추가 UI 업데이트 로직을 구현합니다.
+                        });
+                      }
+                    });
                   }
                 },
               );
@@ -652,7 +655,7 @@ class _HomePageState extends State<HomePage> {
                   color: Colors.grey, // Adjust the color as needed
                 ),
               ),
-              accountName: Text(widget.username ?? 'Guest'),
+              accountName: Text(MyApp.userName ?? 'Guest'),
               accountEmail: Text(MyApp.userId != null ? MyApp.userId.toString() : ''),
               decoration: BoxDecoration(
                 color: Colors.cyan[800],
@@ -667,7 +670,7 @@ class _HomePageState extends State<HomePage> {
                 Icons.wifi_protected_setup,
                 color: Colors.grey[850],
               ),
-              title: Text('회원상태: $userStatus'),
+              title: Text('회원상태: ${MyApp.userStatus}'),
               onTap: () {
                 print('Home button is clicked!');
               },
@@ -788,7 +791,7 @@ class _HomePageState extends State<HomePage> {
                           height: screenSize.height * 0.15,
                           padding: EdgeInsets.only(left: 15, top: 3),
                           child:
-                          (barcodeImageUrl.isEmpty)?
+                          (MyApp.isLoggedIn != true)?
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -807,7 +810,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ),
                                 TextSpan(
-                                  text: widget.username,
+                                  text:MyApp.userName,
                                   style: TextStyle(
                                     fontSize: 18.0,
                                     color: Colors.white70, // 두 번째 텍스트의 글자색
@@ -822,7 +825,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ),
                                 TextSpan(
-                                  text: widget.userid.toString(),
+                                  text:MyApp.userId.toString(),
                                   style: TextStyle(
                                     fontSize: 18.0,
                                     color: Colors.white70, // 네 번째 텍스트의 글자색
@@ -840,9 +843,9 @@ class _HomePageState extends State<HomePage> {
                             bottomLeft: Radius.circular(12.0),
                             bottomRight: Radius.circular(12.0),
                           ),
-                          child: (barcodeImageUrl.isNotEmpty)?
+                          child: (MyApp.isLoggedIn == true && MyApp.barcodeImageUrl != null) ?
                           Image.network(
-                            barcodeImageUrl,
+                            MyApp.barcodeImageUrl!,
                             width: double.infinity,
                             height: 100,
                             fit: BoxFit.contain,
@@ -852,16 +855,30 @@ class _HomePageState extends State<HomePage> {
                             child: Center(
                               child: ElevatedButton(
                                 onPressed: () {
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()));
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => LoginPage()),
+                                  ).then((result) {
+                                    // 로그인 페이지에서 반환된 데이터 처리
+                                    if (result != null && result['isLoggedIn']) {
+                                      setState(() {
+                                        MyApp.isLoggedIn = result['isLoggedIn'];
+                                        MyApp.userName = result['username'];
+                                        MyApp.userId = result['userId'];
+                                        // 필요한 경우 여기에서 추가 UI 업데이트 로직을 구현합니다.
+                                      });
+                                    }
+                                  });
                                 },
                                 style: ElevatedButton.styleFrom(
                                   foregroundColor: Colors.cyan.shade900,
                                   backgroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
                                     side: BorderSide(color: Colors.cyan.shade800, width: 1.5),
                                   ),
                                 ),
-                                child: Text('로그인하러 가기', style: TextStyle(fontWeight: FontWeight.bold),),
+                                child: Text('로그인하러 가기', style: TextStyle(fontWeight: FontWeight.bold)),
                               ),
                             ),
                           ),
