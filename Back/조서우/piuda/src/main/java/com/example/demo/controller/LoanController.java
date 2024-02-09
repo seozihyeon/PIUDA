@@ -59,7 +59,9 @@ public class LoanController {
         loan.setReturn_status(returnStatus);
 
         loanMapper.insertLoan(loan);
+        bookMapper.updateBorrowedStatus(book_id, true);
         return "Loan created successfully!";
+        
     }
     
     @GetMapping("/list/{user_id}")
@@ -89,6 +91,8 @@ public class LoanController {
         loan.setReturn_date(returnDate);
         loan.setReturn_status(true);
         loanMapper.returnBook(loan);
+        bookMapper.updateBorrowedStatus(loan.getBook().getId(), false); // 도서 반환 시 borrowed 상태 업데이트
+
 
         return "Book returned successfully!";
     }
