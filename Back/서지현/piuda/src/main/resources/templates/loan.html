@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>대출 관리</title>
+    <style>
+        /* 대출 데이터 테이블에 적용될 스타일 */
+        .loan-table th, .loan-table td {
+            padding: 10px; /* 각 셀의 안쪽 여백을 설정합니다. */
+    		border : 1px solid black;
+    		border-collapse : collapse;
+        }
+        
+        th, td {
+  			text-align: center;
+		}
+    </style>
+    <!-- 여기에 필요한 CSS 추가 -->
+</head>
+<body>
+    <h1>대출 관리 페이지
+        <button onclick="alert('대출')">대출</button>
+        <button onclick="alert('반납')">반납</button>
+    </h1>
+    <div id="loanDataContainer">
+        <!-- 대출 데이터 테이블이 여기에 표시됩니다 -->
+    </div>
+
+<script src="/loan.js"></script>
+</body>
+</html>

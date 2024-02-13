@@ -61,6 +61,18 @@ public interface LoanMapper {
             "WHERE l.loan_id = #{loan_id}")
     String getBookIsbnByLoanId(@Param("loan_id") Long loan_id);
     
+    @Select("SELECT * FROM loan")
+    @Results({
+        @Result(property = "loan_id", column = "loan_id"),
+        @Result(property = "user", column = "user_id", 
+                javaType = Users.class, 
+                one = @One(select = "com.example.demo.mapper.UsersMapper.getUserById")),
+        @Result(property = "book", column = "book_id", 
+                javaType = Book.class, 
+                one = @One(select = "com.example.demo.mapper.BookMapper.findByBookId"))
+    })
+    List<Loan> getAllLoans();
+    
     
 
 }

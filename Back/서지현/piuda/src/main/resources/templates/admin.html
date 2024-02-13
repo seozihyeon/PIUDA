@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <script src="/admin.js"></script>
+</head>
+<body>
+    <h1>성동라이브러리 관리자 페이지</h1>
+    <button onclick="loadUsers()">사용자</button>
+    <button onclick="loadBooks()">도서</button>
+    <!-- 대출 버튼을 링크로 변경 -->
+    <button onclick="window.location.href='/admin/loan'">대출</button>
+    <button onclick="loadReservations()">예약</button>
+    <button onclick="loadReviews()">상태평가</button>
+    <div id="data"></div>
+</body>
+</html>
