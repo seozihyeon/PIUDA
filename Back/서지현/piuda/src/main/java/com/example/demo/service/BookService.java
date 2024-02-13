@@ -20,25 +20,8 @@ public class BookService{
     }
 	
 	public Book getBookById(String book_id) {
-        // 적절한 메서드로 수정해주세요.
         return bookMapper.findByBookId(book_id);
     }
-
-
-	public List<Book> findByBookTitle(String book_title) {
-	       String preparedTitle = prepareSearchTerm(book_title);
-	       return bookMapper.findByBookTitle(preparedTitle);
-	}
-
-	public List<Book> findByAuthor(String author) {
-	       String preparedAuthor = prepareSearchTerm(author);
-	       return bookMapper.findByAuthor(preparedAuthor);
-	}
-	 
-	public List<Book> findByPublisher(String publisher) {
-	       String preparedPublisher = prepareSearchTerm(publisher);
-	       return bookMapper.findByPublisher(preparedPublisher);
-	}
 	 
 	public String prepareSearchTerm(String term) {
 		
@@ -57,6 +40,7 @@ public class BookService{
 	    return searchTerm.toString();   
 	}
 	
+	
 	//
 	public List<Book> findByBookTitlePaged(String bookTitle, int page, int pageSize) {
 	    int offset = (page - 1) * pageSize;
@@ -73,9 +57,27 @@ public class BookService{
         return bookMapper.findByPublisherPaged(publisher, pageSize, offset);
     }
 	
-	public long countBooksPaged(String bookTitle, String author, String publisher) {
-	    return bookMapper.countBooksPaged(bookTitle, author, publisher);
+	public long countBooksPaged(String bookTitle, String author, String publisher, List<String> libraries) {
+	    if (libraries != null && !libraries.isEmpty()) {
+	        return bookMapper.countBooksPagedWithLibraries(bookTitle, author, publisher, libraries);
+	    } else {
+	        return bookMapper.countBooksPaged(bookTitle, author, publisher);
+	    }
 	}
 	
+	public List<Book> findByLibrariesAndTitlePaged(List<String> libraries, String bookTitle, int page, int pageSize) {
+	    int offset = (page - 1) * pageSize;
+	    return bookMapper.findByLibrariesAndTitlePaged(libraries, bookTitle, pageSize, offset);
+	}
+
+	public List<Book> findByLibrariesAndAuthorPaged(List<String> libraries, String author, int page, int pageSize) {
+	    int offset = (page - 1) * pageSize;
+	    return bookMapper.findByLibrariesAndAuthorPaged(libraries, author, pageSize, offset);
+	}
+
+	public List<Book> findByLibrariesAndPublisherPaged(List<String> libraries, String publisher, int page, int pageSize) {
+	    int offset = (page - 1) * pageSize;
+	    return bookMapper.findByLibrariesAndPublisherPaged(libraries, publisher, pageSize, offset);
+	}
 	
 }

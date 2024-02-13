@@ -18,19 +18,19 @@ import com.example.demo.model.Users;
 @Mapper
 public interface UserInterestBookMapper {
     
-    @Insert("INSERT INTO UserInterestBook (user_id, book_id) VALUES (#{user.id}, #{book.id})")
+    @Insert("INSERT INTO userinterestbook (user_id, book_id) VALUES (#{user.id}, #{book.id})")
     int insertUserInterestBook(@Param("user") Users user, @Param("book") Book book);
 
-    @Delete("DELETE FROM UserInterestBook WHERE user_id=#{user.id} AND book_id=#{book.id}")
+    @Delete("DELETE FROM userinterestbook WHERE user_id=#{user.id} AND book_id=#{book.id}")
     int deleteUserInterestBook(@Param("user") Users user, @Param("book") Book book);
     
-    @Select("SELECT * FROM UserInterestBook WHERE user_id=#{user_id}")
+    @Select("SELECT * FROM userinterestbook WHERE user_id=#{user_id}")
     @Results({
             @Result(property = "user", column = "user_id", javaType = Users.class, one = @One(select = "com.example.demo.mapper.UsersMapper.getUserProfile")),
             @Result(property = "book", column = "book_id", javaType = Book.class, one = @One(select = "com.example.demo.mapper.BookMapper.findByBookId"))
     })
     List<UserInterestBook> getUserInterestList(@Param("user_id") Long user_id);
     
-    @Select("SELECT COUNT(*) FROM UserInterestBook WHERE user_id=#{user_id} AND book_id=#{book_id}")
+    @Select("SELECT COUNT(*) FROM userinterestbook WHERE user_id=#{user_id} AND book_id=#{book_id}")
     int checkDuplicateInterest(@Param("user_id") Long user_id, @Param("book_id") String book_id);
 }

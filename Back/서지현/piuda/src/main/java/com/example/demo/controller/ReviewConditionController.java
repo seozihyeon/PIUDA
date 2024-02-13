@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,6 +48,20 @@ public class ReviewConditionController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid loan_id");
             }
             
+            // 30이내작성
+            Date returnDate = loan.getReturn_date();
+            if (returnDate == null) {
+                // return_date가 없는 경우 ReviewCondition 생성 허용
+            } else {
+                Date currentDate = new Date();
+                long differenceInMilliseconds = currentDate.getTime() - returnDate.getTime();
+                long differenceInDays = TimeUnit.MILLISECONDS.toDays(differenceInMilliseconds);
+
+                if (differenceInDays >= 30) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("상태평가는 반납일로부터 30일 이내에만 작성 가능합니다");
+                }
+            }
+            
             //중복확인
             ReviewCondition existingCondition = reviewConditionMapper.getReviewConditionByLoanId(loan_id);
             if (existingCondition != null) {
@@ -69,6 +84,7 @@ public class ReviewConditionController {
         }
     }
     
+    
     @GetMapping("/check/{loan_id}")
     public ResponseEntity<String> checkReviewCondition(@PathVariable Long loan_id) {
         try {
@@ -78,12 +94,27 @@ public class ReviewConditionController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid loan_id");
             }
 
+            // 30이내작성
+            Date returnDate = loan.getReturn_date();
+            if (returnDate == null) {
+                // return_date가 없는 경우 ReviewCondition 생성 허용
+            } else {
+                Date currentDate = new Date();
+                long differenceInMilliseconds = currentDate.getTime() - returnDate.getTime();
+                long differenceInDays = TimeUnit.MILLISECONDS.toDays(differenceInMilliseconds);
+
+                if (differenceInDays >= 30) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("상태평가는 반납일로부터 30일 이내에만 작성 가능합니다");
+                }
+            }
+
             ReviewCondition existingCondition = reviewConditionMapper.getReviewConditionByLoanId(loan_id);
             if (existingCondition != null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Already exists for the given loan_id");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이미 작성한 상태평가 입니다");
             } else {
                 return ResponseEntity.ok("Review condition does not exist for the given loan_id");
             }
+                       
         } catch (Exception e) {
             // Handle exceptions as needed
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error checking review condition");
