@@ -683,9 +683,27 @@ class _HomePageState extends State<HomePage> {
               ),
               title: Text('나의 독서 로그'),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => MyLog()),
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      content: SingleChildScrollView(
+                        child: ListBody(
+                          children: <Widget>[
+                            Text('아직 개발 중인 서비스입니다.'),
+                          ],
+                        ),
+                      ),
+                      actions: <Widget>[
+                        TextButton(
+                          child: Text('확인', style: TextStyle(color: Colors.cyan.shade800),),
+                          onPressed: () {
+                            Navigator.of(context).pop(); // 팝업 닫기
+                          },
+                        ),
+                      ],
+                    );
+                  },
                 );
               },
               //trailing: Icon(Icons.add),
@@ -746,6 +764,10 @@ class _HomePageState extends State<HomePage> {
                         Expanded(
                           child: TextField(
                             controller: _isbnController,
+                            decoration: InputDecoration(
+                              border: InputBorder.none, // 밑줄 제거
+                              // 기타 필요한 데코레이션 설정
+                            ),
                           ),
                         ),
                         GestureDetector(
@@ -1116,9 +1138,10 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
-            _buildTableCalendar(),
-            SizedBox(height:10),
+            // SizedBox(height:10),
             _buildEventList(),
+            // SizedBox(height:10),
+            _buildTableCalendar(),
             SizedBox(height:30),
           ],
         ),

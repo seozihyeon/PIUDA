@@ -81,4 +81,6 @@ public interface BookMapper {
     })
     List<Book> findByLibrariesAndPublisherPaged(@Param("libraries") List<String> libraries, @Param("publisher") String publisher, @Param("pageSize") int pageSize, @Param("offset") int offset);
 
+    @Select("SELECT book_id, book_title FROM books WHERE reserved = 0 AND borrowed = 0")
+    List<Book> findAllBookIdsAndTitles();
 }

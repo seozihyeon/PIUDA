@@ -286,7 +286,11 @@ class _FirstContentState extends State<FirstContent> {
           borderRadius: BorderRadius.all(Radius.circular(10)),
           border: Border.all(color: Colors.cyan.shade800, width: 2),
         ),
-        child: Column(
+        child: filteredLoanData.isEmpty // 대출 데이터가 비어 있는 경우
+            ? Center(
+          heightFactor: MediaQuery.of(context).size.height*0.035,
+          child: Text('대출내역이 없습니다'), // 대출내역이 없다는 메시지 표시
+        ): Column(
           children: filteredLoanData.map((data) {
             return LoanBookContainer(
               loan_id: data.loan_id,
