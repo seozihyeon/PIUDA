@@ -3,16 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <title>Admin Dashboard</title>
-    <script src="/admin.js"></script>
+    <link rel="stylesheet" href="/style.css">
+    <script src="/js/admin.js"></script>
 </head>
 <body>
+   <div class="header">
+       <div class="nav">
+           <ul>
+            <button onclick="window.location.href='/admin'">홈</button>
+               <button onclick="window.location.href = '/admin/user/all'">사용자</button>
+             <button onclick="window.location.href = '/admin/book/all'">도서</button>
+             <button onclick="window.location.href='/admin/loan'">대출</button>
+             <button onclick="window.location.href = '/admin/booking/all'">예약</button>
+             <button onclick="window.location.href = '/admin/review/all'">북리뷰</button>
+             <button onclick="window.location.href = '/admin/reviewcondition/all'">상태평가</button>
+           </ul>
+       </div>
+   </div>
+
     <h1>성동라이브러리 관리자 페이지</h1>
-    <button onclick="loadUsers()">사용자</button>
-    <button onclick="loadBooks()">도서</button>
-    <!-- 대출 버튼을 링크로 변경 -->
-    <button onclick="window.location.href='/admin/loan'">대출</button>
-    <button onclick="loadReservations()">예약</button>
-    <button onclick="loadReviews()">상태평가</button>
+    <button onclick="window.location.href = '/admin/user/all'">사용자</button>
+   <button onclick="window.location.href = '/admin/book/all'">도서</button>
+   <button onclick="window.location.href='/admin/loan'">대출</button>
+   <button onclick="window.location.href = '/admin/booking/all'">예약</button>
+   <button onclick="window.location.href = '/admin/review/all'">북리뷰</button>
+   <button onclick="window.location.href = '/admin/reviewcondition/all'">상태평가</button>
     <div id="data"></div>
+
 </body>
 </html>

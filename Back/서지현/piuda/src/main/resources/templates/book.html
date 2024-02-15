@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>책 리스트 페이지</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<style>
+    .layout {
+        width: 90%;
+        margin: 10px auto;
+        margin-top: 40px;
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+    }
+
+    th {
+        background-color: #f2f2f2;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+    
+    caption {
+            font-size: 1.5em; 
+            font-weight: bold; 
+            text-align: left; 
+            padding: 10px; 
+    }
+    
+   
+</style>
+
+
+<body>
+	<div class="header">
+       <div class="nav">
+           <ul>
+            <button onclick="window.location.href='/admin'">홈</button>
+               <button onclick="window.location.href = '/admin/user/all'">사용자</button>
+             <button onclick="window.location.href = '/admin/book/all'">도서</button>
+             <button onclick="window.location.href='/admin/loan'">대출</button>
+             <button onclick="window.location.href = '/admin/booking/all'">예약</button>
+             <button onclick="window.location.href = '/admin/review/all'">북리뷰</button>
+             <button onclick="window.location.href = '/admin/reviewcondition/all'">상태평가</button>
+           </ul>
+       </div>
+   </div>
+
+    <div class="layout">
+		<table>
+			<caption>책 목록</caption>
+			<thead>
+				<tr>
+					<th>책ID</th>
+					<th>제목</th>
+					<th>저자</th>
+					<th>출판사</th>
+					<th>도서관</th>
+					<th>ISBN</th>
+					<th>청구기호</th>
+					<th>분류</th>
+					<th>대출여부</th>
+					<th>예약여부</th>
+					<th>대출 가능 여부</th>
+
+
+
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="book: ${booklist}">
+					<td th:text="${book.id}"></td>
+					<td th:text="${book.title}"></td>
+					<td th:text="${book.author}"></td>
+					<td th:text="${book.publisher}"></td>
+					<td th:text="${book.library}"></td>
+					<td th:text="${book.book_isbn}"></td>
+					<td th:text="${book.book_ii}"></td>
+					<td th:text="${book.field_name}"></td>
+					<td th:text="${book.borrowed} ? '대출중' : '대출없음'"></td>
+        			<td th:text="${book.reserved} ? '예약중' : '예약없음'"></td>
+        			 <td th:style="${!book.borrowed and !book.reserved} ? 'color: green;' : 'color: red;'"
+            th:text="${!book.borrowed and !book.reserved} ? '대출 가능' : '대출 불가'">
+        </td>
+			</tbody>
+		</table>
+	</div>
+</body>
+
+</html>

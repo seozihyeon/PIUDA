@@ -49,7 +49,7 @@ function displayLoans(loans) {
 
     const thead = table.createTHead();
     const headerRow = thead.insertRow();
-    const headers = ['Loan ID', '회원번호', '성명', 'Book ID', '책 제목', '대출일자', '반납예정일', '반납일자', '반납상태', '반납 연장 여부', '예약 여부', '반납'];
+    const headers = ['Loan ID', 'User ID', 'User Name', 'Book ID', 'Book Title', 'Loan Date', 'Expected Return Date', 'Return Date', 'Return Status', 'Extend Status', 'Reserved', 'Actions'];
     headers.forEach(headerText => {
         const headerCell = document.createElement('th');
         headerCell.textContent = headerText;
@@ -59,7 +59,6 @@ function displayLoans(loans) {
     const tbody = table.createTBody();
     loans.forEach(loan => {
         const row = tbody.insertRow();
-
         row.insertCell().textContent = loan.loan_id;
         row.insertCell().textContent = loan.user ? loan.user.id : '-';
         row.insertCell().textContent = loan.user ? loan.user.name : '-';
@@ -68,36 +67,29 @@ function displayLoans(loans) {
         row.insertCell().textContent = formatDate(loan.loan_date);
         row.insertCell().textContent = formatDate(loan.expect_date);
         row.insertCell().textContent = formatDate(loan.return_date);
+        row.insertCell().textContent = loan.return_status ? 'Returned' : 'Not Returned';
+        row.insertCell().textContent = loan.extend_status ? 'Extended' : 'Not Extended';
+        row.insertCell().textContent = loan.book.reserved ? 'Reserved' : 'Not Reserved';
 
-        const returnStatusCell = row.insertCell();
-        returnStatusCell.textContent = loan.return_status ? '반납완료' : '대출중';
-        returnStatusCell.style.color = loan.return_status ? 'green' : 'red';
 
-        const extendStatusCell = row.insertCell();
-        extendStatusCell.textContent = loan.extend_status ? '연장완료' : '미연장';
-        extendStatusCell.style.color = loan.extend_status ? 'red' : 'black';
-
-        const reservedStatusCell = row.insertCell();
-        reservedStatusCell.textContent = loan.book.reserved ? '예약중' : '예약없음';
-        reservedStatusCell.style.color = loan.book.reserved ? 'red' : 'black';
-
-        const returnCell = row.insertCell();
-        if (!loan.return_status) {
-            const returnButton = document.createElement('button');
-            returnButton.textContent = '반납';
-            returnButton.onclick = function() { returnLoan(loan.loan_id); };
-            returnButton.style.fontSize = '15px';
-            returnButton.style.padding = '10px 10px';
-            returnButton.style.backgroundColor = 'red';
-            returnButton.style.color = 'white';
-            returnButton.style.border = 'none';    	
-            returnCell.appendChild(returnButton);
-        }
+        // 반납 상태에 따라 반납 버튼 추가
+       const returnCell = row.insertCell();
+		if (!loan.return_status) {
+    	const returnButton = document.createElement('button');
+    	returnButton.textContent = '반납';
+    	returnButton.onclick = function() { returnLoan(loan.loan_id); };
+    	returnButton.style.fontSize = '15px';
+		returnButton.style.padding = '10px 10px';
+		returnButton.style.backgroundColor = 'red';
+		returnButton.style.color = 'white';
+		returnButton.style.border = 'none';    	
+		returnCell.appendChild(returnButton);
+    	
+}
     });
 
     loansContainer.appendChild(table);
 }
-
 
 function returnLoan(loanId) {
     // 반납 처리 로직을 여기에 추가합니다.
