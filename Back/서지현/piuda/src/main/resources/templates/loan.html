@@ -16,8 +16,13 @@
 		}
 		
 		.button-group {
+            margin-top: 5px;
+        }
+        
+        .button-group2 {
             margin-top: 20px;
         }
+        
 
     </style>
     <!-- 여기에 필요한 CSS 추가 -->
@@ -30,15 +35,15 @@
     <div>
         <label for="userIdSelect">사용자:</label>
         <select id="userIdSelect"></select>
-
+ 	
         <label for="bookIdSelect">도서:</label>
         <select id="bookIdSelect"></select>
-
-        <button onclick="initiateLoan()">대출</button>
+		
+		<button onclick="initiateLoan()" style="font-size: 15px; padding: 10px 20px; background-color: dodgerblue; color: white; border: white;">대출</button>
      </div>
 
         
-	<div class="button-group">
+	<div class="button-group2">
     <button onclick="fetchLoanDataFiltered()">대출현황</button>
     <button onclick="fetchLoanData()">대출 내역</button>
 </div>

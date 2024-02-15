@@ -4,8 +4,8 @@ window.onload = function() {
     fetchBookData();
     
     // select2 적용
-   $('#userIdSelect').select2({ width: '100%' });
-   $('#bookIdSelect').select2({ width: '100%' });
+   $('#userIdSelect').select2({ width: '40%' });
+   $('#bookIdSelect').select2({ width: '40%' });
 };
 function fetchLoanData() {
     fetch('/admin/loan/all')
@@ -77,8 +77,14 @@ function displayLoans(loans) {
 		if (!loan.return_status) {
     	const returnButton = document.createElement('button');
     	returnButton.textContent = '반납';
-    	returnButton.onclick = function() { returnLoan(loan.loan_id); }; // 수정된 부분
-    	returnCell.appendChild(returnButton);
+    	returnButton.onclick = function() { returnLoan(loan.loan_id); };
+    	returnButton.style.fontSize = '15px';
+		returnButton.style.padding = '10px 10px';
+		returnButton.style.backgroundColor = 'red';
+		returnButton.style.color = 'white';
+		returnButton.style.border = 'none';    	
+		returnCell.appendChild(returnButton);
+    	
 }
     });
 
