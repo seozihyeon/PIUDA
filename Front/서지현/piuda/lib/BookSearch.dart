@@ -40,6 +40,7 @@ class _BookSearchState extends State<BookSearch> {
   void _updateSelectedLibraries(Set<String> selected) {
     setState(() {
       _selectedLibraries = selected;
+      currentPage = 1;
     });
     searchBook();
   }
@@ -59,7 +60,7 @@ class _BookSearchState extends State<BookSearch> {
   }
 
   int currentPage = 1;
-  int pageSize = 4;
+  int pageSize = 10;
   bool hasMoreData = true;
   late ScrollController _scrollController;
   int totalPages = 1;
@@ -82,6 +83,11 @@ class _BookSearchState extends State<BookSearch> {
     if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
       if (hasMoreData && currentPage < totalPages) {
         goToPage(currentPage + 1);
+      }
+    } else {
+      // 페이지 수가 변경될 때 현재 페이지가 총 페이지 수를 초과하지 않도록 조정
+      if (currentPage > totalPages) {
+        goToPage(totalPages);
       }
     }
   }
@@ -130,6 +136,12 @@ class _BookSearchState extends State<BookSearch> {
         url += '&pageSize=$pageSize';
       }
 
+      // 도서관 정보를 추가
+      if (_selectedLibraries.isNotEmpty) {
+        final selectedLibrariesQueryParam = _selectedLibraries.join(',');
+        url += '&libraries=$selectedLibrariesQueryParam';
+      }
+
       final response = await http.get(Uri.parse(url));
 
 
@@ -142,8 +154,7 @@ class _BookSearchState extends State<BookSearch> {
 
         totalPages = calculateTotalPages(response); // 실제로는 서버 응답에서 페이지 정보를 추출하여 계산해야 합니다.
 
-        if (responseData.isEmpty) {
-          // 더 이상 가져올 데이터가 없음
+        if (responseData.isEmpty) { // 더 이상 가져올 데이터가 없음
           setState(() {
             hasMoreData = false;
           });
@@ -332,6 +343,10 @@ class _BookSearchState extends State<BookSearch> {
                               Expanded(
                                 child: TextField(
                                   controller: _isbnController,
+                                  decoration: InputDecoration(
+                                    border: InputBorder.none, // 밑줄 제거
+                                    // 기타 필요한 데코레이션 설정
+                                  ),
                                 ),
                               ),
                               GestureDetector(
@@ -379,40 +394,39 @@ class _BookSearchState extends State<BookSearch> {
             ),
 
             Container(
-              child: Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (currentPage > 1)
-                      ElevatedButton(
-                        onPressed: () => goToPage(currentPage - 1),
-                        child: Text('이전'),
-                        style: ElevatedButton.styleFrom(foregroundColor: Colors.black),
-                      ),
-                    for (int i = 1; i <= totalPages; i++)
-                      if (i >= (currentPage - 1) ~/ 3 * 3 + 1 && i <= (currentPage - 1) ~/ 3 * 3 + 3)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6.0),
-                          child: ElevatedButton(
-                            onPressed: () => goToPage(i),
-                            child: Text('$i'),
-                            style: ElevatedButton.styleFrom(
-                              foregroundColor: i == currentPage ? Colors.white : Colors.black,
-                              backgroundColor: i == currentPage ? Colors.cyan.shade700 : null,
-                            ),
+              constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (currentPage > 1)
+                    ElevatedButton(
+                      onPressed: () => goToPage(currentPage - 1),
+                      child: Text('이전'),
+                      style: ElevatedButton.styleFrom(foregroundColor: Colors.black),
+                    ),
+                  for (int i = 1; i <= totalPages; i++)
+                    if (i >= (currentPage - 1) ~/ 3 * 3 + 1 && i <= (currentPage - 1) ~/ 3 * 3 + 3)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        child: ElevatedButton(
+                          onPressed: () => goToPage(i),
+                          child: Text('$i'),
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: i == currentPage ? Colors.white : Colors.black,
+                            backgroundColor: i == currentPage ? Colors.cyan.shade700 : null,
                           ),
                         ),
-                    if (currentPage < totalPages)
-                      ElevatedButton(
-                        onPressed: () => goToPage(currentPage + 1),
-                        child: Text('다음'),
-                        style: ElevatedButton.styleFrom(foregroundColor: Colors.black),
                       ),
-                  ],
-                ),
+                  if (currentPage < totalPages)
+                    ElevatedButton(
+                      onPressed: () => goToPage(currentPage + 1),
+                      child: Text('다음'),
+                      style: ElevatedButton.styleFrom(foregroundColor: Colors.black),
+                    ),
+                ],
               ),
             ),
+            SizedBox(height: 4,)
           ],
         ),
       ),
@@ -468,59 +482,98 @@ class BookContainer extends StatelessWidget {
 
 
   Future<void> addInterestBook(BuildContext context, int userId, String bookId) async {
-    try {
-      final response = await http.post(
-        Uri.parse('http://13.210.68.246:8080/api/userinterest/add'),
-        body: {'user_id': userId.toString(), 'book_id': bookId},
+    // 로그인 상태 확인
+    if (MyApp.userId == null) {
+      // 로그인하지 않은 경우, 로그인 유도 팝업 표시
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('알림'),
+            content: Text('로그인 후 이용 가능한 서비스입니다.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // 팝업 닫기
+                },
+                child: Text(
+                    '확인', style: TextStyle(color: Colors.cyan.shade800)),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // 팝업 닫기
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                  );
+                },
+                child: Text(
+                    '로그인하러 가기', style: TextStyle(color: Colors.cyan.shade800)),
+              ),
+            ],
+          );
+        },
       );
+      return; // 함수 종료
+    }
+    else {
+      try {
+        final response = await http.post(
+          Uri.parse('http://13.210.68.246:8080/api/userinterest/add'),
+          body: {'user_id': userId.toString(), 'book_id': bookId},
+        );
 
-      if (response.statusCode == 200) {
-        // 서버에서 성공적으로 응답을 받았을 때의 처리
-        print('Book added to user\'s interest list successfully');
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              content: Text('도서가 관심 도서에 추가되었습니다.'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
-                ),
-              ],
-            );
-          },
-        );
-      } else if (response.statusCode == 400) {
-        // 중복된 경우에 대한 처리
-        print('Failed to add book to user\'s interest list: Duplicate book');
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              content: Text('이미 관심 도서에 추가된 책입니다.'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
-                ),
-              ],
-            );
-          },
-        );
-      } else {
-        // 서버에서 오류 응답을 받았을 때의 처리
-        print('Failed to add book to user\'s interest list');
+        if (response.statusCode == 200) {
+          // 서버에서 성공적으로 응답을 받았을 때의 처리
+          print('Book added to user\'s interest list successfully');
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: Text('도서가 관심 도서에 추가되었습니다.'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                        '확인', style: TextStyle(color: Colors.cyan.shade800)),
+                  ),
+                ],
+              );
+            },
+          );
+        } else if (response.statusCode == 400) {
+          // 중복된 경우에 대한 처리
+          print('Failed to add book to user\'s interest list: Duplicate book');
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: Text('이미 관심 도서에 추가된 책입니다.'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                        '확인', style: TextStyle(color: Colors.cyan.shade800)),
+                  ),
+                ],
+              );
+            },
+          );
+        } else {
+          // 서버에서 오류 응답을 받았을 때의 처리
+          print('Failed to add book to user\'s interest list');
+        }
+      } catch (e) {
+        // 네트워크 오류 등 예외가 발생했을 때의 처리
+        print('Error adding interest book: $e');
       }
-    } catch (e) {
-      // 네트워크 오류 등 예외가 발생했을 때의 처리
-      print('Error adding interest book: $e');
     }
   }
+
 
   Future<void> reserveBook(BuildContext context, String userId, String bookId) async {
     // 로그인 상태 확인
@@ -884,9 +937,9 @@ class LibraryOptions extends StatefulWidget {
 
 class _LibraryOptionsState extends State<LibraryOptions> {
 
-  final List<String> libraries = ['성동구립', '금호', '용답', '무지개', '성수', '청계', '숲속',];
+  final List<String> libraries = ['성동구립도서관', '금호도서관', '용답도서관', '무지개도서관', '성수도서관', '청계도서관', '숲속도서관',];
   Set<String> selectedLibraries = Set<String>.from([
-    '성동구립', '금호', '용답', '무지개', '성수', '청계', '숲속',
+    '성동구립도서관', '금호도서관', '용답도서관', '무지개도서관', '성수도서관', '청계도서관', '숲속도서관',
   ]);
 
   void _onCheckboxChanged(bool? value, String libraryName) {
