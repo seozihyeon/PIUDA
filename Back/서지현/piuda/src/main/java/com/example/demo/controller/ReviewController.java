@@ -58,7 +58,7 @@ public class ReviewController {
                 System.out.println("User object is null for loan_id: " + loan_id);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Loan found but user not found");
             }
-        	Long userId = loan.getUser().getId(); // 사용자 ID 가져오기
+           Long userId = loan.getUser().getId(); // 사용자 ID 가져오기
             String isbn = loan.getBook().getBook_isbn(); // ISBN 가져오기
 
             // 중복 리뷰 확인
@@ -104,6 +104,11 @@ public class ReviewController {
     ) {
         int reviewCount = reviewMapper.countReviewsByUserIdAndIsbn(userId, isbn);
         return ResponseEntity.ok(reviewCount > 0);
+    }
+    
+    @GetMapping("/list")
+    public List<Review> getAllReviews() {
+        return reviewMapper.getAllReviews();
     }
 
 }

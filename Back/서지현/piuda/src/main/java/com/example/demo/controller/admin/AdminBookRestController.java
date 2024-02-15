@@ -1,38 +1,25 @@
 package com.example.demo.controller.admin;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-
+import org.springframework.web.bind.annotation.*;
 import com.example.demo.mapper.BookMapper;
 import com.example.demo.model.Book;
 
-@RequestMapping("/admin/book")
-@Controller
-public class AdminBookController {
+import java.util.List;
+
+@RestController
+@RequestMapping("/admin/books") // 관리자용 URL 접두사
+public class AdminBookRestController {
     private final BookMapper bookMapper;
     private static final Logger logger = LoggerFactory.getLogger(AdminBookController.class);
 
-    public AdminBookController(BookMapper bookMapper) {
+    public AdminBookRestController(BookMapper bookMapper) {
         this.bookMapper = bookMapper;
     }
-    
-    @GetMapping("/all")
-    public String bookList(Model model) {
-    	List<Book> bookList = bookMapper.getBooksList();
-    	
-    	model.addAttribute("booklist", bookList);
-    	
-        return "book"; //
-    }
-    
+
     @GetMapping("/titles")
     public ResponseEntity<List<Book>> getAllBookIdsAndTitles() {
         try {
@@ -43,5 +30,8 @@ public class AdminBookController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+   
+    
 
+    // 관리자 전용 추가 기능...
 }

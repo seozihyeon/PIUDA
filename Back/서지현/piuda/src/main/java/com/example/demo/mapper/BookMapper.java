@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Update;
 import com.example.demo.model.Book;
 
 @Mapper
-public interface BookMapper {       
+public interface BookMapper {	    
     @Select("SELECT * FROM books WHERE book_id = #{book_id}")
     Book findByBookId(@Param("book_id") String book_id);
     
@@ -81,6 +81,9 @@ public interface BookMapper {
     })
     List<Book> findByLibrariesAndPublisherPaged(@Param("libraries") List<String> libraries, @Param("publisher") String publisher, @Param("pageSize") int pageSize, @Param("offset") int offset);
 
+    @Select("SELECT * FROM books")
+    List<Book> getBooksList();
+    
     @Select("SELECT book_id, book_title FROM books WHERE reserved = 0 AND borrowed = 0")
     List<Book> findAllBookIdsAndTitles();
 }

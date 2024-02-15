@@ -3,34 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <title>대출 관리</title>
+    <link rel="stylesheet" href="/style.css">
     <style>
-        /* 대출 데이터 테이블에 적용될 스타일 */
-        .loan-table th, .loan-table td {
-            padding: 10px; /* 각 셀의 안쪽 여백을 설정합니다. */
-    		border : 1px solid black;
-    		border-collapse : collapse;
-        }
-        
-        th, td {
-  			text-align: center;
-		}
-		
-		.button-group {
-            margin-top: 5px;
-        }
-        
-        .button-group2 {
-            margin-top: 20px;
-        }
-        
+    .layout {
+        width: 90%;
+        margin: 10px auto;
+        margin-top: 40px;
+    }
 
-    </style>
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+    }
+
+    th {
+        background-color: #f2f2f2;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+
+    .borrowed {
+        color: red; /* 대출중인 경우에는 빨간색으로 표시 */
+    }
+
+    .available {
+        color: green; /* 대출가능한 경우에는 초록색으로 표시 */
+    }
+
+    /* 여기에 필요한 나머지 스타일 추가 */
+</style>
     <!-- 여기에 필요한 CSS 추가 -->
      <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
 </head>
 <body>
+	<div class="header">
+       <div class="nav">
+           <ul>
+            <button onclick="window.location.href='/admin'">홈</button>
+               <button onclick="window.location.href = '/admin/user/all'">사용자</button>
+             <button onclick="window.location.href = '/admin/book/all'">도서</button>
+             <button onclick="window.location.href='/admin/loan'">대출</button>
+             <button onclick="window.location.href = '/admin/booking/all'">예약</button>
+             <button onclick="window.location.href = '/admin/review/all'">북리뷰</button>
+             <button onclick="window.location.href = '/admin/reviewcondition/all'">상태평가</button>
+           </ul>
+       </div>
+   </div>
+
     <h1>대출 관리 페이지</h1>
     <div>
         <label for="userIdSelect">사용자:</label>
