@@ -5,7 +5,7 @@
  
 ## 📌 Team Olym
 
-👭 Members
+👭 **Members**
 
 | 조서우 | 서지현 |
 | --- | --- |
@@ -13,7 +13,7 @@
 | [Github](https://github.com/suwuim) | [Github](https://github.com/seozihyeon) | 
 
 
-🌟 Contribution
+🌟 **Contribution**
 
 - `조서우` : 팀장, 기획, 디자인, 프론트엔드, 백엔드
 - `서지현` : 기획, 디자인, 프론트엔드, 백엔드
@@ -37,6 +37,7 @@
 - 공지사항/문화행사 열람
 - 도서관 일정 확인
 - 통합 도서관 웹 홈페이지 이동
+
  <br/>
 
 ## 🔧 How to Use
