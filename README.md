@@ -37,9 +37,8 @@
 - 공지사항/문화행사 열람
 - 도서관 일정 확인
 - 통합 도서관 웹 홈페이지 이동
-<img src="https://github.com/seozihyeon/PIUDA/assets/110870960/3029ded7-2c41-4477-a8ca-9d3a2d572851" width="640" height="360"/>
-<img src="https://github.com/seozihyeon/PIUDA/assets/110870960/32441e2f-0e15-4c77-82f5-9191c29c2e5e" width="640" height="360"/>
-<img src="https://github.com/seozihyeon/PIUDA/assets/110870960/754f3380-47b1-4cad-9986-bbe9613945b4" width="640" height="360"/>
+<img src="https://github.com/seozihyeon/PIUDA/assets/110870960/bd522305-b296-4c73-bfdf-b050ebb90286" width="1096" height="360"/>
+<img src="https://github.com/seozihyeon/PIUDA/assets/110870960/20fc44a4-da71-4dbd-be98-1cf0dfd99433" width="1096" height="360"/>
  <br/>
 
 ## 🔧 How to Use
