@@ -9,7 +9,7 @@
 
 | 조서우 | 서지현 |
 | --- | --- |
-| ![조서우의 사진](https://avatars.githubusercontent.com/u/140501944?v=4) | ![서지현의 사진](서지현_URL) |
+| ![조서우의 사진](https://avatars.githubusercontent.com/u/140501944?v=4) | ![서지현의 사진](https://avatars.githubusercontent.com/u/110870960?v=4) |
 | [Github](https://github.com/suwuim) | [Github](https://github.com/seozihyeon) | 
 
 🌟 Contribution
