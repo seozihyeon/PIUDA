@@ -9,8 +9,7 @@
 
 | 조서우 | 서지현 |
 | --- | --- |
-| <img src="https://avatars.githubusercontent.com/u/140501944?v=4" width="100" height="100"/>
- | <img src="https://avatars.githubusercontent.com/u/110870960?v=4" width="100" height="100"/> |
+| <img src="https://avatars.githubusercontent.com/u/140501944?v=4" width="150" height="150"/> | <img src="https://avatars.githubusercontent.com/u/110870960?v=4" width="150" height="150"/> |
 | [Github](https://github.com/suwuim) | [Github](https://github.com/seozihyeon) | 
 
 
