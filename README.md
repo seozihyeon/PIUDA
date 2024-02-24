@@ -28,8 +28,8 @@
 
 ## 🔍 Preview
 
-<img src="https://github.com/seozihyeon/PIUDA/assets/110870960/bd522305-b296-4c73-bfdf-b050ebb90286" width="1096" height="360"/>
-<img src="https://github.com/seozihyeon/PIUDA/assets/110870960/20fc44a4-da71-4dbd-be98-1cf0dfd99433" width="1096" height="360"/>
+<img src="https://github.com/seozihyeon/PIUDA/assets/110870960/bd522305-b296-4c73-bfdf-b050ebb90286" width="685" height="225"/>
+<img src="https://github.com/seozihyeon/PIUDA/assets/110870960/20fc44a4-da71-4dbd-be98-1cf0dfd99433" width="685" height="225"/>
  <br/>
 
 ## 🔧 How to Use
