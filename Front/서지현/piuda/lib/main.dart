@@ -221,7 +221,7 @@ class _HomePageState extends State<HomePage> {
   List<Event> _selectedEvents = [];
 
   Future<void> fetchEvents(String libraryName) async {
-    final url = Uri.parse('http://13.210.68.246:8080/api/events/$libraryName');
+    final url = Uri.parse('http://52.78.222.198:8080:8080/api/events/$libraryName');
     print("Requesting events from: $url");
 
     final response = await http.get(url);
@@ -333,7 +333,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _logout() async {
     var response = await http.post(
-      Uri.parse('http://13.210.68.246:8080/logout'),
+      Uri.parse('http://52.78.222.198:8080:8080/logout'),
     );
 
     if (response.statusCode == 200) {
