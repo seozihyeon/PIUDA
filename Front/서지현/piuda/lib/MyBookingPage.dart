@@ -175,7 +175,7 @@ class _BookingListState extends State<BookingList> {
     });
 
     final url = Uri.parse(
-        'http://13.210.68.246:8080/api/userbooking/list/${MyApp.userId}');
+        'http://52.78.222.198:8080/api/userbooking/list/${MyApp.userId}');
 
     try {
       final response = await http.get(url);
@@ -217,7 +217,7 @@ class _BookingListState extends State<BookingList> {
       print('Removing User Booking. User ID: $userId, Book ID: $bookId');
 
       final response = await http.delete(
-        Uri.parse('http://13.210.68.246:8080/api/userbooking/remove/$userId/$bookId'),
+        Uri.parse('http://52.78.222.198:8080/api/userbooking/remove/$userId/$bookId'),
       );
 
       print('Response status: ${response.statusCode}');

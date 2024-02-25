@@ -168,7 +168,7 @@ class _BookDetailState extends State<BookDetail> {
     else {
       try {
         final response = await http.post(
-          Uri.parse('http://13.210.68.246:8080/api/userinterest/add'),
+          Uri.parse('http://52.78.222.198:8080/api/userinterest/add'),
           body: {'user_id': userId.toString(), 'book_id': bookId},
         );
 
@@ -248,52 +248,21 @@ class _BookDetailState extends State<BookDetail> {
                     MaterialPageRoute(builder: (context) => LoginPage()),
                   );
                 },
-                child: Text('로그인하러 가기' ,  style: TextStyle(color: Colors.cyan.shade800)),
+                child: Text('로그인하러 가기', style: TextStyle(color: Colors.cyan.shade800)),
               ),
             ],
           );
         },
       );
       return; // 함수 종료
-    }
-    else{
+    } else {
       // 로그인 상태일 때의 예약 처리 로직
       try {
-        // 현재 사용자의 예약 내역을 확인
-        final reservationsResponse = await http.get(
-          Uri.parse('http://13.210.68.246:8080/api/userbooking/reservations?user_id=$userId'),
-        );
-
-        if (reservationsResponse.statusCode == 200) {
-          final List<dynamic> reservations = json.decode(reservationsResponse.body);
-
-          // 최대 예약 가능 권수를 초과했을 경우
-          if (reservations.length >= 3) {
-            showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  content: Text('예약은 최대 3권까지 가능합니다.'),
-                  actions: <Widget>[
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(); // 팝업 닫기
-                      },
-                      child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
-                    ),
-                  ],
-                );
-              },
-            );
-            return; // 함수 종료
-          }
-        }
-
-        // 예약 가능한 경우 예약 요청 수행
+        // 예약 요청 보내기
         final DateTime now = DateTime.now();
         final String reserveDate = "${now.year}-${now.month}-${now.day}";
         final response = await http.post(
-          Uri.parse('http://13.210.68.246:8080/api/userbooking/add'),
+          Uri.parse('http://52.78.222.198:8080 /api/userbooking/add'),
           body: {
             'user_id': userId,
             'book_id': bookId,
@@ -301,34 +270,62 @@ class _BookDetailState extends State<BookDetail> {
           },
         );
 
-        // 예약 요청 응답 처리
-        if (response.statusCode == 200) {
-          // 예약 성공 시, 상태 업데이트
-          setState(() {
-            widget.reserved = true; // 예약 상태를 true로 설정
-            // 다른 필요한 상태 업데이트도 여기서 수행
-          });
+        print('서버 응답 메시지: ${response.body}');
 
-          // 성공 메시지 표시
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                content: Text('예약이 완료되었습니다.'),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(); // 팝업 닫기
-                      widget.onReservationCompleted?.call();
-                    },
-                    child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
-                  ),
-                ],
-              );
-            },
-          );
-        } else {
-          // 예약 실패 메시지 표시
+
+        // 서버 응답 확인
+        String message = response.body;
+        if (response.statusCode == 200) {
+          // 예약 성공 메시지
+          if (message == "BookAddedSuccessfully")  {
+            // 예약 성공 시, 상태 업데이트
+            setState(() {
+              widget.reserved = true; // 예약 상태를 true로 설정
+              // 다른 필요한 상태 업데이트도 여기서 수행
+            });
+            // 성공 메시지 표시
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  content: Text('예약이 완료되었습니다.'),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // 팝업 닫기
+                        widget.onReservationCompleted?.call();
+                      },
+                      child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+
+
+          // 기타 오류 메시지
+          else {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  content: Text(message), // 서버에서 받은 메시지 표시
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // 팝업 닫기
+                      },
+                      child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+        }
+        // 최대 예약 권수 초과 메시지
+        else if (message == "MaxReservationLimit") {
           showDialog(
             context: context,
             builder: (BuildContext context) {
@@ -337,17 +334,56 @@ class _BookDetailState extends State<BookDetail> {
                 actions: <Widget>[
                   TextButton(
                     onPressed: () {
-                      Navigator.of(context).pop();
+                      Navigator.of(context).pop(); // 팝업 닫기
                     },
-                    child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
+                    child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
                   ),
                 ],
               );
             },
           );
         }
-      } catch (e) {
-        // 네트워크 오류 등 예외 처리
+        // 이미 예약된 도서 메시지
+        else if (message == "AlreadyReserved") {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: Text('이미 예약된 도서입니다.'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // 팝업 닫기
+                    },
+                    child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+        // 서버 오류 메시지
+        else {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: Text('서버 오류가 발생했습니다.'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // 팝업 닫기
+                    },
+                    child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      }
+      // 예외 처리
+      catch (e) {
         showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -356,17 +392,17 @@ class _BookDetailState extends State<BookDetail> {
               actions: <Widget>[
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pop();
+                    Navigator.of(context).pop(); // 팝업 닫기
                   },
-                  child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
+                  child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
                 ),
               ],
             );
           },
         );
       }
-    }}
-
+    }
+  }
 
 
 
@@ -379,12 +415,7 @@ class _BookDetailState extends State<BookDetail> {
     Color loanStatusColor = (widget.loanstatus && !widget.reserved) ? Colors.cyan.shade700 : Colors.red.shade400;
     String loanStatusBox = (widget.loanstatus || widget.reserved) ? '책누리신청' : '예약하기';
 
-    return PopScope(
-      canPop: false,
-      onPopInvoked: (diPop) async {
-        Navigator.pop(context, true);
-      },
-      child: Scaffold(
+    return Scaffold(
         appBar: AppBar(
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
@@ -992,8 +1023,7 @@ class _BookDetailState extends State<BookDetail> {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }
 

@@ -83,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    var loginurl = Uri.parse('http://13.210.68.246:8080/login');
+    var loginurl = Uri.parse('http://52.78.222.198:8080/login');
 
     try {
       var param = {'user_name': username, 'user_id': userIdInt};
@@ -151,7 +151,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<String> loadBarcodeImage(int userId) async {
-    var response = await http.get(Uri.parse('http://13.210.68.246:8080/b/$userId'));
+    var response = await http.get(Uri.parse('http://52.78.222.198:8080/b/$userId'));
     if (response.statusCode == 200) {
       return response.body; // 바코드 이미지 URL 반환
     } else {
@@ -161,7 +161,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<String> fetchUserStatus(int userId) async {
     var response = await http.get(
-        Uri.parse('http://13.210.68.246:8080/userstatus/$userId'));
+        Uri.parse('http://52.78.222.198:8080/userstatus/$userId'));
     if (response.statusCode == 200) {
       return response.body; // 회원 상태 반환
     } else {
