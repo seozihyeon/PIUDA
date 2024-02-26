@@ -2,6 +2,7 @@ package com.example.demo.mapper;
 import org.apache.ibatis.annotations.Result;
 import org.apache.ibatis.annotations.Results;
 
+import java.util.Date;
 import java.util.List;
 import org.apache.ibatis.annotations.One;
 import org.apache.ibatis.annotations.Insert;
@@ -73,6 +74,8 @@ public interface LoanMapper {
     })
     List<Loan> getAllLoans();
     
-    
+    @Select("SELECT expect_date FROM loan WHERE book_id = #{book_id} AND return_status = false")
+    List<Date> getExpectedDatesByBookId(@Param("book_id") String book_id);
 
+			
 }
