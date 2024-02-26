@@ -3,7 +3,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:http/http.dart' as http;
 
 Future<void> sendReviewToServer(int loanId, String reviewText, int reviewScore) async {
-  final url = Uri.parse('http://52.78.222.198:8080/api/review/add');
+  final url = Uri.parse('http://10.0.2.2:8080/api/review/add');
 
   try {
     final response = await http.post(

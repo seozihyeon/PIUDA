@@ -130,4 +130,15 @@ public class LoanController {
 
         return ResponseEntity.ok("대출이 성공적으로 연장되었습니다!");
     }
+    
+    @GetMapping("/expected-dates/{book_id}")
+    public ResponseEntity<List<Date>> getExpectedDatesByBookId(@PathVariable("book_id") String book_id) {
+        List<Date> expectedDates = loanMapper.getExpectedDatesByBookId(book_id);
+        if (!expectedDates.isEmpty()) {
+            return ResponseEntity.ok().body(expectedDates);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
+        }
+    }
+
 }

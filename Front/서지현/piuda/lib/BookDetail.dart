@@ -168,7 +168,7 @@ class _BookDetailState extends State<BookDetail> {
     else {
       try {
         final response = await http.post(
-          Uri.parse('http://52.78.222.198:8080/api/userinterest/add'),
+          Uri.parse('http://10.0.2.2:8080/api/userinterest/add'),
           body: {'user_id': userId.toString(), 'book_id': bookId},
         );
 
@@ -262,7 +262,7 @@ class _BookDetailState extends State<BookDetail> {
         final DateTime now = DateTime.now();
         final String reserveDate = "${now.year}-${now.month}-${now.day}";
         final response = await http.post(
-          Uri.parse('http://52.78.222.198:8080 /api/userbooking/add'),
+          Uri.parse('http://10.0.2.2:8080 /api/userbooking/add'),
           body: {
             'user_id': userId,
             'book_id': bookId,
