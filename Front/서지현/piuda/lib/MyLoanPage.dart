@@ -133,7 +133,7 @@ class _MyLoanPageState extends State<MyLoanPage> {
   Future<void> fetchLoanData() async {
     try {
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8080/loan/list/${MyApp.userId}'),
+        Uri.parse('http://34.64.173.65:8080/loan/list/${MyApp.userId}'),
       );
 
       if (response.statusCode == 200) {
@@ -459,7 +459,7 @@ class LoanBookContainer extends StatelessWidget {
   void extendLoan(int? loanId, BuildContext context) async {
     try {
       final response = await http.put(
-        Uri.parse('http://10.0.2.2:8080/loan/extend/$loanId'),
+        Uri.parse('http://34.64.173.65:8080/loan/extend/$loanId'),
       );
 
       if (response.statusCode == 200) {
@@ -513,7 +513,7 @@ class LoanBookContainer extends StatelessWidget {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              content: Text('이미 이 책에 대한 리뷰를 작성하셨습니다.'),
+              content: Text('이미 리뷰 작성을 완료한 도서입니다.'),
               actions: <Widget>[TextButton(onPressed: () {Navigator.of(context).pop();}, child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
               ),
               ],
@@ -541,7 +541,7 @@ class LoanBookContainer extends StatelessWidget {
   }
 
   Future<bool> checkIfUserReviewed(String isbn, int userId) async {
-    final url = Uri.parse('http://10.0.2.2:8080/api/review/check/review/$userId/$isbn');
+    final url = Uri.parse('http://34.64.173.65:8080/api/review/check/review/$userId/$isbn');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -560,7 +560,7 @@ class LoanBookContainer extends StatelessWidget {
     try {
       // 서버로부터 리뷰 상태를 확인하는 API 호출
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8080/reviewCondition/check/$loanId'),
+        Uri.parse('http://34.64.173.65:8080/reviewCondition/check/$loanId'),
       );
 
       if (response.statusCode == 200) {
@@ -585,7 +585,7 @@ class LoanBookContainer extends StatelessWidget {
     try {
       // 서버로부터 리뷰 상태를 확인하는 API 호출
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8080/reviewCondition/check/$loanId'),
+        Uri.parse('http://34.64.173.65:8080/reviewCondition/check/$loanId'),
       );
 
       if (response.statusCode == 200) {
@@ -799,12 +799,12 @@ class LoanBookContainer extends StatelessWidget {
                             if (hasReviewed) {
                               showDialog(context: context, builder: (BuildContext context) {
                                 return AlertDialog(
-                                  content: Text('이미 상태 평가를 완료한 도서입니다'),
+                                  content: Text('이미 상태 평가를 완료한 도서입니다.'),
                                   actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),),],);},);
                             } else if (out30) {
                               showDialog(context: context, builder: (BuildContext context) {
                                 return AlertDialog(
-                                  content: Text('상태평가는 반납일로부터 30일 이내에만 작성 가능합니다'),
+                                  content: Text('상태평가는 반납일로부터 30일 이내에만 작성 가능합니다.'),
                                   actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),),],);},);
                             } else {
                               Navigator.push(

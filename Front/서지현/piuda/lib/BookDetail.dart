@@ -8,6 +8,8 @@ import 'dart:convert';
 import 'LoginPage.dart';
 import 'review.dart';
 import 'review_service.dart';
+import 'package:intl/intl.dart';
+
 
 var reviewService = ReviewService();
 
@@ -31,6 +33,8 @@ class BookDetail extends StatefulWidget {
   final String book_ii;
   final String? series;
   final VoidCallback? onReservationCompleted;
+  String expectedDate;
+
 
 
   BookDetail({
@@ -52,11 +56,14 @@ class BookDetail extends StatefulWidget {
     required this.book_ii,
     this.series,
     this.onReservationCompleted,
+    this.expectedDate = '',
+
 
   });
 
   @override
   _BookDetailState createState() => _BookDetailState();
+
 }
 
 class _BookDetailState extends State<BookDetail> {
@@ -80,6 +87,7 @@ class _BookDetailState extends State<BookDetail> {
     fetchBookDescription(widget.book_isbn);
     fetchReviews();
     fetchReviewconditions();
+    getExpectedDate(widget.book_id);
   }
 
   void fetchReviews() async {
@@ -168,7 +176,7 @@ class _BookDetailState extends State<BookDetail> {
     else {
       try {
         final response = await http.post(
-          Uri.parse('http://10.0.2.2:8080/api/userinterest/add'),
+          Uri.parse('http://34.64.173.65:8080/api/userinterest/add'),
           body: {'user_id': userId.toString(), 'book_id': bookId},
         );
 
@@ -262,7 +270,7 @@ class _BookDetailState extends State<BookDetail> {
         final DateTime now = DateTime.now();
         final String reserveDate = "${now.year}-${now.month}-${now.day}";
         final response = await http.post(
-          Uri.parse('http://10.0.2.2:8080 /api/userbooking/add'),
+          Uri.parse('http://34.64.173.65:8080 /api/userbooking/add'),
           body: {
             'user_id': userId,
             'book_id': bookId,
@@ -404,7 +412,33 @@ class _BookDetailState extends State<BookDetail> {
     }
   }
 
+  Future<void> getExpectedDate(String bookId) async {
+    try {
+      print('Book ID: $bookId');
 
+      final response = await http.get(
+        Uri.parse('http://34.64.173.65:8080/loan/expected-dates/$bookId'),
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        List<dynamic> expectedDates = jsonDecode(response.body);
+        String nearestDate = expectedDates.isNotEmpty ? expectedDates.first : '';
+
+        setState(() {
+            if (widget.book_id == bookId) {
+              widget.expectedDate = nearestDate;
+            }
+        });
+      } else {
+        print('Failed to load expected date');
+      }
+    } catch (e) {
+      print('Error loading expected date: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -414,6 +448,17 @@ class _BookDetailState extends State<BookDetail> {
     String loanStatusText = (widget.loanstatus && !widget.reserved) ? '대출가능' : '대출불가';
     Color loanStatusColor = (widget.loanstatus && !widget.reserved) ? Colors.cyan.shade700 : Colors.red.shade400;
     String loanStatusBox = (widget.loanstatus || widget.reserved) ? '책누리신청' : '예약하기';
+
+    String formatDateString(String dateString) {
+      try {
+        DateTime parsedDate = DateTime.parse(dateString);
+        return DateFormat('yyyy-MM-dd').format(parsedDate);
+      } catch (e) {
+        // 날짜 파싱에 실패할 경우 로그를 출력하고 기본값 반환
+        print('Date parsing error: $e');
+        return '날짜 정보 없음';
+      }
+    }
 
     return Scaffold(
         appBar: AppBar(
@@ -705,6 +750,7 @@ class _BookDetailState extends State<BookDetail> {
                                                           color: Colors.grey.shade800, // 두 번째 텍스트의 글자색
                                                         ),
                                                       ),
+                                                      TextSpan(text: '\n'),
                                                     ]
                                                 ),
                                               ),
@@ -895,6 +941,24 @@ class _BookDetailState extends State<BookDetail> {
                                                   color: Colors.grey.shade800, // 두 번째 텍스트의 글자색
                                                 ),
                                               ),
+                                              if (widget.loanstatus == false) ...[
+                                                TextSpan(text: '\n'),
+                                                TextSpan(
+                                                text: '반납예정일 ',
+                                                style: TextStyle(
+                                                  fontSize: 18.0,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.grey.shade900,
+                                                ),
+                                              ),
+                                              TextSpan(
+                                                text: formatDateString(widget.expectedDate),
+                                                style: TextStyle(
+                                                  fontSize: 18.0,
+                                                  color: Colors.grey.shade800, // 두 번째 텍스트의 글자색
+                                                ),
+                                              ),
+                                              ],
                                             ],
                                           ),
                                         ),
