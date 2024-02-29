@@ -129,7 +129,11 @@ class _BookingListState extends State<BookingList> {
   @override
   void initState() {
     super.initState();
-    loadUserBooking();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (MyApp.userId != null) {
+        loadUserBooking();
+      }
+    });
   }
 
   Future<void> fetchBookCover(String book_isbn, int index) async {
@@ -166,43 +170,45 @@ class _BookingListState extends State<BookingList> {
   }
 
   Future<void> loadUserBooking() async {
+    setState(() {
+      isLoading = true; // 로딩 시작
+    });
+
     final url = Uri.parse(
         'http://10.0.2.2:8080/api/userbooking/list/${MyApp.userId}');
 
     try {
       final response = await http.get(url);
-
       if (response.statusCode == 200) {
         final decodedBody = utf8.decode(response.bodyBytes);
         final jsonBody = jsonDecode(decodedBody);
-
-        print("Response status: ${response.statusCode}");
-        print("Response body: $decodedBody");
-
         Iterable jsonList = jsonBody as Iterable;
         List<UserBooking> userBookingData = jsonList.map((userBooking) =>
             UserBooking.fromJson(userBooking)).toList();
 
+        // fetchBookCover 함수를 호출하기 전에 userBooking 상태를 설정합니다.
         setState(() {
           userBooking = userBookingData;
-          print("Updated user booking: $userBooking");
-          isLoading = false;
         });
 
-        for (int i = 0; i < userBookingData.length; i++) {
-          await fetchBookCover(userBookingData[i].book.bookIsbn, i);
+        // 각 예약에 대한 책 표지를 비동기적으로 로드합니다.
+        for (int i = 0; i < userBooking.length; i++) {
+          await fetchBookCover(userBooking[i].book.bookIsbn, i);
         }
-      } else {
-        print('Failed to load user booking.');
+
+        // 모든 책 표지가 로드되면 로딩 상태를 업데이트합니다.
         setState(() {
           isLoading = false;
         });
+      } else {
+        throw Exception('Failed to load user booking.');
       }
     } catch (e) {
-      print('Error loading user booking $e');
       setState(() {
-        isLoading = false;
+        isLoading = false; // 오류 발생 시 로딩 상태 업데이트
       });
+      print('Error loading user booking: $e');
+      // 에러 처리: 사용자에게 메시지를 표시하거나 로깅을 수행합니다.
     }
   }
 
@@ -235,7 +241,7 @@ class _BookingListState extends State<BookingList> {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('확인'),
+                  child: Text('확인', style: TextStyle(color: Colors.cyan.shade800),),
                 ),
               ],
             );
@@ -253,65 +259,91 @@ class _BookingListState extends State<BookingList> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () {
-            // 뒤로가기 동작
-            Navigator.pop(context);
-          },
-          color: Colors.black, // 뒤로가기 버튼의 색상
-        ),
-        title: Text(
-          '나의 도서 예약 내역',
-          textAlign: TextAlign.start,
-          style: TextStyle(
-            color: Colors.black, // 글자색 설정
+    if (isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          // AppBar 설정은 그대로 유지합니다.
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () {
+              // 뒤로가기 동작
+              Navigator.pop(context);
+            },
+            color: Colors.black, // 뒤로가기 버튼의 색상
           ),
-        ),
-        backgroundColor: Colors.white,
-      ),
-      body: isLoading
-          ? Center(
-        child: CircularProgressIndicator(),
-      )
-          : userBooking.isEmpty
-          ? Center(
-        child: Text(
-          '예약 도서가 없습니다.',
-          style: TextStyle(fontSize: 16),
-        ),
-      )
-          : SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: Center(
-            child: Column(
-              children: userBooking.map((booking) {
-                return BookingContainer(
-                  id: booking.id.toString(),
-                  imageUrl: Image.network(booking.book.imageUrl),
-                  // 예약 도서의 이미지 URL을 여기에 넣어주세요.
-                  bookTitle: booking.book.title,
-                  author: booking.book.author,
-                  library: booking.book.library,
-                  location: booking.book.location,
-                  reserve_date: booking.reserve_date,
-                  book_isbn: booking.book.bookIsbn,
-                  booking: booking,
-                  onRemove: () {
-                    removeUserBooking(MyApp.userId ?? 0, booking.book.book_id);
-                  },
-                );
-              }).toList(),
+          title: Text(
+            '나의 도서 예약 내역',
+            textAlign: TextAlign.start,
+            style: TextStyle(
+              color: Colors.black, // 글자색 설정
             ),
+          ),
+          backgroundColor: Colors.white,
+        ),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    } else {
+      return Scaffold(
+        appBar: AppBar(
+          // AppBar 설정은 그대로 유지합니다.
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () {
+              // 뒤로가기 동작
+              Navigator.pop(context);
+            },
+            color: Colors.black, // 뒤로가기 버튼의 색상
+          ),
+          title: Text(
+            '나의 도서 예약 내역',
+            textAlign: TextAlign.start,
+            style: TextStyle(
+              color: Colors.black, // 글자색 설정
+            ),
+          ),
+          backgroundColor: Colors.white,
+        ),
+        body: _buildBookingList(),
+      );
+    }
+  }
+
+  Widget _buildBookingList() {
+    return userBooking.isEmpty
+        ? Center(
+      child: Text(
+        '예약 도서가 없습니다.',
+        style: TextStyle(fontSize: 16),
+      ),
+    )
+        : SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Center(
+          child: Column(
+            children: userBooking.map((booking) {
+              return BookingContainer(
+                id: booking.id.toString(),
+                imageUrl: Image.network(booking.book.imageUrl),
+                bookTitle: booking.book.title,
+                author: booking.book.author,
+                library: booking.book.library,
+                location: booking.book.location,
+                reserve_date: booking.reserve_date,
+                book_isbn: booking.book.bookIsbn,
+                booking: booking,
+                onRemove: () {
+                  removeUserBooking(MyApp.userId ?? 0, booking.book.book_id);
+                },
+              );
+            }).toList(),
           ),
         ),
       ),
     );
   }
 }
+
 //표지, 제목, 저자, 도서관, 자료위치, 예약일
 class BookingContainer extends StatelessWidget {
   final String? id;

@@ -343,6 +343,9 @@ class _BookSearchState extends State<BookSearch> {
                               Expanded(
                                 child: TextField(
                                   controller: _isbnController,
+                                  decoration: InputDecoration(
+                                      border: InputBorder.none
+                                  ),
                                 ),
                               ),
                               GestureDetector(
@@ -478,59 +481,98 @@ class BookContainer extends StatelessWidget {
 
 
   Future<void> addInterestBook(BuildContext context, int userId, String bookId) async {
-    try {
-      final response = await http.post(
-        Uri.parse('http://10.0.2.2:8080/api/userinterest/add'),
-        body: {'user_id': userId.toString(), 'book_id': bookId},
+    // 로그인 상태 확인
+    if (MyApp.userId == null) {
+      // 로그인하지 않은 경우, 로그인 유도 팝업 표시
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('알림'),
+            content: Text('로그인 후 이용 가능한 서비스입니다.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // 팝업 닫기
+                },
+                child: Text(
+                    '확인', style: TextStyle(color: Colors.cyan.shade800)),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // 팝업 닫기
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                  );
+                },
+                child: Text(
+                    '로그인하러 가기', style: TextStyle(color: Colors.cyan.shade800)),
+              ),
+            ],
+          );
+        },
       );
+      return; // 함수 종료
+    }
+    else {
+      try {
+        final response = await http.post(
+          Uri.parse('http://10.0.2.2:8080/api/userinterest/add'),
+          body: {'user_id': userId.toString(), 'book_id': bookId},
+        );
 
-      if (response.statusCode == 200) {
-        // 서버에서 성공적으로 응답을 받았을 때의 처리
-        print('Book added to user\'s interest list successfully');
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              content: Text('도서가 관심 도서에 추가되었습니다.'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
-                ),
-              ],
-            );
-          },
-        );
-      } else if (response.statusCode == 400) {
-        // 중복된 경우에 대한 처리
-        print('Failed to add book to user\'s interest list: Duplicate book');
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              content: Text('이미 관심 도서에 추가된 책입니다.'),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
-                ),
-              ],
-            );
-          },
-        );
-      } else {
-        // 서버에서 오류 응답을 받았을 때의 처리
-        print('Failed to add book to user\'s interest list');
+        if (response.statusCode == 200) {
+          // 서버에서 성공적으로 응답을 받았을 때의 처리
+          print('Book added to user\'s interest list successfully');
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: Text('도서가 관심 도서에 추가되었습니다.'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                        '확인', style: TextStyle(color: Colors.cyan.shade800)),
+                  ),
+                ],
+              );
+            },
+          );
+        } else if (response.statusCode == 400) {
+          // 중복된 경우에 대한 처리
+          print('Failed to add book to user\'s interest list: Duplicate book');
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: Text('이미 관심 도서에 추가된 책입니다.'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child: Text(
+                        '확인', style: TextStyle(color: Colors.cyan.shade800)),
+                  ),
+                ],
+              );
+            },
+          );
+        } else {
+          // 서버에서 오류 응답을 받았을 때의 처리
+          print('Failed to add book to user\'s interest list');
+        }
+      } catch (e) {
+        // 네트워크 오류 등 예외가 발생했을 때의 처리
+        print('Error adding interest book: $e');
       }
-    } catch (e) {
-      // 네트워크 오류 등 예외가 발생했을 때의 처리
-      print('Error adding interest book: $e');
     }
   }
+
 
   Future<void> reserveBook(BuildContext context, String userId, String bookId) async {
     // 로그인 상태 확인
