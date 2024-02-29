@@ -513,7 +513,7 @@ class LoanBookContainer extends StatelessWidget {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              content: Text('이미 이 책에 대한 리뷰를 작성하셨습니다.'),
+              content: Text('이미 리뷰 작성을 완료한 도서입니다.'),
               actions: <Widget>[TextButton(onPressed: () {Navigator.of(context).pop();}, child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
                 ),
               ],
@@ -799,12 +799,12 @@ class LoanBookContainer extends StatelessWidget {
                             if (hasReviewed) {
                               showDialog(context: context, builder: (BuildContext context) {
                                 return AlertDialog(
-                                  content: Text('이미 상태 평가를 완료한 도서입니다'),
+                                  content: Text('이미 상태 평가를 완료한 도서입니다.'),
                                   actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),),],);},);
                             } else if (out30) {
                               showDialog(context: context, builder: (BuildContext context) {
                                 return AlertDialog(
-                                  content: Text('상태평가는 반납일로부터 30일 이내에만 작성 가능합니다'),
+                                  content: Text('상태평가는 반납일로부터 30일 이내에만 작성 가능합니다.'),
                                   actions: [TextButton(onPressed: () {Navigator.of(context).pop();},child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),),],);},);
                             } else {
                               Navigator.push(

@@ -60,7 +60,7 @@ class _BookSearchState extends State<BookSearch> {
   }
 
   int currentPage = 1;
-  int pageSize = 4;
+  int pageSize = 10;
   bool hasMoreData = true;
   late ScrollController _scrollController;
   int totalPages = 1;
@@ -344,7 +344,8 @@ class _BookSearchState extends State<BookSearch> {
                                 child: TextField(
                                   controller: _isbnController,
                                   decoration: InputDecoration(
-                                      border: InputBorder.none
+                                    border: InputBorder.none, // 밑줄 제거
+                                    // 기타 필요한 데코레이션 설정
                                   ),
                                 ),
                               ),
@@ -606,25 +607,53 @@ class BookContainer extends StatelessWidget {
         },
       );
       return; // 함수 종료
-    }
-    else{
+    } else {
       // 로그인 상태일 때의 예약 처리 로직
       try {
-        // 현재 사용자의 예약 내역을 확인
-        final reservationsResponse = await http.get(
-          Uri.parse('http://10.0.2.2:8080/api/userbooking/reservations?user_id=$userId'),
+        // 예약 가능한 경우 예약 요청 수행
+        final DateTime now = DateTime.now();
+        final String reserveDate = "${now.year}-${now.month}-${now.day}";
+        final response = await http.post(
+          Uri.parse('http://10.0.2.2:8080 /api/userbooking/add'),
+          body: {
+            'user_id': userId,
+            'book_id': bookId,
+            'reserve_date': reserveDate, // 예약 날짜 추가
+          },
         );
 
-        if (reservationsResponse.statusCode == 200) {
-          final List<dynamic> reservations = json.decode(reservationsResponse.body);
-
-          // 최대 예약 가능 권수를 초과했을 경우
-          if (reservations.length >= 3) {
+        // 서버 응답 확인
+        String message = response.body;
+        if (response.statusCode == 200) {
+          // 예약 성공 메시지 표시
+          if (message == "BookAddedSuccessfully") {
             showDialog(
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  content: Text('예약은 최대 3권까지 가능합니다.'),
+                  content: Text('예약이 완료되었습니다.'),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // 팝업 닫기
+                        onReservationCompleted?.call();
+                      },
+                      child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+
+
+          // 기타 오류 메시지 표시
+          else {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  content: Text('서버 오류: $message'),
                   actions: <Widget>[
                     TextButton(
                       onPressed: () {
@@ -636,44 +665,10 @@ class BookContainer extends StatelessWidget {
                 );
               },
             );
-            return; // 함수 종료
           }
         }
-
-        // 예약 가능한 경우 예약 요청 수행
-        final DateTime now = DateTime.now();
-        final String reserveDate = "${now.year}-${now.month}-${now.day}";
-        final response = await http.post(
-          Uri.parse('http://10.0.2.2:8080/api/userbooking/add'),
-          body: {
-            'user_id': userId,
-            'book_id': bookId,
-            'reserve_date': reserveDate,
-          },
-        );
-
-        // 예약 요청 응답 처리
-        if (response.statusCode == 200) {
-          // 예약 성공 메시지 표시
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                content: Text('예약이 완료되었습니다.'),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(); // 팝업 닫기
-                      onReservationCompleted?.call();
-                    },
-                    child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
-                  ),
-                ],
-              );
-            },
-          );
-        } else {
-          // 예약 실패 메시지 표시
+        // 예약 실패 메시지 표시
+        else if (message == "MaxReservationLimit") {
           showDialog(
             context: context,
             builder: (BuildContext context) {
@@ -684,33 +679,76 @@ class BookContainer extends StatelessWidget {
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
-                    child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
+                    child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
                   ),
                 ],
               );
             },
           );
         }
-      } catch (e) {
-        // 네트워크 오류 등 예외 처리
+        // 이미 예약된 도서 메시지 표시
+        else if (message == "AlreadyReserved") {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: Text('이미 예약된 도서입니다.'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // 팝업 닫기
+                    },
+                    child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+
+        // 서버 오류 메시지 표시
+        else {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: Text('서버 오류: ${response.reasonPhrase}'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // 팝업 닫기
+                    },
+                    child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      }
+      // 예외 처리
+      catch (e) {
         showDialog(
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              content: Text('예약 처리 중 오류가 발생했습니다.'),
+              content: Text('예약 처리 중 오류가 발생했습니다: $e'),
               actions: <Widget>[
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pop();
+                    Navigator.of(context).pop(); // 팝업 닫기
                   },
-                  child: Text('확인',  style: TextStyle(color: Colors.cyan.shade800)),
+                  child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
                 ),
               ],
             );
           },
         );
       }
-    }}
+    }
+  }
+
+
 
 
 

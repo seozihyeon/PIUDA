@@ -55,7 +55,7 @@ class _MyPageViewState extends State<MyPageView> {
           child: Container(margin: EdgeInsets.only(top: 5),
               height:50, width: screenSize.width*0.1,
               decoration: BoxDecoration(color: Colors.cyan.shade800, border: Border.symmetric(horizontal: BorderSide(color: Colors.cyan.shade900, width: 2.5))),
-              child: Icon(Icons.arrow_forward_ios_rounded, color: Colors.white)
+              child: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white)
           ),
         ),
       ],

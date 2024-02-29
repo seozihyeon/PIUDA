@@ -122,14 +122,14 @@ class WhatIsCondition extends StatelessWidget {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
-              title: Text('상태평가란?'),
-              content: Text('대출한 도서에 대한 상태를 평가할 수 있습니다. 이제 직접 도서관에 방문하지 않고도 어디에서든 도서의 상태를 확인해보세요! 손상된 책을 발견하면 도서관이 신속하게 조치를 취할 수 있도록 도와주세요.'),
+              title: Text('상태평가란?', ),
+              content: Text('대출한 도서에 대한 상태를 평가할 수 있습니다. 이제 직접 도서관에 방문하지 않고도 어디에서든 도서의 상태를 확인해보세요! 손상된 책을 발견하면 도서관이 신속하게 조치를 취할 수 있도록 도와주세요. 상태 평가는 반납 후 30일이 지나면 작성할 수 없습니다.'),
               actions: <Widget>[
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text('닫기'),
+                  child: Text('닫기', style: TextStyle(color: Colors.cyan.shade800),),
                 ),
               ],
             );
@@ -138,11 +138,11 @@ class WhatIsCondition extends StatelessWidget {
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(20),
         shape: CircleBorder(
           side: BorderSide(color: Colors.cyan.shade800, width: 2.0),
         ),
-        elevation: 5,
+        elevation: 2,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -151,7 +151,7 @@ class WhatIsCondition extends StatelessWidget {
           SizedBox(height: 2), // 간격 조절
           Text(
             '상태평가란?',
-            style: TextStyle(color: Colors.cyan.shade700), // 텍스트 색상 설정
+            style: TextStyle(color: Colors.cyan.shade700, fontSize: 13), // 텍스트 색상 설정
           ), // 텍스트
         ],
       ),

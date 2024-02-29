@@ -785,7 +785,6 @@ class _HomePageState extends State<HomePage> {
             // 모바일 회원증 구현
             MyPageView(),
 
-
             //3분할 아이콘
             Container(
               height: 85,
@@ -796,7 +795,6 @@ class _HomePageState extends State<HomePage> {
                   Expanded(
                     child: GestureDetector(
                       onTap: () => _checkLoginAndNavigate(context, MyLoanPage()),
-
                       child: Container(
                         margin: EdgeInsets.only(top: 10, bottom: 5),
                         child: Center(

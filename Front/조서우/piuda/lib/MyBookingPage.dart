@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'main.dart';
 import 'BookDetail.dart';
+import 'package:intl/intl.dart';
+
 
 
 class UserBooking{
@@ -10,12 +12,14 @@ class UserBooking{
   final User user;
   final Book book;
   final String reserve_date;
+  String expectedDate;
 
   UserBooking({
     required this.id,
     required this.user,
     required this.book,
     required this.reserve_date,
+    this.expectedDate = '',
   });
   factory UserBooking.fromJson(Map<String, dynamic> json) {
     return UserBooking(
@@ -194,6 +198,7 @@ class _BookingListState extends State<BookingList> {
         // 각 예약에 대한 책 표지를 비동기적으로 로드합니다.
         for (int i = 0; i < userBooking.length; i++) {
           await fetchBookCover(userBooking[i].book.bookIsbn, i);
+          await getExpectedDate(userBooking[i].book.book_id);
         }
 
         // 모든 책 표지가 로드되면 로딩 상태를 업데이트합니다.
@@ -254,6 +259,36 @@ class _BookingListState extends State<BookingList> {
     } catch (e) {
       // 네트워크 오류 등 예외가 발생했을 때의 처리
       print('Error removing booking list: $e');
+    }
+  }
+
+  Future<void> getExpectedDate(String bookId) async {
+    try {
+      print('Book ID: $bookId');
+
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:8080/loan/expected-dates/$bookId'),
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        List<dynamic> expectedDates = jsonDecode(response.body);
+        String nearestDate = expectedDates.isNotEmpty ? expectedDates.first : '';
+
+        setState(() {
+          for (var booking in userBooking) {
+            if (booking.book.book_id == bookId) {
+              booking.expectedDate = nearestDate;
+            }
+          }
+        });
+      } else {
+        print('Failed to load expected date');
+      }
+    } catch (e) {
+      print('Error loading expected date: $e');
     }
   }
 
@@ -358,8 +393,16 @@ class BookingContainer extends StatelessWidget {
 
   final VoidCallback onRemove;
 
-
-
+  String formatDateString(String dateString) {
+    try {
+      DateTime parsedDate = DateTime.parse(dateString);
+      return DateFormat('yyyy-MM-dd').format(parsedDate);
+    } catch (e) {
+      // 날짜 파싱에 실패할 경우 로그를 출력하고 기본값 반환
+      print('Date parsing error: $e');
+      return '날짜 정보 없음';
+    }
+  }
 
 
 
@@ -375,18 +418,15 @@ class BookingContainer extends StatelessWidget {
     required this.booking,
     required this.onRemove,
 
-
-
   });
-
 
 
   @override
   Widget build(BuildContext context) {
-    double Height = MediaQuery.of(context).size.height;
-    double Width = MediaQuery.of(context).size.width;
+    double height = MediaQuery.of(context).size.height;
+    double width = MediaQuery.of(context).size.width;
 
-    return  GestureDetector(
+    return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
@@ -413,148 +453,180 @@ class BookingContainer extends StatelessWidget {
         );
       },
       child: Container(
-          width: Width *0.95,
-          margin: EdgeInsets.only(bottom: 10),
-          padding: EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(3.0),
-            border: Border.all(
-              color: Colors.grey, // 테두리 색상
-              width: 1, // 테두리 두께
-            ),
+        width: width * 0.95,
+        margin: EdgeInsets.only(bottom: 10),
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(3.0),
+          border: Border.all(
+            color: Colors.grey, // 테두리 색상
+            width: 1, // 테두리 두께
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(child: imageUrl, height: Height*0.25*0.6),
-              SizedBox(width: 20,),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("상태: 예약", style: TextStyle(color: Colors.cyan.shade800),),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: RichText(softWrap:true, text: TextSpan(children: [
-                            TextSpan(text: bookTitle, style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),),
-                          ]),),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(child: imageUrl, height: height * 0.25 * 0.6),
+            SizedBox(width: 20,),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("상태: 예약", style: TextStyle(color: Colors.cyan.shade800),),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: RichText(softWrap: true, text: TextSpan(children: [
+                          TextSpan(text: bookTitle, style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),),
+                        ]),),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 4,),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: EdgeInsets.all(5),
+                          decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade500,), top: BorderSide(color: Colors.grey.shade500,))),
+                          child: RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: '저자 ',
+                                  style: TextStyle(
+                                    fontSize: 18.0,
+                                    color: Colors.grey.shade600, // 세 번째 텍스트의 글자색
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: author,
+                                  style: TextStyle(
+                                    fontSize: 18.0,
+                                    color: Colors.black, // 네 번째 텍스트의 글자색
+                                  ),
+                                ),
+                                TextSpan(text: '\n'),
+                                TextSpan(
+                                  text: '도서관 ',
+                                  style: TextStyle(
+                                    fontSize: 18.0,
+                                    color: Colors.grey.shade600, // 세 번째 텍스트의 글자색
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: library,
+                                  style: TextStyle(
+                                    fontSize: 18.0,
+                                    color: Colors.black, // 네 번째 텍스트의 글자색
+                                  ),
+                                ),
+                                TextSpan(text: '\n'),
+                                TextSpan(
+                                  text: '자료위치 ',
+                                  style: TextStyle(
+                                    fontSize: 18.0,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: location,
+                                  style: TextStyle(
+                                    fontSize: 18.0,
+                                    color: Colors.grey.shade900, // 두 번째 텍스트의 글자색
+                                  ),
+                                ),
+                                TextSpan(text: '\n'),                                TextSpan(
+                                  text: '예약일 ',
+                                  style: TextStyle(
+                                    fontSize: 18.0,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: reserve_date,
+                                  style: TextStyle(
+                                    fontSize: 18.0,
+                                    color: Colors.grey.shade900,
+                                  ),
+                                ),
+                                if (booking.expectedDate.isNotEmpty) ...[
+                                  WidgetSpan(
+                                    child: Wrap(
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      children: [
+                                        RichText(
+                                          text: TextSpan(
+                                            children: <TextSpan>[
+                                              TextSpan(
+                                                text: '예상도착일 ',
+                                                style: TextStyle(
+                                                  fontSize: 18.0,
+                                                  color: Colors.grey.shade600,
+                                                ),
+                                              ),
+                                              TextSpan(
+                                                text: formatDateString(booking.expectedDate),
+                                                style: TextStyle(
+                                                  fontSize: 18.0,
+                                                  color: Colors.grey.shade900,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        SizedBox(width: 1,),
+                                        Tooltip(
+                                          message: '실제 도착일과 차이가 있을 수 있습니다.\n도서가 도착하면 알림을 통해 바로 알려드리겠습니다!',
+                                          child: Icon(Icons.info_outline, size: 20.0,),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
                         ),
-                      ],
-                    ),
-                    SizedBox(height: 4,),
-                    Row(
-                      children: [
-                        Expanded(
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 6,),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: onRemove,
                           child: Container(
                             padding: EdgeInsets.all(5),
-                            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey.shade500,), top: BorderSide(color: Colors.grey.shade500,))),
-                            child: RichText(
-                              text: TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text: '저자 ',
-                                      style: TextStyle(
-                                        fontSize: 18.0,
-                                        color: Colors.grey.shade600, // 세 번째 텍스트의 글자색
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: author,
-                                      style: TextStyle(
-                                        fontSize: 18.0,
-                                        color: Colors.black, // 네 번째 텍스트의 글자색
-                                      ),
-                                    ),
-                                    TextSpan(text: '\n'),
-                                    TextSpan(
-                                      text: '도서관 ',
-                                      style: TextStyle(
-                                        fontSize: 18.0,
-                                        color: Colors.grey.shade600, // 세 번째 텍스트의 글자색
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: library,
-                                      style: TextStyle(
-                                        fontSize: 18.0,
-                                        color: Colors.black, // 네 번째 텍스트의 글자색
-                                      ),
-                                    ),
-                                    TextSpan(text: '\n'),
-                                    TextSpan(
-                                      text: '자료위치 ',
-                                      style: TextStyle(
-                                        fontSize: 18.0,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: location,
-                                      style: TextStyle(
-                                        fontSize: 18.0,
-                                        color: Colors.grey.shade900, // 두 번째 텍스트의 글자색
-                                      ),
-                                    ),
-                                    TextSpan(text: '\n'),
-                                    TextSpan(
-                                      text: '예약일 ',
-                                      style: TextStyle(
-                                        fontSize: 18.0,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text: reserve_date,
-                                      style: TextStyle(
-                                        fontSize: 18.0,
-                                        color: Colors.grey.shade900, // 두 번째 텍스트의 글자색
-                                      ),
-                                    ),
-                                  ]
+                            decoration: BoxDecoration(
+                              color: Colors.grey,
+                              border: Border.all(
+                                color: Colors.white, // 테두리 색상
+                                width: 1.0, // 테두리 두께
+                              ),
+                              borderRadius: BorderRadius.circular(2.0),
+                            ),
+                            child: Text(
+                              '예약 취소',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 17.5,
+                                  fontWeight: FontWeight.bold
                               ),
                             ),
                           ),
-
                         ),
-                      ],
-                    ),
-                    SizedBox(height: 6,),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: onRemove,
-                            child: Container(
-                              padding: EdgeInsets.all(5),
-                              decoration: BoxDecoration(
-                                color: Colors.grey,
-                                border: Border.all(
-                                  color: Colors.white, // 테두리 색상
-                                  width: 1.0, // 테두리 두께
-                                ),
-                                borderRadius: BorderRadius.circular(2.0), // 테두리의 모서리를 둥글게 만듭니다.
-                              ),
-                              child: Text(
-                                '예약 취소',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 17.5,
-                                    fontWeight: FontWeight.bold
-                                ),
-                              ),
-                            ),
-                          ),
-
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              )
-            ],
-          )
-      ), );
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
