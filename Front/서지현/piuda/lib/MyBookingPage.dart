@@ -179,7 +179,7 @@ class _BookingListState extends State<BookingList> {
     });
 
     final url = Uri.parse(
-        'http://10.0.2.2:8080/api/userbooking/list/${MyApp.userId}');
+        'http://34.64.173.65:8080/api/userbooking/list/${MyApp.userId}');
 
     try {
       final response = await http.get(url);
@@ -222,7 +222,7 @@ class _BookingListState extends State<BookingList> {
       print('Removing User Booking. User ID: $userId, Book ID: $bookId');
 
       final response = await http.delete(
-        Uri.parse('http://10.0.2.2:8080/api/userbooking/remove/$userId/$bookId'),
+        Uri.parse('http://34.64.173.65:8080/api/userbooking/remove/$userId/$bookId'),
       );
 
       print('Response status: ${response.statusCode}');
@@ -267,7 +267,7 @@ class _BookingListState extends State<BookingList> {
       print('Book ID: $bookId');
 
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8080/loan/expected-dates/$bookId'),
+        Uri.parse('http://34.64.173.65:8080/loan/expected-dates/$bookId'),
       );
 
       print('Response status: ${response.statusCode}');
@@ -550,7 +550,6 @@ class BookingContainer extends StatelessWidget {
                                     color: Colors.grey.shade900,
                                   ),
                                 ),
-                                if (booking.expectedDate.isNotEmpty) ...[
                                   WidgetSpan(
                                   child: Wrap(
                                     crossAxisAlignment: WrapCrossAlignment.center,
@@ -559,12 +558,23 @@ class BookingContainer extends StatelessWidget {
                                         text: TextSpan(
                                           children: <TextSpan>[
                                             TextSpan(
-                                              text: '예상도착일 ',
+                                              text: '예상도착일',
                                               style: TextStyle(
                                                 fontSize: 18.0,
                                                 color: Colors.grey.shade600,
                                               ),
                                             ),
+                                          ],
+                                        ),
+                                      ),
+                                      Tooltip(
+                                        message: '실제 도착일과 차이가 있을 수 있습니다.\n도서가 도착하면 알림을 통해 바로 알려드리겠습니다!',
+                                        child: Icon(Icons.info_outline, size: 20.0, color: Colors.grey.shade600,),
+                                      ),
+                                      SizedBox(width:1),
+                                      RichText(
+                                        text: TextSpan(
+                                          children: <TextSpan>[
                                             TextSpan(
                                               text: formatDateString(booking.expectedDate),
                                               style: TextStyle(
@@ -575,16 +585,11 @@ class BookingContainer extends StatelessWidget {
                                           ],
                                         ),
                                       ),
-                                      SizedBox(width: 1,),
-                                      Tooltip(
-                                        message: '실제 도착일과 차이가 있을 수 있습니다.\n도서가 도착하면 알림을 통해 바로 알려드리겠습니다!',
-                                        child: Icon(Icons.info_outline, size: 20.0,),
-                                      ),
+
                                     ],
                                   ),
                                 ),
                                 ],
-                              ],
                             ),
                           ),
                         ),

@@ -3,6 +3,8 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:piuda/state_question_widget.dart';
+
 class BookStateReview extends StatefulWidget {
   final String bookTitle;
   final String author;
@@ -74,7 +76,7 @@ class _BookStateReviewState extends State<BookStateReview> {
       int yourTaintScore,
       String yourConditionOp,
       ) async {
-    final String apiUrl = 'http://10.0.2.2:8080/reviewCondition/write';
+    final String apiUrl = 'http://34.64.173.65:8080/reviewCondition/write';
 
     final Map<String, dynamic> requestData = {
       'loan_id': widget.loan_id,
@@ -133,16 +135,23 @@ class _BookStateReviewState extends State<BookStateReview> {
         child: Column(
           children: [
             Container(
-              margin: EdgeInsets.only(top:20, bottom: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.network(widget.imageUrl, // 사진 경로
-                    fit: BoxFit.cover, // 사진의 크기 조절 방식
-                    height: 200.0,
-                  ),
-                ],
-              ),
+                margin: EdgeInsets.only(top:20, bottom: 10),
+                child: Stack(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.network(widget.imageUrl, // 사진 경로
+                            fit: BoxFit.cover, // 사진의 크기 조절 방식
+                            height: 200.0,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Positioned(child: WhatIsCondition(), top: 0, right: 0,)
+                  ],
+                )
             ),
             Container(
               margin: EdgeInsets.only(left: 15, top: 8),
@@ -150,12 +159,17 @@ class _BookStateReviewState extends State<BookStateReview> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '오염도',
-                    style: TextStyle(
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        '오염도',
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Expanded(child: QuestionMarkButton())
+                    ],
                   ),
                   SizedBox(height: 8.0),
                   Container(
@@ -188,12 +202,17 @@ class _BookStateReviewState extends State<BookStateReview> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '손실도',
-                    style: TextStyle(
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        '손실도',
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Expanded(child: QuestionMarkButton2())
+                    ],
                   ),
                   SizedBox(height: 6.0),
                   Container(

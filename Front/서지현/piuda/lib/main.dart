@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:piuda/MyBookingPage.dart';
 import 'package:piuda/MyLog.dart';
+import 'package:piuda/main_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -163,7 +164,7 @@ class _HomePageState extends State<HomePage> {
                         MyApp.isLoggedIn = result['isLoggedIn'];
                         MyApp.userName = result['username'];
                         MyApp.userId = result['userId'];
-                         // 필요한 경우 여기에서 추가 UI 업데이트 로직을 구현합니다.
+                        // 필요한 경우 여기에서 추가 UI 업데이트 로직을 구현합니다.
                       });
                       Navigator.push(context, MaterialPageRoute(builder: (context) => nextPage)); // 로그인 성공 후 다음 페이지로 이동
                     }
@@ -221,7 +222,7 @@ class _HomePageState extends State<HomePage> {
   List<Event> _selectedEvents = [];
 
   Future<void> fetchEvents(String libraryName) async {
-    final url = Uri.parse('http://10.0.2.2:8080/api/events/$libraryName');
+    final url = Uri.parse('http://34.64.173.65:8080/api/events/$libraryName');
     print("Requesting events from: $url");
 
     final response = await http.get(url);
@@ -333,7 +334,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _logout() async {
     var response = await http.post(
-      Uri.parse('http://10.0.2.2:8080/logout'),
+      Uri.parse('http://34.64.173.65:8080/logout'),
     );
 
     if (response.statusCode == 200) {
@@ -628,7 +629,7 @@ class _HomePageState extends State<HomePage> {
                           MyApp.userName = result['username'];
                           MyApp.userId = result['userId'];
 
-                                // 필요한 경우 여기에서 추가 UI 업데이트 로직을 구현합니다.
+                          // 필요한 경우 여기에서 추가 UI 업데이트 로직을 구현합니다.
                         });
                       }
                     });
@@ -782,140 +783,7 @@ class _HomePageState extends State<HomePage> {
             ),
 
             // 모바일 회원증 구현
-            Row(
-              children: [
-                Container(margin: EdgeInsets.only(top: 5),
-                    height:50, width: screenSize.width * 0.1,
-                    decoration: BoxDecoration(color: Colors.cyan.shade800, border: Border.symmetric(horizontal: BorderSide(color: Colors.cyan.shade900, width: 2.5))),
-                    child: Icon(Icons.arrow_back_ios_rounded, color: Colors.white)
-                ),
-                Container(
-                  height: 165.0,
-                  width: screenSize.width * 0.8,
-                  margin: EdgeInsets.only(top:5, bottom:3, left: 0.0, right: 0.0),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(6.0),
-                    border: Border.all(
-                      color: Colors.cyan.shade900, // 테두리 색상
-                      width: 3.0, // 테두리 두께
-                    ),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start, // 텍스트를 왼쪽 정렬
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: Container(
-                          decoration: BoxDecoration(color: Colors.cyan.shade800, border: Border(bottom: BorderSide(color: Colors.cyan.shade900, width: 2))),
-                          width: screenSize.width * 0.8,
-                          height: screenSize.height * 0.15,
-                          padding: EdgeInsets.only(left: 15, top: 3),
-                          child:
-                          (MyApp.isLoggedIn != true)?
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("모바일 회원증", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),),
-                              Text("로그인 후 이용 가능한 서비스입니다", style: TextStyle(color: Colors.white, fontSize: 15),)
-                            ],
-                          )
-                              :RichText(
-                            text: TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: '이름 ',
-                                  style: TextStyle(
-                                    fontSize: 18.0,
-                                    color: Colors.white, // 첫 번째 텍스트의 글자색
-                                  ),
-                                ),
-                                TextSpan(
-                                  text:MyApp.userName,
-                                  style: TextStyle(
-                                    fontSize: 18.0,
-                                    color: Colors.white70, // 두 번째 텍스트의 글자색
-                                  ),
-                                ),
-                                TextSpan(text: '\n'),
-                                TextSpan(
-                                  text: '회원번호 ',
-                                  style: TextStyle(
-                                    fontSize: 18.0,
-                                    color: Colors.white, // 세 번째 텍스트의 글자색
-                                  ),
-                                ),
-                                TextSpan(
-                                  text:MyApp.userId.toString(),
-                                  style: TextStyle(
-                                    fontSize: 18.0,
-                                    color: Colors.white70, // 네 번째 텍스트의 글자색
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 0,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(12.0),
-                            bottomRight: Radius.circular(12.0),
-                          ),
-                          child: (MyApp.isLoggedIn == true && MyApp.barcodeImageUrl != null) ?
-                          Image.network(
-                            MyApp.barcodeImageUrl!,
-                            width: double.infinity,
-                            height: 100,
-                            fit: BoxFit.contain,
-                          )
-                              :Padding(
-                            padding: const EdgeInsets.all(25.0),
-                            child: Center(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => LoginPage()),
-                                  ).then((result) {
-                                    // 로그인 페이지에서 반환된 데이터 처리
-                                    if (result != null && result['isLoggedIn']) {
-                                      setState(() {
-                                        MyApp.isLoggedIn = result['isLoggedIn'];
-                                        MyApp.userName = result['username'];
-                                        MyApp.userId = result['userId'];
-                                        // 필요한 경우 여기에서 추가 UI 업데이트 로직을 구현합니다.
-                                      });
-                                    }
-                                  });
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  foregroundColor: Colors.cyan.shade900,
-                                  backgroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    side: BorderSide(color: Colors.cyan.shade800, width: 1.5),
-                                  ),
-                                ),
-                                child: Text('로그인하러 가기', style: TextStyle(fontWeight: FontWeight.bold)),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(margin: EdgeInsets.only(top: 5),
-                    height:50, width:screenSize.width*0.1,
-                    decoration: BoxDecoration(color: Colors.cyan.shade800, border: Border.symmetric(horizontal: BorderSide(color: Colors.cyan.shade900, width: 2.5))),
-                    child: Icon(Icons.arrow_forward_ios_rounded, color: Colors.white)
-                ),
-              ],
-            ),
+            MyPageView(),
 
 
             //3분할 아이콘
