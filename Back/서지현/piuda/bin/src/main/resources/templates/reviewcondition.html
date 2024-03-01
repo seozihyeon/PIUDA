@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>상태평가 리스트 페이지</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<style>
+    .layout {
+        width: 90%;
+        margin: 10px auto;
+        margin-top: 40px;
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    th, td {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+    }
+
+    th {
+        background-color: #f2f2f2;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+    
+    caption {
+            font-size: 1.5em; 
+            font-weight: bold; 
+            text-align: left; 
+            padding: 10px; 
+    }
+</style>
+
+<body>
+    <div class="layout">
+        <table>
+			<caption>상태평가 목록</caption>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>회원ID</th>
+                    <th>책ID</th>
+                    <th>책제목</th>
+                    <th>손실도</th>
+                    <th>오염도</th>
+                    <th>기타의견</th>
+                    <th>작성날짜</th>
+                    <th>도서관</th>
+                    <th>삭제</th> <!-- 삭제 버튼 추가 -->
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="condition: ${conditionlist}">
+                    <td th:text="${condition.condition_id}"></td>
+                    <td th:text="${condition.loan.user.id}"></td>
+                    <td th:text="${condition.loan.book.id}"></td>
+                    <td th:text="${condition.loan.book.title}"></td>
+                    <td th:text="${condition.loss_score}"></td>
+                    <td th:text="${condition.taint_score}"></td>
+                    <td th:text="${condition.condition_op}"></td>
+                    <td th:text="${#dates.format(condition.condition_date, 'yyyy-MM-dd')}"></td>
+                    <td th:text="${condition.loan.book.library}"></td>
+                    <!-- 삭제 버튼 추가 -->
+					<td><a th:href="@{/admin/reviewcondition/delete(condition_id=${condition.condition_id})}">글삭제</a></td>                
+				</tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
