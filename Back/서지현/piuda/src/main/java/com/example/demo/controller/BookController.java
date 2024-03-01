@@ -91,4 +91,19 @@ public class BookController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    
+    @GetMapping("/{book_id}")
+    public ResponseEntity<Book> getBookById(@PathVariable String book_id) {
+        try {
+            Book book = bookService.getBookById(book_id);
+            if (book != null) {
+                return new ResponseEntity<>(book, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            logger.error("Error fetching book with ID: " + book_id, e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
