@@ -28,7 +28,7 @@ public interface BookMapper {
     List<Book> findByPublisherPaged(@Param("publisher") String publisher, @Param("pageSize") int pageSize, @Param("offset") int offset);
     
     @Select("SELECT COUNT(*) FROM books WHERE book_title LIKE CONCAT('%', #{book_title}, '%') OR author LIKE CONCAT('%', #{author}, '%') OR publisher LIKE CONCAT('%', #{publisher}, '%')")
-    long countBooksPaged(@Param("book_title") String bookTitle, @Param("author") String author, @Param("publisher") String publisher);
+    long countBooksPaged(@Param("book_title") String book_title, @Param("author") String author, @Param("publisher") String publisher);
     
     @Select({
         "<script>",
@@ -36,10 +36,10 @@ public interface BookMapper {
         "<foreach item='library' index='index' collection='libraries' open='' separator=' OR ' close=''>",
         "   library = #{library}",
         "</foreach>",
-        ") AND (book_title LIKE CONCAT('%', #{bookTitle}, '%') OR author LIKE CONCAT('%', #{author}, '%') OR publisher LIKE CONCAT('%', #{publisher}, '%'))",
+        ") AND (book_title LIKE CONCAT('%', #{book_title}, '%') OR author LIKE CONCAT('%', #{author}, '%') OR publisher LIKE CONCAT('%', #{publisher}, '%'))",
         "</script>"
     })
-    long countBooksPagedWithLibraries(@Param("bookTitle") String bookTitle, @Param("author") String author, @Param("publisher") String publisher, @Param("libraries") List<String> libraries);
+    long countBooksPagedWithLibraries(@Param("book_title") String bookTitle, @Param("author") String author, @Param("publisher") String publisher, @Param("libraries") List<String> libraries);
     
     @Update("UPDATE books SET borrowed = #{borrowed} WHERE book_id = #{book_id}")
     void updateBorrowedStatus(@Param("book_id") String book_id, @Param("borrowed") boolean borrowed);
@@ -81,4 +81,9 @@ public interface BookMapper {
     })
     List<Book> findByLibrariesAndPublisherPaged(@Param("libraries") List<String> libraries, @Param("publisher") String publisher, @Param("pageSize") int pageSize, @Param("offset") int offset);
 
+    @Select("SELECT * FROM books")
+    List<Book> getBooksList();
+    
+    @Select("SELECT book_id, book_title FROM books WHERE reserved = 0 AND borrowed = 0")
+    List<Book> findAllBookIdsAndTitles();
 }

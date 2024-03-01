@@ -22,6 +22,7 @@ import com.example.demo.mapper.UsersMapper;
 import com.example.demo.model.Book;
 import com.example.demo.model.Loan;
 import com.example.demo.model.Users;
+import com.example.demo.util.DateUtil;
 
 @RestController
 @RequestMapping("/loan")
@@ -46,8 +47,8 @@ public class LoanController {
             return "User or Book not found!";
         }
 
-        Date loanDate = new Date();
-        LocalDate localLoanDate = loanDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        Date loanDate = DateUtil.getCurrentDateInKST();
+        LocalDate localLoanDate = loanDate.toInstant().atZone(ZoneId.of("Asia/Seoul")).toLocalDate();
         LocalDate expectedReturnDate = localLoanDate.plusDays(14);
         Boolean returnStatus = false;
 
@@ -61,7 +62,6 @@ public class LoanController {
         loanMapper.insertLoan(loan);
         bookMapper.updateBorrowedStatus(book_id, true);
         return "Loan created successfully!";
-        
     }
     
     @GetMapping("/list/{user_id}")
@@ -73,7 +73,6 @@ public class LoanController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
         }
     }
-    
     
     @PutMapping("/return/{loan_id}")
     public String returnLoan(@PathVariable("loan_id") Long loan_id) {
@@ -87,17 +86,16 @@ public class LoanController {
             return "Loan already returned!";
         }
 
-        Date returnDate = new Date();
+        Date returnDate = DateUtil.getCurrentDateInKST();
         loan.setReturn_date(returnDate);
         loan.setReturn_status(true);
-        loanMapper.returnBook(loan);
-        bookMapper.updateBorrowedStatus(loan.getBook().getId(), false); // 도서 반환 시 borrowed 상태 업데이트
 
+        loanMapper.returnBook(loan);
+        bookMapper.updateBorrowedStatus(loan.getBook().getId(), false);
 
         return "Book returned successfully!";
     }
     
-    //연장
     @PutMapping("/extend/{loan_id}")
     public ResponseEntity<String> extendLoan(@PathVariable("loan_id") Long loan_id) {
         Loan loan = loanMapper.getLoanById(loan_id);
@@ -114,18 +112,17 @@ public class LoanController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("대출은 한 번만 연장할 수 있습니다!");
         }
 
-        LocalDate currentLocalDate = loan.getLoan_date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        if (currentLocalDate.isEqual(LocalDate.now())) {
+        LocalDate currentLocalDate = loan.getLoan_date().toInstant().atZone(ZoneId.of("Asia/Seoul")).toLocalDate();
+        if (currentLocalDate.isEqual(LocalDate.now(ZoneId.of("Asia/Seoul")))) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("대출 당일은 연장할 수 없습니다!");
         }
 
-        LocalDate returnDate = loan.getExpect_date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        if (LocalDate.now().isAfter(returnDate)) {
+        LocalDate returnDate = loan.getExpect_date().toInstant().atZone(ZoneId.of("Asia/Seoul")).toLocalDate();
+        if (LocalDate.now(ZoneId.of("Asia/Seoul")).isAfter(returnDate)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("반납예정일 이후에는 연장할 수 없습니다!");
         }
 
-        Date currentReturnDate = loan.getExpect_date();
-        LocalDate extendedReturnDate = currentReturnDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate().plusDays(10);
+        LocalDate extendedReturnDate = returnDate.plusDays(10);
         loan.setExpect_date(java.sql.Date.valueOf(extendedReturnDate));
         loan.setExtend_status(true);
 
@@ -133,4 +130,15 @@ public class LoanController {
 
         return ResponseEntity.ok("대출이 성공적으로 연장되었습니다!");
     }
+    
+    @GetMapping("/expected-dates/{book_id}")
+    public ResponseEntity<List<Date>> getExpectedDatesByBookId(@PathVariable("book_id") String book_id) {
+        List<Date> expectedDates = loanMapper.getExpectedDatesByBookId(book_id);
+        if (!expectedDates.isEmpty()) {
+            return ResponseEntity.ok().body(expectedDates);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.emptyList());
+        }
+    }
+
 }

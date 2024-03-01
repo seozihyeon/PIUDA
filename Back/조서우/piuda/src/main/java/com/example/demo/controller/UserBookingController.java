@@ -44,21 +44,29 @@ public class UserBookingController {
             // 사용자의 현재 예약 개수 확인
             List<UserBooking> currentBookings = userBookingMapper.getUserBookingList(user_id);
             if (currentBookings.size() >= 3) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Cannot reserve more than 3 books");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("MaxReservationLimit"); // 예약 권수 초과 메시지
+            }
+
+            // 이미 예약된 책인지 확인
+            boolean alreadyReserved = currentBookings.stream().anyMatch(booking -> booking.getBook().getId().equals(book_id));
+            if (alreadyReserved) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("AlreadyReserved"); // 중복 예약 메시지
             }
 
             LocalDate reserveDate = LocalDate.now(); // 현재 날짜를 예약 날짜로 설정
             int result = userBookingMapper.insertUserBooking(user, book, reserveDate);
             if (result > 0) {
                 bookMapper.updateBookReservedStatus(book_id, true);
-                return ResponseEntity.ok().body("Book added to user's booking list successfully");
+                return ResponseEntity.ok().body("BookAddedSuccessfully");
             } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to add book to user's booking list");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed");
             }
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User or book not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("UserOrBookNotFound");
         }
     }
+        
+ 
 
 
     @DeleteMapping("/remove/{user_id}/{book_id}")

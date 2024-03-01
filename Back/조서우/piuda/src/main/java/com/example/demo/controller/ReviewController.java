@@ -105,5 +105,10 @@ public class ReviewController {
         int reviewCount = reviewMapper.countReviewsByUserIdAndIsbn(userId, isbn);
         return ResponseEntity.ok(reviewCount > 0);
     }
+    
+    @GetMapping("/list")
+    public List<Review> getAllReviews() {
+        return reviewMapper.getAllReviews();
+    }
 
 }
