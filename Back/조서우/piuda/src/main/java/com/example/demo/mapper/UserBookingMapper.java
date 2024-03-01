@@ -23,11 +23,18 @@ public interface UserBookingMapper {
 
     @Delete("DELETE FROM userbooking WHERE user_id = #{user.id} AND book_id = #{book.id}")
     int deleteUserBooking(@Param("user") Users user, @Param("book") Book book);
-
+    
     @Select("SELECT * FROM userbooking WHERE user_id = #{user_id}")
     @Results({
         @Result(property = "user", column = "user_id", javaType = Users.class, one = @One(select = "com.example.demo.mapper.UsersMapper.getUserProfile")),
         @Result(property = "book", column = "book_id", javaType = Book.class, one = @One(select = "com.example.demo.mapper.BookMapper.findByBookId"))
     })
     List<UserBooking> getUserBookingList(@Param("user_id") Long user_id);
+    
+    @Select("SELECT * FROM userbooking")
+    @Results({
+        @Result(property = "user", column = "user_id", javaType = Users.class, one = @One(select = "com.example.demo.mapper.UsersMapper.getUserProfile")),
+        @Result(property = "book", column = "book_id", javaType = Book.class, one = @One(select = "com.example.demo.mapper.BookMapper.findByBookId"))
+    })
+    List<UserBooking> getBookingList();
 }

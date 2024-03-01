@@ -1,10 +1,14 @@
 package com.example.demo.mapper;
 
+import com.example.demo.model.Loan;
 import com.example.demo.model.Review;
+
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.One;
 import org.apache.ibatis.annotations.Options;
 import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Result;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
@@ -45,8 +49,9 @@ public interface ReviewMapper {
             "WHERE u.user_id = #{user_id} AND b.book_isbn = #{book_isbn}")
     int countReviewsByUserIdAndIsbn(@Param("user_id") Long user_id, @Param("book_isbn") String book_isbn);
 
+    @Select("SELECT * FROM review")
+    @Result(property = "loan", column = "loan_id", javaType = Loan.class, one = @One(select = "com.example.demo.mapper.LoanMapper.getLoanById"))
+    List<Review> getAllReviews();
 
-
-    
-    
+     
 }
