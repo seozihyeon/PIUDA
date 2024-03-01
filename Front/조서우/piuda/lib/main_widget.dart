@@ -40,20 +40,20 @@ class _MyPageViewState extends State<MyPageView> {
           onTap: () {_goToPreviousPage();
           },
           child: Container(margin: EdgeInsets.only(top: 5),
-              height:50, width: screenSize.width * 0.1,
+              height:50, width: screenSize.width * 0.08,
               decoration: BoxDecoration(color: Colors.cyan.shade800, border: Border.symmetric(horizontal: BorderSide(color: Colors.cyan.shade900, width: 2.5))),
               child: Icon(Icons.arrow_back_ios_rounded, color: Colors.white)
           ),
         ),
         SizedBox(
-          height: 166,
-          width: MediaQuery.of(context).size.width * 0.8,
+          height: 180,
+          width: MediaQuery.of(context).size.width * 0.84,
           child: buildPageView(),
         ),
         GestureDetector(
           onTap: () {_goToNextPage();},
           child: Container(margin: EdgeInsets.only(top: 5),
-              height:50, width: screenSize.width*0.1,
+              height:50, width: screenSize.width*0.08,
               decoration: BoxDecoration(color: Colors.cyan.shade800, border: Border.symmetric(horizontal: BorderSide(color: Colors.cyan.shade900, width: 2.5))),
               child: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white)
           ),
@@ -93,8 +93,7 @@ class _MyPageViewState extends State<MyPageView> {
                 flex: 1,
                 child: Container(
                   decoration: BoxDecoration(color: Colors.cyan.shade800, border: Border(bottom: BorderSide(color: Colors.cyan.shade900, width: 2))),
-                  width: screenSize.width * 0.8,
-                  height: screenSize.height * 0.15,
+                  width: screenSize.width * 0.84,
                   padding: EdgeInsets.only(left: 15),
                   child:
                   (MyApp.isLoggedIn != true)?
@@ -153,11 +152,11 @@ class _MyPageViewState extends State<MyPageView> {
                   Image.network(
                     MyApp.barcodeImageUrl!,
                     width: double.infinity,
-                    height: 100,
+                    height: 110,
                     fit: BoxFit.contain,
                   )
                       :Padding(
-                    padding: const EdgeInsets.all(25.0),
+                    padding: const EdgeInsets.all(30.0),
                     child: Center(
                       child: ElevatedButton(
                         onPressed: () {
@@ -195,22 +194,134 @@ class _MyPageViewState extends State<MyPageView> {
         );
       case 2:
         return Container(
-          color: Colors.blue,
-          child: Center(
-            child: Text(
-              '두 번째 페이지',
-              style: TextStyle(fontSize: 24, color: Colors.white),
+          margin: EdgeInsets.only(top: 5, bottom: 3, left: 0.0, right: 0.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(6.0),
+            border: Border.all(
+              color: Colors.cyan.shade900,
+              width: 3.0,
             ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.only(left: 5, right: 5, top: 5),
+                width: 30,
+                height: double.maxFinite,
+                decoration: BoxDecoration(
+                  color: Colors.cyan.shade800,
+                  border: Border(right: BorderSide(color: Colors.cyan.shade900, width: 2))
+                ),
+                child: Text('추천 도서', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
+              ),
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Container(
+                      width: MediaQuery.of(context).size.width*0.2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Image.asset('assets/images/나미야.jpg', height: MediaQuery.of(context).size.height*0.19,),
+                          Text('나미야 잡화점의 기적', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
+                          Text('히가시노 게이고', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: MediaQuery.of(context).size.width*0.2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Image.asset('assets/images/나미야.jpg', height: MediaQuery.of(context).size.height*0.19,),
+                          Text('나미야 잡화점의 기적', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
+                          Text('히가시노 게이고', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: MediaQuery.of(context).size.width*0.2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Image.asset('assets/images/나미야.jpg', height: MediaQuery.of(context).size.height*0.19,),
+                          Text('나미야 잡화점의 기적', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
+                          Text('히가시노 게이고', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            ],
           ),
         );
       case 3:
         return Container(
-          color: Colors.green,
-          child: Center(
-            child: Text(
-              '세 번째 페이지',
-              style: TextStyle(fontSize: 24, color: Colors.white),
+          margin: EdgeInsets.only(top: 5, bottom: 3, left: 0.0, right: 0.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(6.0),
+            border: Border.all(
+              color: Colors.cyan.shade900,
+              width: 3.0,
             ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.only(left: 5, right: 5, top: 5),
+                width: 30,
+                height: double.maxFinite,
+                decoration: BoxDecoration(
+                    color: Colors.cyan.shade800,
+                    border: Border(right: BorderSide(color: Colors.cyan.shade900, width: 2))
+                ),
+                child: Text('신착 도서', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
+              ),
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Container(
+                      width: MediaQuery.of(context).size.width*0.2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Image.asset('assets/images/나미야.jpg', height: MediaQuery.of(context).size.height*0.19,),
+                          Text('나미야 잡화점의 기적', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
+                          Text('히가시노 게이고', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: MediaQuery.of(context).size.width*0.2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Image.asset('assets/images/나미야.jpg', height: MediaQuery.of(context).size.height*0.19,),
+                          Text('나미야 잡화점의 기적', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
+                          Text('히가시노 게이고', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
+                        ],
+                      ),
+                    ),
+                    Container(
+                      width: MediaQuery.of(context).size.width*0.2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Image.asset('assets/images/나미야.jpg', height: MediaQuery.of(context).size.height*0.19,),
+                          Text('나미야 잡화점의 기적', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
+                          Text('히가시노 게이고', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            ],
           ),
         );
       default:
