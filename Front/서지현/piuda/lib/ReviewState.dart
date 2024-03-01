@@ -76,7 +76,7 @@ class _BookStateReviewState extends State<BookStateReview> {
       int yourTaintScore,
       String yourConditionOp,
       ) async {
-    final String apiUrl = 'http://34.64.173.65:8080/reviewCondition/write';
+    final String apiUrl = 'http://10.0.2.2:8080/reviewCondition/write';
 
     final Map<String, dynamic> requestData = {
       'loan_id': widget.loan_id,

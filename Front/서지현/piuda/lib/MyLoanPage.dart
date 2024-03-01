@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:piuda/ReviewBook.dart';
 import 'package:piuda/ReviewState.dart';
-
 import 'main.dart';
 import 'BookDetail.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'Utils/BookUtils.dart';
+
 
 class LoanBookContainerData {
   final int loan_id;
@@ -13,6 +14,7 @@ class LoanBookContainerData {
   final String bookTitle;
   final String author;
   final String library;
+  final String? book_id;
   final String loan_date;
   final String? return_date;
   final int? remain_date;
@@ -26,6 +28,7 @@ class LoanBookContainerData {
     required this.bookTitle,
     required this.author,
     required this.library,
+    required this.book_id,
     required this.loan_date,
     required this.return_date,
     required this.remain_date,
@@ -34,39 +37,6 @@ class LoanBookContainerData {
     required this.book_isbn,
   });
 
-  static Future<String> fetchBookCover(String bookIsbn) async {
-    final String clientId = 'uFwwNh4yYFgq3WtAYl6S';
-    final String clientSecret = 'WElJXwZDhV';
-
-    print('API 요청 시작');
-
-    try {
-      final response = await http.get(
-        Uri.parse('https://openapi.naver.com/v1/search/book_adv.json?d_isbn=$bookIsbn'),
-        headers: {
-          'X-Naver-Client-Id': clientId,
-          'X-Naver-Client-Secret': clientSecret,
-        },
-      );
-
-      print('API 응답 받음');
-
-      if (response.statusCode == 200) {
-        final decodedData = json.decode(response.body);
-
-        // 확인을 위해 표지 이미지 URL 출력
-        print('이미지 URL: ${decodedData['items'][0]['image']}');
-
-        return decodedData['items'][0]['image'] ?? '';
-      } else {
-        print('Failed to fetch book cover. Status code: ${response.statusCode}');
-        return '';
-      }
-    } catch (e) {
-      print('fetchBookCover 함수에서 오류 발생: $e');
-      return '';
-    }
-  }
 
   static String extractDateOnly(String? dateTimeString) {
     if (dateTimeString != null && dateTimeString.isNotEmpty) {
@@ -86,6 +56,7 @@ class LoanBookContainerData {
       bookTitle: book['title'],
       author: book['author'],
       library: book['library'],
+      book_id: book['id'],
       loan_date: extractDateOnly(json['loan_date']),
       return_date: extractDateOnly(json['return_date']),
       remain_date: null, // 남은 날짜 정보가 없는 경우 수정 필요
@@ -96,7 +67,7 @@ class LoanBookContainerData {
   }
 
   Future<void> fetchAndSetImageUrl() async {
-    imageUrl = await fetchBookCover(book_isbn);
+    imageUrl = await BookUtils.fetchBookCover(book_isbn);
   }
 }
 
@@ -133,7 +104,7 @@ class _MyLoanPageState extends State<MyLoanPage> {
   Future<void> fetchLoanData() async {
     try {
       final response = await http.get(
-        Uri.parse('http://34.64.173.65:8080/loan/list/${MyApp.userId}'),
+        Uri.parse('http://10.0.2.2:8080/loan/list/${MyApp.userId}'),
       );
 
       if (response.statusCode == 200) {
@@ -298,6 +269,7 @@ class _FirstContentState extends State<FirstContent> {
               bookTitle: data.bookTitle,
               author: data.author,
               library: data.library,
+              book_id: data.book_id,
               loan_date: data.loan_date,
               return_date: data.return_date,
               remain_date: data.remain_date,
@@ -384,6 +356,7 @@ class _SecondContentState extends State<SecondContent> {
                 bookTitle: data.bookTitle,
                 author: data.author,
                 library: data.library,
+                book_id: data.book_id,
                 loan_date: data.loan_date,
                 return_date: data.return_date,
                 remain_date: data.remain_date,
@@ -417,6 +390,7 @@ class LoanBookContainer extends StatelessWidget {
   final String bookTitle;
   final String author;
   final String library;
+  final String? book_id;
   final String loan_date;
   final String? return_date;
   int? remain_date; //남은날짜
@@ -432,6 +406,7 @@ class LoanBookContainer extends StatelessWidget {
     required this.bookTitle,
     required this.author,
     required this.library,
+    required this.book_id,
     required this.loan_date,
     required this.return_date,
     required this.remain_date,
@@ -459,7 +434,7 @@ class LoanBookContainer extends StatelessWidget {
   void extendLoan(int? loanId, BuildContext context) async {
     try {
       final response = await http.put(
-        Uri.parse('http://34.64.173.65:8080/loan/extend/$loanId'),
+        Uri.parse('http://10.0.2.2:8080/loan/extend/$loanId'),
       );
 
       if (response.statusCode == 200) {
@@ -541,7 +516,7 @@ class LoanBookContainer extends StatelessWidget {
   }
 
   Future<bool> checkIfUserReviewed(String isbn, int userId) async {
-    final url = Uri.parse('http://34.64.173.65:8080/api/review/check/review/$userId/$isbn');
+    final url = Uri.parse('http://10.0.2.2:8080/api/review/check/review/$userId/$isbn');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -560,7 +535,7 @@ class LoanBookContainer extends StatelessWidget {
     try {
       // 서버로부터 리뷰 상태를 확인하는 API 호출
       final response = await http.get(
-        Uri.parse('http://34.64.173.65:8080/reviewCondition/check/$loanId'),
+        Uri.parse('http://10.0.2.2:8080/reviewCondition/check/$loanId'),
       );
 
       if (response.statusCode == 200) {
@@ -585,7 +560,7 @@ class LoanBookContainer extends StatelessWidget {
     try {
       // 서버로부터 리뷰 상태를 확인하는 API 호출
       final response = await http.get(
-        Uri.parse('http://34.64.173.65:8080/reviewCondition/check/$loanId'),
+        Uri.parse('http://10.0.2.2:8080/reviewCondition/check/$loanId'),
       );
 
       if (response.statusCode == 200) {
@@ -611,7 +586,22 @@ class LoanBookContainer extends StatelessWidget {
     double Height = MediaQuery.of(context).size.height;
     double Width = MediaQuery.of(context).size.width;
 
-    return Container(
+    return GestureDetector(
+      onTap: () {
+        print('GestureDetector onTap called with book_id: $book_id');
+        if (book_id != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BookDetail(book_id: book_id!),
+            ),
+          );
+        } else {
+          // book_id가 null인 경우 처리
+          // 예: 경고 메시지 표시, 기본값 사용, 등
+        }
+      },
+      child: Container(
         width: Width *0.95,
         margin: EdgeInsets.only(bottom: 10, left: 5, right: 5),
         padding: EdgeInsets.all(12),
@@ -849,7 +839,8 @@ class LoanBookContainer extends StatelessWidget {
               ),
             )
           ],
-        )
+        ),
+    ),
     );
   }
 }

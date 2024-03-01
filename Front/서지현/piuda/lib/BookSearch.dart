@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'BookDetail.dart';
 import 'LoginPage.dart';
+import 'Utils/BookUtils.dart';
+
 
 
 class BookSearch extends StatefulWidget {
@@ -125,11 +127,11 @@ class _BookSearchState extends State<BookSearch> {
 
       String url;
       if (_selectedSearchTarget == '자료명') {
-        url = 'http://34.64.173.65:8080/api/books/search?title=$searchText&page=$currentPage';
+        url = 'http://10.0.2.2:8080/api/books/search?title=$searchText&page=$currentPage';
       } else if (_selectedSearchTarget == '저자명') {
-        url = 'http://34.64.173.65:8080/api/books/search?author=$searchText&page=$currentPage';
+        url = 'http://10.0.2.2:8080/api/books/search?author=$searchText&page=$currentPage';
       } else {
-        url = 'http://34.64.173.65:8080/api/books/search?publisher=$searchText&page=$currentPage';
+        url = 'http://10.0.2.2:8080/api/books/search?publisher=$searchText&page=$currentPage';
       }
 
       if (pageSize > 0) {
@@ -170,13 +172,14 @@ class _BookSearchState extends State<BookSearch> {
           List<Widget> bookWidgets = []; // 책 데이터를 위한 위젯 리스트
           for (var bookData in filteredData) {
             final book_isbn = bookData['book_isbn'] as String? ?? '9788901241760';
+            String _imageUrl = await BookUtils.fetchBookCover(book_isbn);
+
 
             print('ISBN: $book_isbn');
 
             setState(() {
-              _imageUrl = '';
+              _imageUrl = _imageUrl;
             });
-            await fetchBookCover(book_isbn);
 
             final bookWidget = BookContainer(
               imageUrl: _imageUrl.isNotEmpty ? _imageUrl : widget.iniimageUrl,
@@ -230,39 +233,6 @@ class _BookSearchState extends State<BookSearch> {
       setState(() {
         isLoading = false; // 로딩 종료
       });
-    }
-  }
-
-  Future<void> fetchBookCover(String book_isbn) async {
-    final String clientId = 'uFwwNh4yYFgq3WtAYl6S';
-    final String clientSecret = 'WElJXwZDhV';
-
-    print('API 요청 시작');
-
-    try {
-      final response = await http.get(
-        Uri.parse('https://openapi.naver.com/v1/search/book_adv.json?d_isbn=$book_isbn'),
-        headers: {
-          'X-Naver-Client-Id': clientId,
-          'X-Naver-Client-Secret': clientSecret,
-        },
-      );
-
-      print('API 응답 받음');
-
-      if (response.statusCode == 200) {
-        final decodedData = json.decode(response.body);
-        setState(() {
-          _imageUrl = decodedData['items'][0]['image'] ?? ''; // 이미지 URL을 상태로 설정
-        });
-      } else {
-        setState(() {
-          _imageUrl = '';
-        });
-        print('Failed to fetch book data.');
-      }
-    } catch (e) {
-      print('fetchBookCover 함수에서 오류 발생: $e');
     }
   }
 
@@ -519,7 +489,7 @@ class BookContainer extends StatelessWidget {
     else {
       try {
         final response = await http.post(
-          Uri.parse('http://34.64.173.65:8080/api/userinterest/add'),
+          Uri.parse('http://10.0.2.2:8080/api/userinterest/add'),
           body: {'user_id': userId.toString(), 'book_id': bookId},
         );
 
@@ -614,7 +584,7 @@ class BookContainer extends StatelessWidget {
         final DateTime now = DateTime.now();
         final String reserveDate = "${now.year}-${now.month}-${now.day}";
         final response = await http.post(
-          Uri.parse('http://34.64.173.65:8080 /api/userbooking/add'),
+          Uri.parse('http://10.0.2.2:8080 /api/userbooking/add'),
           body: {
             'user_id': userId,
             'book_id': bookId,
@@ -776,22 +746,6 @@ class BookContainer extends StatelessWidget {
           MaterialPageRoute(
             builder: (context) => BookDetail(
               book_id: book_id,
-              imageUrl: imageUrl,
-              bookTitle: bookTitle,
-              author: author,
-              library: library,
-              publisher: publisher,
-              location: location,
-              loanstatus: loanstatus,
-              book_isbn: book_isbn,
-              reserved: reserved,
-              size: size,
-              price: price,
-              classification: classification,
-              media: media,
-              field_name: field_name,
-              book_ii: book_ii,
-              series: series,
             ),
           ),
         );
