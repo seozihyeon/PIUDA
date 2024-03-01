@@ -38,6 +38,8 @@ class _newbookspageState extends State<newbookspage> {
   void initState() {
     super.initState();
     fetchNewBooks('도서관전체');
+    _startDate = DateTime.now().subtract(Duration(days: 30)); // 30일 전
+    _endDate = DateTime.now();
 
     // _scrollController를 초기화
     _scrollController = ScrollController();
@@ -121,14 +123,14 @@ class _newbookspageState extends State<newbookspage> {
           newBooks.add(BookContainer(
             book_id: bookData['book']['id'] ?? '',
             imageUrl: _imageUrl,
-            bookTitle: bookData['book']['bookTitle'] ?? '',
+            bookTitle: bookData['book']['title'] ?? '',
             author: bookData['book']['author'] ?? '',
             library: bookData['book']['library']?? '',
             publisher: bookData['book']['publisher']?? '',
             location: bookData['book']['location']?? '',
-            loanstatus: bookData['book']['loanstatus']?? false,
+            loanstatus: !bookData['book']['borrowed'],
             book_isbn: bookData['book']['book_isbn']?? '',
-            reserved: bookData['book']['reserved']?? false,
+            reserved: bookData['book']['reserved'],
             size: bookData['book']['size']?? '',
             price: bookData['book']['price']?? 0,
             classification: bookData['book']['classification']?? '',
@@ -153,18 +155,38 @@ class _newbookspageState extends State<newbookspage> {
     }
   }
 
-
   Widget _buildDateDropdown() {
     return Row(
       children: [
+        Text('날짜범위'),
         TextButton(
           onPressed: () => _showDatePicker(context, true),
-          child: Text(_startDate != null ? '시작 날짜: ${DateFormat('yyyy-MM-dd').format(_startDate!)}' : '시작 날짜: ${DateFormat('yyyy-MM-dd').format(DateTime(DateTime.now().year, DateTime.now().month - 1, DateTime.now().day))}'),
+          child: Row(
+            children: [
+              Text(_startDate != null ? '${DateFormat('yyyy-MM-dd').format(_startDate!)}'  : '${DateFormat('yyyy-MM-dd').format(DateTime(DateTime.now().year, DateTime.now().month - 1, DateTime.now().day))}'),
+              Icon(Icons.arrow_drop_down)
+            ],
+          ),
         ),
-        SizedBox(width: 10),
+        Text('~'),
         TextButton(
           onPressed: () => _showDatePicker(context, false),
-          child: Text(_endDate != null ? '끝나는 날짜: ${DateFormat('yyyy-MM-dd').format(_endDate!)}' : '끝나는 날짜: ${DateFormat('yyyy-MM-dd').format(DateTime.now())}'),
+          child: Row(
+            children: [
+              Text(_endDate != null ? '${DateFormat('yyyy-MM-dd').format(_endDate!)}' : '${DateFormat('yyyy-MM-dd').format(DateTime.now())}'),
+              Icon(Icons.arrow_drop_down)
+            ],
+          ),
+        ),
+        IconButton(
+          onPressed: () {
+            fetchNewBooks(
+              _selectedLibrary.isNotEmpty ? _selectedLibrary.first : '도서관전체',
+              startDate: _startDate,
+              endDate: _endDate,
+            );
+          },
+          icon: Icon(Icons.search),
         ),
       ],
     );
@@ -186,13 +208,6 @@ class _newbookspageState extends State<newbookspage> {
           _endDate = pickedDate;
         }
       });
-
-      // 페치 실행
-      fetchNewBooks(
-        _selectedLibrary.isNotEmpty ? _selectedLibrary.first : '도서관전체',
-        startDate: _startDate,
-        endDate: _endDate,
-      );
     }
   }
 
@@ -260,7 +275,8 @@ class _newbookspageState extends State<newbookspage> {
         child: Column(
           children: [
             Container(
-              margin: EdgeInsets.only(left: 3, right: 3, bottom: 9),
+              margin: EdgeInsets.only(left: 9, right: 9, bottom: 9, top: 9),
+              padding: EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4.0),
                 border: Border.all(
@@ -268,80 +284,32 @@ class _newbookspageState extends State<newbookspage> {
                   width: 1.0, // 테두리 두께
                 ),
               ),
-
-              //@@검색창
               child: Column(
                 children: [
-                  Container(
-                    margin: EdgeInsets.only(top:17, left: 10, right: 10, bottom: 5),
-                    padding: EdgeInsets.only(left: 10, right: 10, top: 0, bottom: 0),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4.0),
-                      border: Border.all(
-                        color: Colors.cyan.shade700, // 테두리 색상
-                        width: 2.0, // 테두리 두께
+                  Row(
+                    children: [
+                      Text('구분'),
+                      SizedBox(width: 10,),
+                      DropdownButton<String>(
+                        value: _selectedLibrary.isNotEmpty ? _selectedLibrary.first : '도서관전체',
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            _updateSelectedLibrary(newValue);
+                          }
+                        },
+                        items: _libraries.map((String library) {
+                          return DropdownMenuItem<String>(
+                            value: library,
+                            child: Text(library),
+                          );
+                        }).toList(),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        DropdownButton<String>(
-                          value: _selectedSearchTarget,
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              if (newValue != null) {
-                                _selectedSearchTarget = newValue;
-                              }
-                            });
-                          },
-                          items: ['자료명', '저자명', '발행처']
-                              .map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                        ),
-                        SizedBox(width: 8.0),
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  //controller: _isbnController,
-                                  decoration: InputDecoration(
-                                    border: InputBorder.none, // 밑줄 제거
-                                    // 기타 필요한 데코레이션 설정
-                                  ),
-                                ),
-                              ),
-                              GestureDetector(
-                                //onTap: searchBook,
-                                child: Icon(Icons.search, color: Colors.cyan.shade700),
-                              )
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
+                  _buildDateDropdown(),
                 ],
               ),
             ),
-            DropdownButton<String>(
-              value: _selectedLibrary.isNotEmpty ? _selectedLibrary.first : '도서관전체',
-              onChanged: (String? newValue) {
-                if (newValue != null) {
-                  _updateSelectedLibrary(newValue);
-                }
-              },
-              items: _libraries.map((String library) {
-                return DropdownMenuItem<String>(
-                  value: library,
-                  child: Text(library),
-                );
-              }).toList(),
-            ),
-            _buildDateDropdown(),
 
             Column(
               children: _newbookWidget,
