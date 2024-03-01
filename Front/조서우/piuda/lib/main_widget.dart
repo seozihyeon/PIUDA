@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:piuda/NewBooksPage.dart';
 import 'main.dart';
 import 'LoginPage.dart';
 
@@ -224,8 +225,8 @@ class _MyPageViewState extends State<MyPageView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Image.asset('assets/images/나미야.jpg', height: MediaQuery.of(context).size.height*0.19,),
-                          Text('나미야 잡화점의 기적', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
+                          Image.asset('assets/images/라플라스.jpg', height: MediaQuery.of(context).size.height*0.19,),
+                          Text('라플라스의 마녀', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
                           Text('히가시노 게이고', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
                         ],
                       ),
@@ -235,8 +236,8 @@ class _MyPageViewState extends State<MyPageView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Image.asset('assets/images/나미야.jpg', height: MediaQuery.of(context).size.height*0.19,),
-                          Text('나미야 잡화점의 기적', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
+                          Image.asset('assets/images/레이크.jpg', height: MediaQuery.of(context).size.height*0.19,),
+                          Text('레이크 사이드', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
                           Text('히가시노 게이고', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
                         ],
                       ),
@@ -246,9 +247,9 @@ class _MyPageViewState extends State<MyPageView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Image.asset('assets/images/나미야.jpg', height: MediaQuery.of(context).size.height*0.19,),
-                          Text('나미야 잡화점의 기적', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
-                          Text('히가시노 게이고', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
+                          Image.asset('assets/images/돈의심리학.png', height: MediaQuery.of(context).size.height*0.19,),
+                          Text('돈의 심리학', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
+                          Text('모건 하우절', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
                         ],
                       ),
                     ),
@@ -271,15 +272,23 @@ class _MyPageViewState extends State<MyPageView> {
           ),
           child: Row(
             children: [
-              Container(
-                padding: EdgeInsets.only(left: 5, right: 5, top: 5),
-                width: 30,
-                height: double.maxFinite,
-                decoration: BoxDecoration(
-                    color: Colors.cyan.shade800,
-                    border: Border(right: BorderSide(color: Colors.cyan.shade900, width: 2))
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => newbookspage()),
+                  );
+                },
+                child: Container(
+                  padding: EdgeInsets.only(left: 5, right: 5, top: 5),
+                  width: 30,
+                  height: double.maxFinite,
+                  decoration: BoxDecoration(
+                      color: Colors.cyan.shade800,
+                      border: Border(right: BorderSide(color: Colors.cyan.shade900, width: 2))
+                  ),
+                  child: Text('신착 도서', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
                 ),
-                child: Text('신착 도서', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
               ),
               Expanded(
                 child: Row(
@@ -301,9 +310,9 @@ class _MyPageViewState extends State<MyPageView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Image.asset('assets/images/나미야.jpg', height: MediaQuery.of(context).size.height*0.19,),
-                          Text('나미야 잡화점의 기적', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
-                          Text('히가시노 게이고', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
+                          Image.asset('assets/images/모모.jpg', height: MediaQuery.of(context).size.height*0.19,),
+                          Text('모모', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
+                          Text('미하엘 엔데', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
                         ],
                       ),
                     ),
@@ -312,9 +321,9 @@ class _MyPageViewState extends State<MyPageView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Image.asset('assets/images/나미야.jpg', height: MediaQuery.of(context).size.height*0.19,),
-                          Text('나미야 잡화점의 기적', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
-                          Text('히가시노 게이고', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
+                          Image.asset('assets/images/인간실격.png', height: MediaQuery.of(context).size.height*0.19,),
+                          Text('인간 실격', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
+                          Text('다자이 오사무', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
                         ],
                       ),
                     ),
