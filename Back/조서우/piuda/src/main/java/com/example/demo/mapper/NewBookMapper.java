@@ -54,4 +54,23 @@ public interface NewBookMapper {
 	            one = @One(select = "com.example.demo.mapper.BookMapper.findByBookId"))
 	})
 	List<NewBook> getNewBooksByLibraryAndDateRange(@Param("library") String library, @Param("startDate") Date startDate, @Param("endDate") Date endDate);
+	
+	
+	@Select("SELECT * FROM newbooks ORDER BY newbook_date DESC")
+	@Results({
+	    @Result(property = "newbook_id", column = "newbook_id"),
+	    @Result(property = "book", column = "book_id", 
+	            javaType = Book.class, 
+	            one = @One(select = "com.example.demo.mapper.BookMapper.findByBookId"))
+	})
+    List<NewBook> NewBookOrderedByDateDesc();
+	
+//	@Select("SELECT * FROM newbooks WHERE book_id IN (SELECT book_id FROM books WHERE library = #{library})")
+//	@Results({
+//	    @Result(property = "newbook_id", column = "newbook_id"),
+//	    @Result(property = "book", column = "book_id", 
+//	            javaType = Book.class, 
+//	            one = @One(select = "com.example.demo.mapper.BookMapper.findByBookId"))
+//	})
+//    List<NewBook> NewBookFilteredByLibrary(@Param("library") String library);
 }
