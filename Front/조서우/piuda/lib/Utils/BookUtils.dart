@@ -21,14 +21,14 @@ class BookUtils {
 
       if (response.statusCode == 200) {
         final decodedData = json.decode(response.body);
-        return decodedData['items'][0]['image'] ?? 'assets/images/디폴트.png';
+        return decodedData['items'][0]['image'] ?? 'https://piudabucket.s3.ap-southeast-2.amazonaws.com/%EB%94%94%ED%8F%B4%ED%8A%B8.png';
       } else {
         print('Failed to fetch book cover. Status code: ${response.statusCode}');
-        return 'assets/images/디폴트.png';
+        return 'https://piudabucket.s3.ap-southeast-2.amazonaws.com/%EB%94%94%ED%8F%B4%ED%8A%B8.png';
       }
     } catch (e) {
       print('Error fetching book cover: $e');
-      return 'assets/images/디폴트.png';
+      return 'https://piudabucket.s3.ap-southeast-2.amazonaws.com/%EB%94%94%ED%8F%B4%ED%8A%B8.png';
     }
   }
 }

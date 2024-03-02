@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:piuda/BookSearch.dart';
 import 'package:intl/intl.dart';
 import 'package:piuda/Utils/BookUtils.dart';
-
+import 'package:piuda/Widgets/bookcontainer_widget.dart';
 
 class newbookspage extends StatefulWidget {
   const newbookspage({super.key});
@@ -142,6 +142,7 @@ class _newbookspageState extends State<newbookspage> {
             onReservationCompleted: () {
               // 예약이 완료되었을 때 수행할 작업을 여기에 추가
             },
+            recommender: null,
           ));
         }
 

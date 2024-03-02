@@ -67,6 +67,7 @@ class MyApp extends StatelessWidget {
     );
   }
 
+
   Future<Users?> checkLoginStatus() async {
     final storage = new FlutterSecureStorage();
     String? userInfo = await storage.read(key: 'login');
@@ -98,17 +99,26 @@ class _HomePageState extends State<HomePage> {
   bool isLoggedIn = false;
   int? userId;
   String? userName;
-
-  final MyPageView myPageView = MyPageView();
+  late GlobalKey<MyPageViewState> myPageViewKey;
+  late MyPageView myPageView;
 
   @override
   void initState() {
     super.initState();
+
+    myPageViewKey = GlobalKey<MyPageViewState>();
+
+    myPageView = MyPageView(
+      key: myPageViewKey,
+      onLibraryChanged: (newLibrary) {
+        //print("도서관이 변경되었습니다: $newLibrary");
+      },
+    );
+
     _selectedDay = ValueNotifier(DateTime.now());
     _focusedDay = ValueNotifier(DateTime.now());
     fetchEvents(selectedLibrary);
     _selectedEvents = _getEventsForDay(_selectedDay.value);
-    //myPageView.callFetchMainNewBooks(selectedLibrary);
   }
 
   // 로그인 상태를 업데이트하는 함수
@@ -117,7 +127,6 @@ class _HomePageState extends State<HomePage> {
       isLoggedIn = loginResult['isLoggedIn'];
       userName = loginResult['username'];
       userId = loginResult['userId'];
-
     });
   }
 
@@ -295,6 +304,9 @@ class _HomePageState extends State<HomePage> {
   void _onLibraryChanged(String newValue) {
     setState(() {
       selectedLibrary = newValue;
+      if (myPageViewKey.currentState != null) {
+        myPageViewKey.currentState!.updateLibrary(newValue);
+      }
     });
     fetchEvents(newValue);
   }
@@ -745,7 +757,7 @@ class _HomePageState extends State<HomePage> {
             ),
 
             // 모바일 회원증 구현
-            MyPageView(),
+            myPageView,
 
             //3분할 아이콘
             Container(
@@ -756,20 +768,20 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => _checkLoginAndNavigate(context, MyLoanPage()),
-                      child: MainFunction(imageUrl: 'assets/images/대출현황.jpg', text: '대출조회')
+                        onTap: () => _checkLoginAndNavigate(context, MyLoanPage()),
+                        child: MainFunction(imageUrl: 'assets/images/대출현황.jpg', text: '대출조회')
                     ),
                   ),
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => _checkLoginAndNavigate(context, MyInterestBooksPage()),
-                      child: MainFunction(imageUrl: 'assets/images/관심.jpg', text: '관심도서')
+                        onTap: () => _checkLoginAndNavigate(context, MyInterestBooksPage()),
+                        child: MainFunction(imageUrl: 'assets/images/관심.jpg', text: '관심도서')
                     ),
                   ),
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => _checkLoginAndNavigate(context, BookingList()),
-                      child: MainFunction(imageUrl: 'assets/images/로그.jpg', text: '예약내역')
+                        onTap: () => _checkLoginAndNavigate(context, BookingList()),
+                        child: MainFunction(imageUrl: 'assets/images/로그.jpg', text: '예약내역')
                     ),
                   ),
                 ],
@@ -888,6 +900,7 @@ class _LibDropdownState extends State<LibDropdown> {
             value: widget.selectedLibrary,
             onChanged: (String? newValue) {
               if (newValue != null) {
+                print("LibDropdown onChanged 호출됨, 선택된 도서관: $newValue");
                 setState(() {
                   widget.onLibraryChanged(newValue);
                 });

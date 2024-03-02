@@ -2,15 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-import 'package:piuda/Widgets/state_question_widget.dart';
+import 'Widgets/state_question_widget.dart';
 
 class BookStateReview extends StatefulWidget {
   final String bookTitle;
   final String author;
   final String library;
   final String book_isbn;
-  String imageUrl;
+  final String imageUrl;
   final int loan_id;
 
 
@@ -34,49 +33,13 @@ class _BookStateReviewState extends State<BookStateReview> {
   double lossScore = 3.0; // 초기값은 3.0으로 설정
   double taintScore = 3.0;
 
-  static Future<String> fetchBookCover(String bookIsbn) async {
-    final String clientId = 'uFwwNh4yYFgq3WtAYl6S';
-    final String clientSecret = 'WElJXwZDhV';
-
-    print('API 요청 시작');
-
-    try {
-      final response = await http.get(
-        Uri.parse('https://openapi.naver.com/v1/search/book_adv.json?d_isbn=$bookIsbn'),
-        headers: {
-          'X-Naver-Client-Id': clientId,
-          'X-Naver-Client-Secret': clientSecret,
-        },
-      );
-
-      print('API 응답 받음');
-
-      if (response.statusCode == 200) {
-        final decodedData = json.decode(response.body);
-
-        // 확인을 위해 표지 이미지 URL 출력
-        print('이미지 URL: ${decodedData['items'][0]['image']}');
-
-        return decodedData['items'][0]['image'] ?? '';
-      } else {
-        print('Failed to fetch book cover. Status code: ${response.statusCode}');
-        return '';
-      }
-    } catch (e) {
-      print('fetchBookCover 함수에서 오류 발생: $e');
-      return '';
-    }
-  }
-  Future<void> fetchAndSetImageUrl() async {
-    widget.imageUrl = await fetchBookCover(widget.book_isbn);
-  }
 
   Future<void> saveReviewConditionToServer(
       int yourLossScore,
       int yourTaintScore,
       String yourConditionOp,
       ) async {
-    final String apiUrl = 'http://10.0.2.2:8080/reviewCondition/write';
+    final String apiUrl = 'http://34.64.173.65:8080/reviewCondition/write';
 
     final Map<String, dynamic> requestData = {
       'loan_id': widget.loan_id,
@@ -135,23 +98,24 @@ class _BookStateReviewState extends State<BookStateReview> {
         child: Column(
           children: [
             Container(
-              margin: EdgeInsets.only(top:20, bottom: 10),
+              margin: EdgeInsets.only(top: 20, bottom: 10),
               child: Stack(
                 children: [
-                  Expanded(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.network(widget.imageUrl, // 사진 경로
-                          fit: BoxFit.cover, // 사진의 크기 조절 방식
-                          height: 200.0,
-                        ),
-                      ],
+                  Container(
+                    height: 200.0, // 이미지 높이를 200으로 고정
+                    width: double.infinity, // 이미지 너비를 화면 너비에 맞춤
+                    child: Image.network(
+                      widget.imageUrl,
+                      fit: BoxFit.contain,
                     ),
                   ),
-                  Positioned(child: WhatIsCondition(), top: 0, right: 0,)
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: WhatIsCondition(),
+                  ),
                 ],
-              )
+              ),
             ),
             Container(
               margin: EdgeInsets.only(left: 15, top: 8),

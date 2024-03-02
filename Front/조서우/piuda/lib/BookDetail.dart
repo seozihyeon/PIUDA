@@ -9,56 +9,18 @@ import 'LoginPage.dart';
 import 'review.dart';
 import 'review_service.dart';
 import 'package:intl/intl.dart';
+import 'Utils/BookUtils.dart';
 
 
 var reviewService = ReviewService();
 
-
 class BookDetail extends StatefulWidget {
-  final String bookTitle;
-  final String author;
-  final String library;
-  final String location;
-  final bool loanstatus;
-  final String book_isbn;
-  bool reserved;
-  final String imageUrl;
-  final String publisher;
-  final String size;
-  final int price;
-  final String classification;
-  final String media;
-  final String field_name;
   final String book_id;
-  final String book_ii;
-  final String? series;
-  final VoidCallback? onReservationCompleted;
   String expectedDate;
 
-
-
   BookDetail({
-    required this.imageUrl,
-    required this.bookTitle,
-    required this.author,
-    required this.library,
-    required this.location,
-    required this.loanstatus,
-    required this.book_isbn,
-    required this.reserved,
-    required this.publisher,
-    required this.size,
-    required this.price,
-    required this.classification,
-    required this.media,
-    required this.field_name,
     required this.book_id,
-    required this.book_ii,
-    this.series,
-    this.onReservationCompleted,
     this.expectedDate = '',
-
-
   });
 
   @override
@@ -70,7 +32,24 @@ class _BookDetailState extends State<BookDetail> {
   String bookDescription = ""; // 책 소개를 저장할 변수
   bool isExpanded = false;
   bool showBookReviewContent = true;
+  VoidCallback? onReservationCompleted;
   ScrollController _pageController = ScrollController();
+  String bookTitle = '';
+  String author = '';
+  String library = '';
+  String publisher = '';
+  String location = '';
+  bool loanstatus = false;
+  String book_isbn = '';
+  bool reserved = false;
+  String size = '';
+  int price = 0;
+  String classification = '';
+  String media = '';
+  String field_name = '';
+  String book_ii = '';
+  String? series; //null을 허용
+  String imageUrl = '';
 
   void toggleExpanded() {
     setState(() {
@@ -80,20 +59,76 @@ class _BookDetailState extends State<BookDetail> {
 
   List<Review> reviews = [];
   List<ReviewConditionBox> reviewconditions = [];
+  bool isLoading = true;
+
 
   @override
   void initState() {
     super.initState();
-    fetchBookDescription(widget.book_isbn);
+    initBookDetails();
+  }
+
+  Future<void> initBookDetails() async {
+    await fetchBookDetails(widget.book_id);
+    loadImage();
+    fetchBookDescription(book_isbn);
     fetchReviews();
     fetchReviewconditions();
     getExpectedDate(widget.book_id);
+    setState(() {
+      isLoading = false; // 모든 데이터 로드 완료
+    });
   }
+
+  void loadImage() async {
+    imageUrl = await BookUtils.fetchBookCover(book_isbn);
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+
+
+  Future<void> fetchBookDetails(String bookId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:8080/api/books/$bookId'),
+      );
+      if (response.statusCode == 200) {
+        final String responseBody = utf8.decode(response.bodyBytes);
+        final bookData = json.decode(responseBody);
+
+        setState(() {
+          book_ii = bookData['book_ii'] as String? ?? '청구기호 없음';
+          bookTitle =  bookData['title'] as String? ?? '제목 없음';
+          author = bookData['author'] as String? ?? '저자 없음';
+          library =  bookData['library'] as String? ?? '도서관 없음';
+          publisher = bookData['publisher'] as String? ?? '출판사 없음';
+          location = bookData['location'] as String? ?? '자료위치 없음'; // 예시 값, 실제 값으로 대체 필요
+          loanstatus = !bookData['borrowed'] as bool? ?? false; // 예시 값, 실제 값으로 대체 필요
+          book_isbn = bookData['book_isbn'];
+          reserved = bookData['reserved'] as bool? ?? false;
+          size = bookData['size'] as String? ?? '형태사항 없음';
+          price = bookData['price'] as int ?? 0;
+          classification =  bookData['classification'] as String ?? '분류기호 없음';
+          media = bookData['media'] as String ?? '매체구분 없음';
+          field_name = bookData['field_name'] as String? ?? '분야 없음';
+          series = bookData['series'] as String?;
+          imageUrl = imageUrl;
+        });
+      } else {
+        print('Failed to load book details. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching book details: $e');
+    }
+  }
+
 
   void fetchReviews() async {
     try {
       var reviewService = ReviewService();
-      var fetchedReviews = await reviewService.fetchReviews(widget.book_isbn);
+      var fetchedReviews = await reviewService.fetchReviews(book_isbn);
       setState(() {
         reviews = fetchedReviews;
       });
@@ -288,7 +323,7 @@ class _BookDetailState extends State<BookDetail> {
           if (message == "BookAddedSuccessfully")  {
             // 예약 성공 시, 상태 업데이트
             setState(() {
-              widget.reserved = true; // 예약 상태를 true로 설정
+              reserved = true; // 예약 상태를 true로 설정
               // 다른 필요한 상태 업데이트도 여기서 수행
             });
             // 성공 메시지 표시
@@ -301,7 +336,7 @@ class _BookDetailState extends State<BookDetail> {
                     TextButton(
                       onPressed: () {
                         Navigator.of(context).pop(); // 팝업 닫기
-                        widget.onReservationCompleted?.call();
+                        onReservationCompleted?.call();
                       },
                       child: Text('확인', style: TextStyle(color: Colors.cyan.shade800)),
                     ),
@@ -442,12 +477,37 @@ class _BookDetailState extends State<BookDetail> {
 
   @override
   Widget build(BuildContext context) {
+
+    if (isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () {
+              // 뒤로가기 동작
+              Navigator.pop(context, true);
+            },
+            color: Colors.black, // 뒤로가기 버튼의 색상
+          ),
+          title: Text(
+            '도서 상세 정보',
+            textAlign: TextAlign.start,
+            style: TextStyle(
+              color: Colors.black, // 글자색 설정
+            ),
+          ),
+          backgroundColor: Colors.white,
+        ),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     double Height = MediaQuery.of(context).size.height;
     double Width = MediaQuery.of(context).size.width;
 
-    String loanStatusText = (widget.loanstatus && !widget.reserved) ? '대출가능' : '대출불가';
-    Color loanStatusColor = (widget.loanstatus && !widget.reserved) ? Colors.cyan.shade700 : Colors.red.shade400;
-    String loanStatusBox = (widget.loanstatus || widget.reserved) ? '책누리신청' : '예약하기';
+    String loanStatusText = (loanstatus && !reserved) ? '대출가능' : ('대출불가' + (reserved ? "(예약중)" : ""));
+    Color loanStatusColor = (loanstatus && !reserved) ? Colors.cyan.shade700 : Colors.red.shade400;
+    String loanStatusBox = (loanstatus || reserved) ? '책누리신청' : '예약하기';
 
     String formatDateString(String dateString) {
       try {
@@ -517,7 +577,7 @@ class _BookDetailState extends State<BookDetail> {
                             text: TextSpan(
                               children: [
                                 TextSpan(
-                                  text: widget.bookTitle,
+                                  text: bookTitle,
                                   style: TextStyle(
                                     color: Colors.black,
                                     fontSize: 18,
@@ -530,10 +590,18 @@ class _BookDetailState extends State<BookDetail> {
                         ),
                       ),
                       SizedBox(height: 10),
-                      // 이미지 컨테이너
                       Container(
                         margin: EdgeInsets.only(bottom: 3),
-                        child: Image.network(widget.imageUrl, height: Height * 0.3),
+                        child: imageUrl.isNotEmpty
+                            ? Image.network(
+                          imageUrl,
+                          height: Height * 0.3,
+                          errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+                            // 로드 중 오류 발생 시 기본 이미지 표시
+                            return Image.asset('assets/images/디폴트.png', height: Height * 0.3);
+                          },
+                        )
+                            : Image.asset('assets/images/디폴트.png', height: Height * 0.3), // imageUrl이 비어있을 경우 기본 이미지 표시
                       ),
                       Container(
                         width: Width * 0.35,
@@ -552,7 +620,7 @@ class _BookDetailState extends State<BookDetail> {
                             text: TextSpan(
                               children: [
                                 TextSpan(
-                                  text: widget.field_name,
+                                  text:field_name,
                                   style: TextStyle(
                                     color: Colors.cyan.shade700,
                                     fontSize: 18,
@@ -598,7 +666,7 @@ class _BookDetailState extends State<BookDetail> {
                                                       ),
                                                     ),
                                                     TextSpan(
-                                                      text: widget.library,
+                                                      text: library,
                                                       style: TextStyle(
                                                         fontSize: 18.0,
                                                         color: Colors.grey.shade800, // 두 번째 텍스트의 글자색
@@ -614,7 +682,7 @@ class _BookDetailState extends State<BookDetail> {
                                                       ),
                                                     ),
                                                     TextSpan(
-                                                      text: widget.author,
+                                                      text: author,
                                                       style: TextStyle(
                                                         fontSize: 18.0,
                                                         color: Colors.grey.shade800, // 두 번째 텍스트의 글자색
@@ -630,7 +698,7 @@ class _BookDetailState extends State<BookDetail> {
                                                       ),
                                                     ),
                                                     TextSpan(
-                                                      text: widget.publisher,
+                                                      text: publisher,
                                                       style: TextStyle(
                                                         fontSize: 18.0,
                                                         color: Colors.grey.shade800, // 네 번째 텍스트의 글자색
@@ -646,7 +714,7 @@ class _BookDetailState extends State<BookDetail> {
                                                       ),
                                                     ),
                                                     TextSpan(
-                                                      text: widget.location,
+                                                      text: location,
                                                       style: TextStyle(
                                                         fontSize: 18.0,
                                                         color: Colors.grey.shade800, // 두 번째 텍스트의 글자색
@@ -662,14 +730,14 @@ class _BookDetailState extends State<BookDetail> {
                                                       ),
                                                     ),
                                                     TextSpan(
-                                                      text: widget.size,
+                                                      text: size,
                                                       style: TextStyle(
                                                         fontSize: 18.0,
                                                         color: Colors.grey.shade800, // 두 번째 텍스트의 글자색
                                                       ),
                                                     ),
                                                     TextSpan(text: '\n'),
-                                                    if (widget.series != null) ...[
+                                                    if (series != null) ...[
                                                       TextSpan(
                                                         text: '총서명 ',
                                                         style: TextStyle(
@@ -679,7 +747,7 @@ class _BookDetailState extends State<BookDetail> {
                                                         ),
                                                       ),
                                                       TextSpan(
-                                                        text: widget.series,
+                                                        text: series,
                                                         style: TextStyle(
                                                           fontSize: 18.0,
                                                           color: Colors.grey.shade800,
@@ -696,7 +764,7 @@ class _BookDetailState extends State<BookDetail> {
                                                       ),
                                                     ),
                                                     TextSpan(
-                                                      text: widget.book_isbn,
+                                                      text: book_isbn,
                                                       style: TextStyle(
                                                         fontSize: 18.0,
                                                         color: Colors.grey.shade800, // 두 번째 텍스트의 글자색
@@ -712,7 +780,7 @@ class _BookDetailState extends State<BookDetail> {
                                                       ),
                                                     ),
                                                     TextSpan(
-                                                      text: widget.price.toString(),
+                                                      text: price.toString(),
                                                       style: TextStyle(
                                                         fontSize: 18.0,
                                                         color: Colors.grey.shade800, // 두 번째 텍스트의 글자색
@@ -728,7 +796,7 @@ class _BookDetailState extends State<BookDetail> {
                                                       ),
                                                     ),
                                                     TextSpan(
-                                                      text: widget.classification,
+                                                      text: classification,
                                                       style: TextStyle(
                                                         fontSize: 18.0,
                                                         color: Colors.grey.shade800, // 두 번째 텍스트의 글자색
@@ -744,7 +812,7 @@ class _BookDetailState extends State<BookDetail> {
                                                       ),
                                                     ),
                                                     TextSpan(
-                                                      text: widget.media,
+                                                      text: media,
                                                       style: TextStyle(
                                                         fontSize: 18.0,
                                                         color: Colors.grey.shade800, // 두 번째 텍스트의 글자색
@@ -865,7 +933,7 @@ class _BookDetailState extends State<BookDetail> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(children: [
-                                (widget.loanstatus && !widget.reserved) ? Icon(Icons.check, color: Colors.cyan.shade700, weight: 20) : Icon(Icons.clear, color: Colors.red.shade400),
+                                (loanstatus && !reserved) ? Icon(Icons.check, color: Colors.cyan.shade700, weight: 20) : Icon(Icons.clear, color: Colors.red.shade400),
                                 Text(loanStatusText, style: TextStyle(color: loanStatusColor, fontSize: 16, fontWeight: FontWeight.bold,)),
                               ],),
                               SizedBox(height: 4,),
@@ -903,7 +971,7 @@ class _BookDetailState extends State<BookDetail> {
                                               ),
                                             ),
                                             TextSpan(
-                                              text: widget.book_ii,
+                                              text: book_ii,
                                               style: TextStyle(
                                                 fontSize: 18.0,
                                                 color: Colors.grey.shade800, // 두 번째 텍스트의 글자색
@@ -919,7 +987,7 @@ class _BookDetailState extends State<BookDetail> {
                                               ),
                                             ),
                                             TextSpan(
-                                              text: widget.location,
+                                              text: location,
                                               style: TextStyle(
                                                 fontSize: 18.0,
                                                 color: Colors.grey.shade800, // 두 번째 텍스트의 글자색
@@ -935,13 +1003,13 @@ class _BookDetailState extends State<BookDetail> {
                                               ),
                                             ),
                                             TextSpan(
-                                              text: widget.media,
+                                              text: media,
                                               style: TextStyle(
                                                 fontSize: 18.0,
                                                 color: Colors.grey.shade800, // 두 번째 텍스트의 글자색
                                               ),
                                             ),
-                                            if (widget.loanstatus == false) ...[
+                                            if (loanstatus == false) ...[
                                               TextSpan(text: '\n'),
                                               TextSpan(
                                                 text: '반납예정일 ',
@@ -993,7 +1061,7 @@ class _BookDetailState extends State<BookDetail> {
                                     ),
                                   ),
                                   SizedBox(width: 10,),
-                                  if (!widget.loanstatus && !widget.reserved)
+                                  if (!loanstatus && !reserved)
                                     GestureDetector(
                                       onTap: () {
                                         reserveBook(context, MyApp.userId.toString(), widget.book_id);
@@ -1121,6 +1189,8 @@ class _BookReviewContentState extends State<BookReviewContent> {
 
 
 
+
+
 class StateReviewContent extends StatefulWidget {
   final ScrollController pageController;
   final List<ReviewConditionBox> reviewconditions;
@@ -1167,6 +1237,7 @@ class ReviewBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
+    star myStar = star();
 
     return Container(
       width: width * 0.95,
@@ -1189,28 +1260,14 @@ class ReviewBox extends StatelessWidget {
               Text(review_date, style: TextStyle(color: Colors.grey.shade700)),
             ],
           ),
-          _buildStarRating(review_score),
+          myStar._buildStarRating(review_score),
           Text(review_content),
         ],
       ),
     );
   }
 
-  Widget _buildStarRating(int rating) {
-    List<Widget> stars = [];
-    for (int i = 0; i < 5; i++) {
-      IconData starIcon = Icons.star;
-      Color starColor = Colors.cyan.shade700;
-      if (i >= rating) {
-        starIcon = Icons.star_border;
-        starColor = Colors.grey;
-      }
-      stars.add(
-        Icon(starIcon, color: starColor, size: 20), // 별 크기를 20으로 설정
-      );
-    }
-    return Row(children: stars);
-  }
+
 }
 
 class StateReviewBox extends StatelessWidget {
@@ -1248,6 +1305,7 @@ class StateReviewBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
+    star myStar = star();
 
     return Container(
       width: width * 0.95,
@@ -1270,21 +1328,57 @@ class StateReviewBox extends StatelessWidget {
               Text(state_date, style: TextStyle(color: Colors.grey.shade700)),
             ],
           ),
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("손실도 ", style: TextStyle(color: Colors.cyan.shade900, )),
-              Text(getScoreText(lost_score), style: TextStyle(color: Colors.cyan.shade700)),
+              Row(
+                children: [
+                  Text("손실도 ", style: TextStyle(color: Colors.cyan.shade900, )),
+                  myStar._buildStarRating(lost_score),
+                  SizedBox(width: 4,),
+                  Text(getScoreText(lost_score), style: TextStyle(color: Colors.grey.shade700)),
+                ],
+              ),
+
             ],
           ),
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("오염도 ", style: TextStyle(color: Colors.cyan.shade900, )),
-              Text(getScoreText(taint_score), style: TextStyle(color: Colors.cyan.shade700)),
+              Row(
+                children: [
+                  Text("오염도 ", style: TextStyle(color: Colors.cyan.shade900, )),
+                  myStar._buildStarRating(taint_score),
+                  SizedBox(width: 4,),
+                  Text(getScoreText(taint_score), style: TextStyle(color: Colors.grey.shade700)),
+                ],
+              ),
             ],
           ),
-          Text(condi_op),
+          if (condi_op.isNotEmpty) ...[
+            Text(condi_op),
+          ],
         ],
       ),
     );
+  }
+}
+
+
+class star {
+  Widget _buildStarRating(int rating) {
+    List<Widget> stars = [];
+    for (int i = 0; i < 5; i++) {
+      IconData starIcon = Icons.star;
+      Color starColor = Colors.cyan.shade800;
+      if (i >= rating) {
+        starIcon = Icons.star_border;
+        starColor = Colors.grey;
+      }
+      stars.add(
+        Icon(starIcon, color: starColor, size: 15), // 별 크기를 20으로 설정
+      );
+    }
+    return Row(children: stars);
   }
 }
