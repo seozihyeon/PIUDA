@@ -83,15 +83,16 @@ public class NewBookController {
         
         Date startDateAsDate = localDateToDate(startDate);
         Date endDateAsDate = localDateToDate(endDate);
-        
-        // 호출할 매퍼 메소드 추가
+
         return newBookMapper.getNewBooksByLibraryAndDateRange(library, startDateAsDate, endDateAsDate);
     }
+    
     
     @GetMapping("/latest")
     public List<NewBook> getBooksOrderedByDateDesc() {
         return newBookService.getNewBooksOrderedByDateDesc();
     }
+    
     
     @GetMapping("/latest/{library}")
     public List<NewBook> getBooksOrderedByDateDescAndLibrary(@PathVariable String library) {

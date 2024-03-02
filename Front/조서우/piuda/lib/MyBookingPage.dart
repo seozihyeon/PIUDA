@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'main.dart';
 import 'BookDetail.dart';
 import 'package:intl/intl.dart';
+import 'Utils/BookUtils.dart';
 
 
 
@@ -140,38 +141,6 @@ class _BookingListState extends State<BookingList> {
     });
   }
 
-  Future<void> fetchBookCover(String book_isbn, int index) async {
-    final String clientId = 'uFwwNh4yYFgq3WtAYl6S';
-    final String clientSecret = 'WElJXwZDhV';
-
-    print('API 요청 시작');
-
-    try {
-      final response = await http.get(
-        Uri.parse(
-            'https://openapi.naver.com/v1/search/book_adv.json?d_isbn=$book_isbn'),
-        headers: {
-          'X-Naver-Client-Id': clientId,
-          'X-Naver-Client-Secret': clientSecret,
-        },
-      );
-
-      print('API 응답 받음');
-
-      if (response.statusCode == 200) {
-        final decodedData = json.decode(response.body);
-
-        setState(() {
-          userBooking[index].book.imageUrl =
-              decodedData['items'][0]['image'] ?? '';
-        });
-      } else {
-        print('Failed to fetch book cover.');
-      }
-    } catch (e) {
-      print('fetchBookCover 함수에서 오류 발생: $e');
-    }
-  }
 
   Future<void> loadUserBooking() async {
     setState(() {
@@ -197,7 +166,8 @@ class _BookingListState extends State<BookingList> {
 
         // 각 예약에 대한 책 표지를 비동기적으로 로드합니다.
         for (int i = 0; i < userBooking.length; i++) {
-          await fetchBookCover(userBooking[i].book.bookIsbn, i);
+          String imageUrl = await BookUtils.fetchBookCover(userBooking[i].book.bookIsbn);
+          userBooking[i].book.imageUrl = imageUrl;
           await getExpectedDate(userBooking[i].book.book_id);
         }
 
@@ -359,7 +329,7 @@ class _BookingListState extends State<BookingList> {
             children: userBooking.map((booking) {
               return BookingContainer(
                 id: booking.id.toString(),
-                imageUrl: Image.network(booking.book.imageUrl),
+                imageUrl: booking.book.imageUrl,
                 bookTitle: booking.book.title,
                 author: booking.book.author,
                 library: booking.book.library,
@@ -382,7 +352,7 @@ class _BookingListState extends State<BookingList> {
 //표지, 제목, 저자, 도서관, 자료위치, 예약일
 class BookingContainer extends StatelessWidget {
   final String? id;
-  final Image imageUrl;
+  final String imageUrl;
   final String bookTitle;
   final String author;
   final String library;
@@ -432,22 +402,7 @@ class BookingContainer extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (context) => BookDetail(
-              imageUrl: booking.book.imageUrl,
-              bookTitle: booking.book.title,
-              author: booking.book.author,
-              library: booking.book.library,
-              location: booking.book.location,
-              loanstatus: booking.book.loanstatus,
-              book_isbn: booking.book.bookIsbn,
-              reserved: booking.book.reserved,
-              publisher: booking.book.publisher,
-              size: booking.book.size,
-              price: booking.book.price,
-              classification: booking.book.classification,
-              media: booking.book.media,
-              field_name: booking.book.fieldName,
               book_id: booking.book.book_id,
-              book_ii: booking.book.bookIi,
             ),
           ),
         );
@@ -466,7 +421,9 @@ class BookingContainer extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(child: imageUrl, height: height * 0.25 * 0.6),
+            Image.network(
+              imageUrl,
+              height: MediaQuery.of(context).size.height * 0.25 * 0.6,),
             SizedBox(width: 20,),
             Expanded(
               child: Column(
@@ -550,40 +507,45 @@ class BookingContainer extends StatelessWidget {
                                     color: Colors.grey.shade900,
                                   ),
                                 ),
-                                if (booking.expectedDate.isNotEmpty) ...[
-                                  WidgetSpan(
-                                    child: Wrap(
-                                      crossAxisAlignment: WrapCrossAlignment.center,
-                                      children: [
-                                        RichText(
-                                          text: TextSpan(
-                                            children: <TextSpan>[
-                                              TextSpan(
-                                                text: '예상도착일 ',
-                                                style: TextStyle(
-                                                  fontSize: 18.0,
-                                                  color: Colors.grey.shade600,
-                                                ),
+                                WidgetSpan(
+                                  child: Wrap(
+                                    crossAxisAlignment: WrapCrossAlignment.center,
+                                    children: [
+                                      RichText(
+                                        text: TextSpan(
+                                          children: <TextSpan>[
+                                            TextSpan(
+                                              text: '예상도착일',
+                                              style: TextStyle(
+                                                fontSize: 18.0,
+                                                color: Colors.grey.shade600,
                                               ),
-                                              TextSpan(
-                                                text: formatDateString(booking.expectedDate),
-                                                style: TextStyle(
-                                                  fontSize: 18.0,
-                                                  color: Colors.grey.shade900,
-                                                ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Tooltip(
+                                        message: '실제 도착일과 차이가 있을 수 있습니다.\n도서가 도착하면 알림을 통해 바로 알려드리겠습니다!',
+                                        child: Icon(Icons.info_outline, size: 20.0, color: Colors.grey.shade600,),
+                                      ),
+                                      SizedBox(width:1),
+                                      RichText(
+                                        text: TextSpan(
+                                          children: <TextSpan>[
+                                            TextSpan(
+                                              text: formatDateString(booking.expectedDate),
+                                              style: TextStyle(
+                                                fontSize: 18.0,
+                                                color: Colors.grey.shade900,
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
-                                        SizedBox(width: 1,),
-                                        Tooltip(
-                                          message: '실제 도착일과 차이가 있을 수 있습니다.\n도서가 도착하면 알림을 통해 바로 알려드리겠습니다!',
-                                          child: Icon(Icons.info_outline, size: 20.0,),
-                                        ),
-                                      ],
-                                    ),
+                                      ),
+
+                                    ],
                                   ),
-                                ],
+                                ),
                               ],
                             ),
                           ),
