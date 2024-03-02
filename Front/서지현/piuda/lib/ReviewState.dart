@@ -3,7 +3,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import 'package:piuda/state_question_widget.dart';
+import 'package:piuda/Widgets/state_question_widget.dart';
 
 class BookStateReview extends StatefulWidget {
   final String bookTitle;
@@ -40,7 +40,7 @@ class _BookStateReviewState extends State<BookStateReview> {
       int yourTaintScore,
       String yourConditionOp,
       ) async {
-    final String apiUrl = 'http://34.64.173.65:8080/reviewCondition/write';
+    final String apiUrl = 'http://10.0.2.2:8080/reviewCondition/write';
 
     final Map<String, dynamic> requestData = {
       'loan_id': widget.loan_id,
