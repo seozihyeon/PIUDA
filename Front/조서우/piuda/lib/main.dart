@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:piuda/MyBookingPage.dart';
 import 'package:piuda/MyLog.dart';
-import 'package:piuda/main_widget.dart';
+import 'package:piuda/Widgets/main_3widget.dart';
+import 'package:piuda/Widgets/main_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'LoginPage.dart';
 import 'MyLoanPage.dart';
 import 'ReadingLogPage.dart';
@@ -18,29 +17,11 @@ import 'users.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'Widgets/main_widget.dart';
+import 'Utils/EventUtils.dart';
 
 final Uri _url = Uri.parse('https://www.sdlib.or.kr/main/');
 bool isLoggedIn = false;
-
-
-class Event {
-  final int id;
-  final String name;
-  final String library;
-  final DateTime date;
-
-  Event({required this.id, required this.name, required this.library, required this.date});
-
-  factory Event.fromJson(Map<String, dynamic> json) {
-    return Event(
-      id: json['event_id'],
-      name: json['event_name'],
-      library: json['event_library'],
-      date: DateTime.parse(json['event_date']),
-    );
-  }
-}
-
 
 void main() {
   initializeDateFormatting().then((_) {
@@ -56,13 +37,9 @@ class MyApp extends StatelessWidget {
   static String? userStatus;
 
 
-
-
   static void updateLoginStatus(bool status) {
     isLoggedIn = status;
   }
-
-
 
   Widget build(BuildContext context) {
     Intl.defaultLocale = 'ko_KR';
@@ -122,6 +99,17 @@ class _HomePageState extends State<HomePage> {
   int? userId;
   String? userName;
 
+  final MyPageView myPageView = MyPageView();
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDay = ValueNotifier(DateTime.now());
+    _focusedDay = ValueNotifier(DateTime.now());
+    fetchEvents(selectedLibrary);
+    _selectedEvents = _getEventsForDay(_selectedDay.value);
+    //myPageView.callFetchMainNewBooks(selectedLibrary);
+  }
 
   // 로그인 상태를 업데이트하는 함수
   void updateLoginStatus(Map<String, dynamic> loginResult) {
@@ -183,37 +171,37 @@ class _HomePageState extends State<HomePage> {
 
   late final ValueNotifier<DateTime> _selectedDay;
   late final ValueNotifier<DateTime> _focusedDay;
-  String selectedLibrary = '성동구립';
+  String selectedLibrary = '성동구립도서관';
   Map<String, Map<String, String>> libraryUrls = {
-    '성동구립': {
+    '성동구립도서관': {
       '공지사항': 'https://www.sdlib.or.kr/SD/contents.do?a_num=25663758',
       '문화행사': 'https://www.sdlib.or.kr/SD/edusat/list.do',
     },
-    '금호': {
+    '금호도서관': {
       '공지사항': 'https://www.sdlib.or.kr/KH/contents.do?a_num=20831646',
       '문화행사': 'https://www.sdlib.or.kr/KH/edusat/list.do',
     },
-    '용답': {
+    '용답도서관': {
       '공지사항': 'https://www.sdlib.or.kr/YD/contents.do?a_num=55661714',
       '문화행사': 'https://www.sdlib.or.kr/YD/edusat/list.do',
     },
-    '무지개': {
+    '무지개도서관': {
       '공지사항': 'https://www.sdlib.or.kr/RB/contents.do?a_num=48121466',
       '문화행사': 'https://www.sdlib.or.kr/RB/edusat/list.do',
     },
-    '성수': {
+    '성수도서관': {
       '공지사항': 'https://www.sdlib.or.kr/SS/contents.do?a_num=22326537',
       '문화행사': 'https://www.sdlib.or.kr/SS/edusat/list.do',
     },
-    '청계': {
+    '청계도서관': {
       '공지사항': 'https://www.sdlib.or.kr/CG/contents.do?a_num=33672856',
       '문화행사': 'https://www.sdlib.or.kr/CG/edusat/list.do',
     },
-    '숲속': {
+    '숲속도서관': {
       '공지사항': 'https://www.sdlib.or.kr/fore/contents.do?a_num=80628730',
       '문화행사': 'https://www.sdlib.or.kr/fore/edusat/list.do',
     },
-    '작은': {
+    '작은도서관': {
       '공지사항': 'https://www.sdlib.or.kr/small/main.do',
       '문화행사': 'https://www.sdlib.or.kr/small/main.do',
     },
@@ -230,17 +218,17 @@ class _HomePageState extends State<HomePage> {
     final json = jsonDecode(decodedBody);
 
     print("Response status: ${response.statusCode}");
-    print("Response body: $decodedBody");
+    //print("Response body: $decodedBody");
 
     if (response.statusCode == 200) {
       Iterable jsonList = json as Iterable; // jsonDecode의 결과를 Iterable로 캐스팅
       List<Event> events = jsonList.map((event) => Event.fromJson(event)).toList();
 
-      print("Fetched events: $events"); // 이벤트 로깅
+      //print("Fetched events: $events"); // 이벤트 로깅
 
       setState(() {
         _events = groupEventsByDate(events);
-        print("Updated events: $_events");
+        //print("Updated events: $_events");
       });
     } else {
       throw Exception('Failed to load events');
@@ -263,10 +251,6 @@ class _HomePageState extends State<HomePage> {
   }
 
 
-
-
-
-
   Future<void> _launchLibraryUrl(String category) async {
     String url = libraryUrls[selectedLibrary]?[category] ?? '';
     if (url.isNotEmpty) {
@@ -286,12 +270,10 @@ class _HomePageState extends State<HomePage> {
 
   void _navigateAndSearch() {
     if (_isbnController.text.isEmpty) {
-      // 텍스트 필드가 비어있으면 SnackBar 표시
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('검색어를 입력해주세요')),
       );
     } else {
-      // 검색 로직 수행
       print('Selected Search Target: $_selectedSearchTarget');
       Navigator.push(
         context,
@@ -307,15 +289,8 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _selectedDay = ValueNotifier(DateTime.now());
-    _focusedDay = ValueNotifier(DateTime.now());
-    fetchEvents(selectedLibrary);
-    _selectedEvents = _getEventsForDay(_selectedDay.value);
 
-  }
+
 
   void _onLibraryChanged(String newValue) {
     setState(() {
@@ -490,7 +465,7 @@ class _HomePageState extends State<HomePage> {
         eventLoader: (day) {
           // 시간 정보를 무시하고 날짜만 사용
           DateTime dateKey = DateTime(day.year, day.month, day.day);
-          print("Events for $dateKey: ${_events[dateKey]}");
+          //print("Events for $dateKey: ${_events[dateKey]}");
           return _events[dateKey] ?? [];
         },
       ),
@@ -582,27 +557,16 @@ class _HomePageState extends State<HomePage> {
         title: Row(
           children: [
             GestureDetector(
-              onTap: () {
-                _launchUrl();
-              },
+              onTap: () {_launchUrl();},
               child: Icon(Icons.public, color: Colors.cyan.shade900,),
             ),
             Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset(
-                    'assets/images/성동문화재단.jpg',
-                    width: 24.0,
-                    height: 24.0,
-                  ),
+                  Image.asset('assets/images/성동문화재단.jpg', width: 24.0, height: 24.0, ),
                   SizedBox(width: 5,),
-                  Text(
-                    '성동라이브러리',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.black,
-                    ),
+                  Text('성동라이브러리', textAlign: TextAlign.center, style: TextStyle(color: Colors.black,),
                   ),
                 ],
               ),
@@ -628,8 +592,6 @@ class _HomePageState extends State<HomePage> {
                           MyApp.isLoggedIn = result['isLoggedIn'];
                           MyApp.userName = result['username'];
                           MyApp.userId = result['userId'];
-
-                          // 필요한 경우 여기에서 추가 UI 업데이트 로직을 구현합니다.
                         });
                       }
                     });
@@ -795,76 +757,19 @@ class _HomePageState extends State<HomePage> {
                   Expanded(
                     child: GestureDetector(
                       onTap: () => _checkLoginAndNavigate(context, MyLoanPage()),
-                      child: Container(
-                        margin: EdgeInsets.only(top: 10, bottom: 5),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center, // 가로 중앙 정렬 추가
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Image.asset('assets/images/대출현황.jpg', scale: 1.3),
-                              SizedBox(height: 2),
-                              Text(
-                                  '대출조회',
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade700,
-                                      fontWeight: FontWeight.bold)
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      child: MainFunction(imageUrl: 'assets/images/대출현황.jpg', text: '대출조회')
                     ),
                   ),
                   Expanded(
                     child: GestureDetector(
                       onTap: () => _checkLoginAndNavigate(context, MyInterestBooksPage()),
-                      child: Container(
-                        margin: EdgeInsets.only(top: 10, bottom: 5),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center, // 가로 중앙 정렬 추가
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Image.asset('assets/images/관심.jpg', scale: 1.3),
-                              SizedBox(height: 2),
-                              Text(
-                                  '관심도서',
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade700,
-                                      fontWeight: FontWeight.bold)
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      child: MainFunction(imageUrl: 'assets/images/관심.jpg', text: '관심도서')
                     ),
                   ),
                   Expanded(
                     child: GestureDetector(
                       onTap: () => _checkLoginAndNavigate(context, BookingList()),
-                      child: Container(
-                        margin: EdgeInsets.only(top: 10, bottom: 5),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center, // 가로 중앙 정렬 추가
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Image.asset('assets/images/로그.jpg', scale: 1.3),
-                              SizedBox(height: 2),
-                              Text(
-                                  '예약내역',
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade700,
-                                      fontWeight: FontWeight.bold)
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      child: MainFunction(imageUrl: 'assets/images/로그.jpg', text: '예약내역')
                     ),
                   ),
                 ],
@@ -872,141 +777,58 @@ class _HomePageState extends State<HomePage> {
             ),
 
 
-
-
-            Row(
-              children: [
-                Spacer(flex: 3), // 좌측 마진
-                Expanded(
-                  flex: 25, //
-                  child: LibDropdown(
+            Container(
+              margin: EdgeInsets.only(left: 20, bottom: 8),
+              child: Row(
+                children: [
+                  LibDropdown(
                     selectedLibrary: selectedLibrary,
                     onLibraryChanged: _onLibraryChanged,
                     libraryUrls: libraryUrls,
                   ),
-                ),
-                Expanded(
-                  flex: 29, // '공지사항' 버튼을 위한 공간
-                  child: GestureDetector(
+                  GestureDetector(
                     onTap: () => _launchLibraryUrl('공지사항'),
                     child: Container(
-                      height: 50,
-                      padding: EdgeInsets.all(5),
+                      padding: EdgeInsets.all(5.0),
                       margin: EdgeInsets.only(top: 5, bottom: 5, left: 10.0, right: 10),
                       child: Row(
                         children: [
-                          RichText(
-                            text: TextSpan(
-                              children: [
-                                WidgetSpan(
-                                  child: Icon(
-                                    Icons.arrow_forward_ios,
-                                    color: Colors.grey.shade800,
-                                    size: 18.0,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: '공지사항',
-                                  style: TextStyle(
-                                    color: Colors.grey.shade800,
-                                    fontSize: 18.0,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          Icon(Icons.arrow_forward_ios, color: Colors.grey.shade800, size: 18.0,),
+                          Text('공지사항', style: TextStyle(color: Colors.grey.shade800, fontSize: 18.0, fontWeight: FontWeight.bold,),),
                         ],
                       ),
                     ),
                   ),
-                ),
-                Container(height: 18, decoration: BoxDecoration(border: Border(right: BorderSide(color: Colors.grey, width: 2)))),
-                Expanded(
-                  flex: 29, // '문화행사' 버튼을 위한 공간
-                  child: GestureDetector(
+                  Container(height: 18, decoration: BoxDecoration(border: Border(right: BorderSide(color: Colors.grey, width: 2)))),
+                  GestureDetector(
                     onTap: () => _launchLibraryUrl('문화행사'),
                     child: Container(
-                      height: 50,
-                      // width: screenSize.width*0.3, // 이제 필요 없음
                       padding: EdgeInsets.all(5.0),
                       margin: EdgeInsets.only(top: 5, bottom: 5, left: 10.0, right: 10.0),
                       child: Row(
                         children: [
-                          RichText(
-                            text: TextSpan(
-                              children: [
-                                WidgetSpan(
-                                  child: Icon(
-                                    Icons.arrow_forward_ios,
-                                    color: Colors.grey.shade800,
-                                    size: 18.0,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: '문화행사',
-                                  style: TextStyle(
-                                    color: Colors.grey.shade800,
-                                    fontSize: 18.0,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          Icon(Icons.arrow_forward_ios, color: Colors.grey.shade800, size: 18.0,),
+                          Text('문화행사', style: TextStyle(color: Colors.grey.shade800, fontSize: 18.0, fontWeight: FontWeight.bold,),),
                         ],
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             Container(
               padding: EdgeInsets.only(left: 35, bottom: 5),
               child: Row(
                 children: [
-                  // 빨간 점
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.red[400],
-                    ),
-                  ),
-                  SizedBox(width: 4), // 간격
-                  Text('오늘'),
+                  DayCircle(color: Colors.red[400]!, text: '오늘',),
                   SizedBox(width: 15), // 추가 간격
-                  // 회색 점
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  SizedBox(width: 4), // 간격
-                  Text('휴관일'),
+                  DayCircle(color: Colors.grey, text: '휴관일',),
                   SizedBox(width: 15), // 추가 간격
-                  // 파란 점
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.blue,
-                    ),
-                  ),
-                  SizedBox(width: 4), // 간격
-                  Text('행사일'),
-
+                  DayCircle(color: Colors.blue, text: '행사일',),
                 ],
               ),
             ),
-            // SizedBox(height:10),
             _buildEventList(),
-            // SizedBox(height:10),
             _buildTableCalendar(),
             SizedBox(height:30),
           ],
@@ -1058,12 +880,10 @@ class LibDropdown extends StatefulWidget {
 class _LibDropdownState extends State<LibDropdown> {
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
-          width: screenWidth*0.25, // 원하는 너비로 설정
           child: DropdownButton<String>(
             value: widget.selectedLibrary,
             onChanged: (String? newValue) {

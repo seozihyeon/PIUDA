@@ -47,4 +47,7 @@ public class NewBook {
 		this.newbook_date = newbook_date;
 	}
     
+	public String getLibrary() {
+        return this.book != null ? this.book.getLibrary() : null;
+    }
 }

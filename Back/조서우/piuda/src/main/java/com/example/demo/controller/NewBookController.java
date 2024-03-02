@@ -4,7 +4,9 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,12 +16,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.mapper.NewBookMapper;
 import com.example.demo.model.NewBook;
+import com.example.demo.service.NewBookService;
 
 @RestController
 @RequestMapping("/newbooks")
 public class NewBookController {
 
     private final NewBookMapper newBookMapper;
+    
+    @Autowired
+    private NewBookService newBookService;
 
     public NewBookController(NewBookMapper newBookMapper) {
         this.newBookMapper = newBookMapper;
@@ -82,5 +88,17 @@ public class NewBookController {
         return newBookMapper.getNewBooksByLibraryAndDateRange(library, startDateAsDate, endDateAsDate);
     }
     
+    @GetMapping("/latest")
+    public List<NewBook> getBooksOrderedByDateDesc() {
+        return newBookService.getNewBooksOrderedByDateDesc();
+    }
     
+    @GetMapping("/latest/{library}")
+    public List<NewBook> getBooksOrderedByDateDescAndLibrary(@PathVariable String library) {
+        List<NewBook> latestBooks = newBookService.getNewBooksOrderedByDateDesc();
+        List<NewBook> filteredBooks = latestBooks.stream()
+                                                 .filter(book -> book.getLibrary().equals(library))
+                                                 .collect(Collectors.toList());
+        return filteredBooks;
+    }
 }

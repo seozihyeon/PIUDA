@@ -1,22 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:piuda/NewBooksPage.dart';
-import 'main.dart';
-import 'LoginPage.dart';
+import '../main.dart';
+import '../LoginPage.dart';
+import 'package:http/http.dart' as http;
+import 'package:piuda/BookSearch.dart';
+import 'dart:convert';
+import '../Utils/BookUtils.dart';
 
 class MyPageView extends StatefulWidget {
+  final GlobalKey<_MyPageViewState> myPageViewStateKey = GlobalKey<_MyPageViewState>();
+
   @override
   _MyPageViewState createState() => _MyPageViewState();
+
+  // void callFetchMainNewBooks(String selectedLibrary) {
+  //   final state = myPageViewStateKey.currentState;
+  //   if (state != null) {
+  //     state.fetchMainNewBooks(selectedLibrary);
+  //   }
+  // }
 }
 
 class _MyPageViewState extends State<MyPageView> {
   late PageController _pageController;
   int _currentPageIndex = 1000;
+  String library = '';
+  // @override
+  // void receiveLibrary(LibDropdown lib) {
+  //   setState(() {
+  //     library = lib.selectedLibrary;
+  //   });
+  //   print('도서관 $library'); // 도서관 출력
+  //   fetchMainNewBooks(library).then((_) {
+  //     print('도서관 $library의 신착 도서 가져오기 완료'); // 완료 메시지 출력
+  //   }).catchError((error) {
+  //     print('도서관 $library의 신착 도서 가져오기 실패: $error'); // 오류 메시지 출력
+  //   });
+  // }
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _currentPageIndex);
     _pageController.addListener(_pageListener);
+    fetchMainNewBooks(library);
   }
 
   @override
@@ -30,6 +57,63 @@ class _MyPageViewState extends State<MyPageView> {
     setState(() {
       _currentPageIndex = _pageController.page!.round();
     });
+  }
+
+  //신착도서3개
+  String _imageUrl = '';
+  List<BookContainer> _newbookMainWidget = [];
+  Future<void> fetchMainNewBooks(String selectedLibrary) async {
+    try {
+      String url = 'http://10.0.2.2:8080/newbooks/latest';
+
+      final response = await http.get(Uri.parse(url));
+      print('선택된도서관:$selectedLibrary');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> newBooksData = jsonDecode(utf8.decode(response.bodyBytes));
+        List<BookContainer> newBooks = [];
+
+        setState(() {
+          _imageUrl = '';
+        });
+
+        for (var i = 0; i < newBooksData.length && i < 3; i++) {
+          var bookData = newBooksData[i];
+          String _imageUrl = await BookUtils.fetchBookCover(bookData['book']['book_isbn']);
+
+          newBooks.add(BookContainer(
+            book_id: bookData['book']['id'] ?? '',
+            imageUrl: _imageUrl,
+            bookTitle: bookData['book']['title'] ?? '',
+            author: bookData['book']['author'] ?? '',
+            library: bookData['book']['library'] ?? '',
+            publisher: bookData['book']['publisher'] ?? '',
+            location: bookData['book']['location'] ?? '',
+            loanstatus: !bookData['book']['borrowed'],
+            book_isbn: bookData['book']['book_isbn'] ?? '',
+            reserved: bookData['book']['reserved'],
+            size: bookData['book']['size'] ?? '',
+            price: bookData['book']['price'] ?? 0,
+            classification: bookData['book']['classification'] ?? '',
+            media: bookData['book']['media'] ?? '',
+            field_name: bookData['book']['field_name'] ?? '',
+            book_ii: bookData['book']['book_ii'] ?? '',
+            series: bookData['book']['series'] ?? '',
+            onReservationCompleted: () {
+              // 예약이 완료되었을 때 수행할 작업을 여기에 추가
+            },
+          ));
+        }
+        setState(() {
+          _newbookMainWidget = newBooks;
+        });
+      } else {
+        print('Failed to fetch new books for library $selectedLibrary: ${response.statusCode}');
+
+      }
+    } catch (e) {
+      print('Error fetching new books: $e');
+    }
   }
 
   @override
@@ -287,47 +371,25 @@ class _MyPageViewState extends State<MyPageView> {
                       color: Colors.cyan.shade800,
                       border: Border(right: BorderSide(color: Colors.cyan.shade900, width: 2))
                   ),
-                  child: Text('신착 도서', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
+                  child: Text('신착 도서', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ),
               Expanded(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Container(
-                      width: MediaQuery.of(context).size.width*0.2,
+                  children: _newbookMainWidget.map((book) {
+                    return Container(
+                      width: MediaQuery.of(context).size.width * 0.2,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Image.asset('assets/images/나미야.jpg', height: MediaQuery.of(context).size.height*0.19,),
-                          Text('나미야 잡화점의 기적', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
-                          Text('히가시노 게이고', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
+                          Image.network(book.imageUrl, height: MediaQuery.of(context).size.height * 0.19),
+                          Text(book.bookTitle, softWrap: true, style: TextStyle(fontSize: 10), overflow: TextOverflow.ellipsis),
+                          Text(book.author, style: TextStyle(color: Colors.grey.shade600, fontSize: 10), overflow: TextOverflow.ellipsis)
                         ],
                       ),
-                    ),
-                    Container(
-                      width: MediaQuery.of(context).size.width*0.2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Image.asset('assets/images/모모.jpg', height: MediaQuery.of(context).size.height*0.19,),
-                          Text('모모', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
-                          Text('미하엘 엔데', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: MediaQuery.of(context).size.width*0.2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Image.asset('assets/images/인간실격.png', height: MediaQuery.of(context).size.height*0.19,),
-                          Text('인간 실격', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
-                          Text('다자이 오사무', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
-                        ],
-                      ),
-                    ),
-                  ],
+                    );
+                  }).toList(),
                 ),
               )
             ],
@@ -352,3 +414,6 @@ class _MyPageViewState extends State<MyPageView> {
     );
   }
 }
+
+
+

@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:piuda/BookSearch.dart';
 import 'package:intl/intl.dart';
+import 'package:piuda/Utils/BookUtils.dart';
 
 
 class newbookspage extends StatefulWidget {
@@ -118,7 +119,7 @@ class _newbookspageState extends State<newbookspage> {
 
         for (var bookData in newBooksData) {
           // 책 정보를 BookContainer 위젯으로 변환하여 리스트에 추가
-          await fetchBookCover(bookData['book']['book_isbn']);
+          String _imageUrl = await BookUtils.fetchBookCover(bookData['book']['book_isbn']);
 
           newBooks.add(BookContainer(
             book_id: bookData['book']['id'] ?? '',
@@ -210,43 +211,6 @@ class _newbookspageState extends State<newbookspage> {
       });
     }
   }
-
-
-
-
-  Future<void> fetchBookCover(String book_isbn) async {
-    final String clientId = 'uFwwNh4yYFgq3WtAYl6S';
-    final String clientSecret = 'WElJXwZDhV';
-
-    print('API 요청 시작');
-
-    try {
-      final response = await http.get(
-        Uri.parse('https://openapi.naver.com/v1/search/book_adv.json?d_isbn=$book_isbn'),
-        headers: {
-          'X-Naver-Client-Id': clientId,
-          'X-Naver-Client-Secret': clientSecret,
-        },
-      );
-
-      print('API 응답 받음');
-
-      if (response.statusCode == 200) {
-        final decodedData = json.decode(response.body);
-        setState(() {
-          _imageUrl = decodedData['items'][0]['image'] ?? ''; // 이미지 URL을 상태로 설정
-        });
-      } else {
-        setState(() {
-          _imageUrl = '';
-        });
-        print('Failed to fetch book data.');
-      }
-    } catch (e) {
-      print('fetchBookCover 함수에서 오류 발생: $e');
-    }
-  }
-
 
   @override
   Widget build(BuildContext context) {
