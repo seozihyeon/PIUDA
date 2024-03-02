@@ -127,11 +127,11 @@ class _BookSearchState extends State<BookSearch> {
 
       String url;
       if (_selectedSearchTarget == '자료명') {
-        url = 'http://10.0.2.2:8080/api/books/search?title=$searchText&page=$currentPage';
+        url = 'http://34.64.173.65:8080/api/books/search?title=$searchText&page=$currentPage';
       } else if (_selectedSearchTarget == '저자명') {
-        url = 'http://10.0.2.2:8080/api/books/search?author=$searchText&page=$currentPage';
+        url = 'http://34.64.173.65:8080/api/books/search?author=$searchText&page=$currentPage';
       } else {
-        url = 'http://10.0.2.2:8080/api/books/search?publisher=$searchText&page=$currentPage';
+        url = 'http://34.64.173.65:8080/api/books/search?publisher=$searchText&page=$currentPage';
       }
 
       if (pageSize > 0) {
@@ -489,7 +489,7 @@ class BookContainer extends StatelessWidget {
     else {
       try {
         final response = await http.post(
-          Uri.parse('http://10.0.2.2:8080/api/userinterest/add'),
+          Uri.parse('http://34.64.173.65:8080/api/userinterest/add'),
           body: {'user_id': userId.toString(), 'book_id': bookId},
         );
 
@@ -584,7 +584,7 @@ class BookContainer extends StatelessWidget {
         final DateTime now = DateTime.now();
         final String reserveDate = "${now.year}-${now.month}-${now.day}";
         final response = await http.post(
-          Uri.parse('http://10.0.2.2:8080 /api/userbooking/add'),
+          Uri.parse('http://34.64.173.65:8080 /api/userbooking/add'),
           body: {
             'user_id': userId,
             'book_id': bookId,

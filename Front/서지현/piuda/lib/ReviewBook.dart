@@ -3,7 +3,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:http/http.dart' as http;
 
 Future<void> sendReviewToServer(int loanId, String reviewText, int reviewScore) async {
-  final url = Uri.parse('http://10.0.2.2:8080/api/review/add');
+  final url = Uri.parse('http://34.64.173.65:8080/api/review/add');
 
   try {
     final response = await http.post(
@@ -172,10 +172,10 @@ class _BookReviewState extends State<BookReview> {
                     controller: reviewController,
                     maxLines: 7,
                     decoration: InputDecoration(
-                      hintText: '리뷰를 작성하세요...',
-                      border: OutlineInputBorder(),
+                        hintText: '리뷰를 작성하세요...',
+                        border: OutlineInputBorder(),
                         focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.cyan.shade700),)
+                          borderSide: BorderSide(color: Colors.cyan.shade700),)
                     ),
                   ),
                 ],
