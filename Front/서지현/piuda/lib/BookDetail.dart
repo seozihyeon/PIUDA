@@ -92,7 +92,7 @@ class _BookDetailState extends State<BookDetail> {
   Future<void> fetchBookDetails(String bookId) async {
     try {
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8080/api/books/$bookId'),
+        Uri.parse('http://34.64.173.65:8080/api/books/$bookId'),
       );
       if (response.statusCode == 200) {
         final String responseBody = utf8.decode(response.bodyBytes);
@@ -211,7 +211,7 @@ class _BookDetailState extends State<BookDetail> {
     else {
       try {
         final response = await http.post(
-          Uri.parse('http://10.0.2.2:8080/api/userinterest/add'),
+          Uri.parse('http://34.64.173.65:8080/api/userinterest/add'),
           body: {'user_id': userId.toString(), 'book_id': bookId},
         );
 
@@ -305,7 +305,7 @@ class _BookDetailState extends State<BookDetail> {
         final DateTime now = DateTime.now();
         final String reserveDate = "${now.year}-${now.month}-${now.day}";
         final response = await http.post(
-          Uri.parse('http://10.0.2.2:8080 /api/userbooking/add'),
+          Uri.parse('http://34.64.173.65:8080 /api/userbooking/add'),
           body: {
             'user_id': userId,
             'book_id': bookId,
@@ -452,7 +452,7 @@ class _BookDetailState extends State<BookDetail> {
       print('Book ID: $bookId');
 
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8080/loan/expected-dates/$bookId'),
+        Uri.parse('http://34.64.173.65:8080/loan/expected-dates/$bookId'),
       );
 
       print('Response status: ${response.statusCode}');
@@ -1261,7 +1261,9 @@ class ReviewBox extends StatelessWidget {
             ],
           ),
           myStar._buildStarRating(review_score),
-          Text(review_content),
+          if (review_content.isNotEmpty) ...[
+    Text(review_content),
+    ]
         ],
       ),
     );

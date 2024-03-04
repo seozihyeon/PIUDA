@@ -6,6 +6,9 @@ import 'package:http/http.dart' as http;
 import 'package:piuda/BookSearch.dart';
 import 'dart:convert';
 import '../Utils/BookUtils.dart';
+import 'package:piuda/BookDetail.dart';
+import 'package:piuda/RecommendBooksPage.dart';
+import 'package:piuda/Widgets/bookcontainer_widget.dart';
 
 class MyPageView extends StatefulWidget {
   final GlobalKey<MyPageViewState> myPageViewStateKey = GlobalKey<MyPageViewState>();
@@ -19,45 +22,24 @@ class MyPageView extends StatefulWidget {
 
 }
 
-// void callFetchMainNewBooks(String selectedLibrary) {
-//   final state = myPageViewStateKey.currentState;
-//   if (state != null) {
-//     state.fetchMainNewBooks(selectedLibrary);
-//   }
-// }
-
 
 class MyPageViewState extends State<MyPageView> {
   late PageController _pageController;
-  int _currentPageIndex = 1000;
+  int _currentPageIndex = 999;
   String library = '';
   bool _isMounted = false;
 
   void updateLibrary(String newLibrary) {
-    print("updateLibrary 호출됨: $newLibrary");
+    //print("updateLibrary 호출됨: $newLibrary");
     if (library != newLibrary) {
       setState(() {
         library = newLibrary;
         fetchMainNewBooks(library);
       });
-
       // onLibraryChanged 콜백 호출
       widget.onLibraryChanged(newLibrary);
     }
   }
-
-  // @override
-  // void receiveLibrary(LibDropdown lib) {
-  //   setState(() {
-  //     library = lib.selectedLibrary;
-  //   });
-  //   print('도서관 $library'); // 도서관 출력
-  //   fetchMainNewBooks(library).then((_) {
-  //     print('도서관 $library의 신착 도서 가져오기 완료'); // 완료 메시지 출력
-  //   }).catchError((error) {
-  //     print('도서관 $library의 신착 도서 가져오기 실패: $error'); // 오류 메시지 출력
-  //   });
-  // }
 
   @override
   void initState() {
@@ -66,7 +48,14 @@ class MyPageViewState extends State<MyPageView> {
     _pageController.addListener(_pageListener);
     _isMounted = true; // 상태가 마운트된 것으로 설정
     library = '성동구립도서관';
-    fetchMainNewBooks(library);
+    fetchData();
+  }
+
+  Future<void> fetchData() async {
+    await Future.wait([
+      fetchMainNewBooks(library),
+      fetchMainRecommendBooks(),
+    ]);
   }
 
   @override
@@ -86,22 +75,21 @@ class MyPageViewState extends State<MyPageView> {
   }
 
   //신착도서3개
-  String _imageUrl = '';
+  String _newimageUrl = '';
   List<BookContainer> _newbookMainWidget = [];
   Future<void> fetchMainNewBooks(String selectedLibrary) async {
-    print("fetchMainNewBooks 호출됨: $selectedLibrary");
     try {
-      String url = 'http://10.0.2.2:8080/newbooks/latest/$selectedLibrary';
+      String url = 'http://34.64.173.65:8080/newbooks/latest/$selectedLibrary';
 
       final response = await http.get(Uri.parse(url));
-      print('선택된도서관:$selectedLibrary');
+      //print('선택된도서관:$selectedLibrary');
 
       if (response.statusCode == 200) {
         final List<dynamic> newBooksData = jsonDecode(utf8.decode(response.bodyBytes));
         List<BookContainer> newBooks = [];
 
         setState(() {
-          _imageUrl = '';
+          _newimageUrl = '';
         });
 
         for (var i = 0; i < newBooksData.length && i < 3; i++) {
@@ -129,6 +117,7 @@ class MyPageViewState extends State<MyPageView> {
             onReservationCompleted: () {
               // 예약이 완료되었을 때 수행할 작업을 여기에 추가
             },
+            recommender: null,
           ));
         }
         setState(() {
@@ -147,6 +136,65 @@ class MyPageViewState extends State<MyPageView> {
     }
   }
 
+  //추천도서 3개
+  String _recommendimageUrl = '';
+  List<BookContainer> _recommendbookMainWidget = [];
+  Future<void> fetchMainRecommendBooks() async {
+    try {
+      String url = 'http://34.64.173.65:8080/recommendbooks/latest';
+
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> recommendBooksData = jsonDecode(utf8.decode(response.bodyBytes));
+        List<BookContainer> recommendBooks = [];
+
+        setState(() {
+          _recommendimageUrl = '';
+        });
+
+        for (var i = 0; i < recommendBooksData.length && i < 3; i++) {
+          var bookData = recommendBooksData[i];
+          String _imageUrl = await BookUtils.fetchBookCover(bookData['book']['book_isbn']);
+
+          recommendBooks.add(BookContainer(
+            book_id: bookData['book']['id'] ?? '',
+            imageUrl: _imageUrl,
+            bookTitle: bookData['book']['title'] ?? '',
+            author: bookData['book']['author'] ?? '',
+            library: bookData['book']['library'] ?? '',
+            publisher: bookData['book']['publisher'] ?? '',
+            location: bookData['book']['location'] ?? '',
+            loanstatus: !bookData['book']['borrowed'],
+            book_isbn: bookData['book']['book_isbn'] ?? '',
+            reserved: bookData['book']['reserved'],
+            size: bookData['book']['size'] ?? '',
+            price: bookData['book']['price'] ?? 0,
+            classification: bookData['book']['classification'] ?? '',
+            media: bookData['book']['media'] ?? '',
+            field_name: bookData['book']['field_name'] ?? '',
+            book_ii: bookData['book']['book_ii'] ?? '',
+            series: bookData['book']['series'] ?? '',
+            onReservationCompleted: () {
+            },
+            recommender: null,
+          ));
+        }
+        setState(() {
+          _recommendbookMainWidget = recommendBooks;
+        });
+      } else {
+        print('Failed to fetch recommend books}');
+      }
+    } catch (e) {
+      if (_isMounted) { // 상태가 마운트된 경우에만 setState() 호출
+        setState(() {
+          print('Error fetching recommend books: $e');
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
@@ -156,20 +204,20 @@ class MyPageViewState extends State<MyPageView> {
           onTap: () {_goToPreviousPage();
           },
           child: Container(margin: EdgeInsets.only(top: 5),
-              height:50, width: screenSize.width * 0.08,
+              height:screenSize.height*0.075, width: screenSize.width*0.08,
               decoration: BoxDecoration(color: Colors.cyan.shade800, border: Border.symmetric(horizontal: BorderSide(color: Colors.cyan.shade900, width: 2.5))),
               child: Icon(Icons.arrow_back_ios_rounded, color: Colors.white)
           ),
         ),
         SizedBox(
-          height: 180,
-          width: MediaQuery.of(context).size.width * 0.84,
+          height: screenSize.height * 0.28, //0.265 ~ 0.27
+          width: screenSize.width * 0.84,
           child: buildPageView(),
         ),
         GestureDetector(
           onTap: () {_goToNextPage();},
           child: Container(margin: EdgeInsets.only(top: 5),
-              height:50, width: screenSize.width*0.08,
+              height:screenSize.height*0.075, width: screenSize.width*0.08,
               decoration: BoxDecoration(color: Colors.cyan.shade800, border: Border.symmetric(horizontal: BorderSide(color: Colors.cyan.shade900, width: 2.5))),
               child: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white)
           ),
@@ -190,6 +238,7 @@ class MyPageViewState extends State<MyPageView> {
 
   Widget buildContent(int pageIndex) {
     Size screenSize = MediaQuery.of(context).size;
+    final textSize = MediaQuery.textScalerOf(context);
     switch (pageIndex) {
       case 1:
         return Container(
@@ -205,60 +254,40 @@ class MyPageViewState extends State<MyPageView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start, // 텍스트를 왼쪽 정렬
             children: [
-              Expanded(
-                flex: 1,
-                child: Container(
+              Container(
                   decoration: BoxDecoration(color: Colors.cyan.shade800, border: Border(bottom: BorderSide(color: Colors.cyan.shade900, width: 2))),
+                  height: screenSize.height*0.095,
                   width: screenSize.width * 0.84,
-                  padding: EdgeInsets.only(left: 15),
+                  padding: EdgeInsets.only(left: 15,),
                   child:
                   (MyApp.isLoggedIn != true)?
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text("모바일 회원증", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17),),
-                      Text("로그인 후 이용 가능한 서비스입니다", style: TextStyle(color: Colors.white, fontSize: 15),)
+                      Text("모바일 회원증", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: textSize.scale(17)),),
+                      Text("로그인 후 이용 가능한 서비스입니다", style: TextStyle(color: Colors.white, fontSize: textSize.scale(15)),)
                     ],
                   )
-                      :RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '이름 ',
-                          style: TextStyle(
-                            fontSize: 18.0,
-                            color: Colors.white, // 첫 번째 텍스트의 글자색
-                          ),
-                        ),
-                        TextSpan(
-                          text:MyApp.userName,
-                          style: TextStyle(
-                            fontSize: 18.0,
-                            color: Colors.white70, // 두 번째 텍스트의 글자색
-                          ),
-                        ),
-                        TextSpan(text: '\n'),
-                        TextSpan(
-                          text: '회원번호 ',
-                          style: TextStyle(
-                            fontSize: 18.0,
-                            color: Colors.white, // 세 번째 텍스트의 글자색
-                          ),
-                        ),
-                        TextSpan(
-                          text:MyApp.userId.toString(),
-                          style: TextStyle(
-                            fontSize: 18.0,
-                            color: Colors.white70, // 네 번째 텍스트의 글자색
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                      : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        children: [
+                          Text("이름 ", style: TextStyle(color: Colors.white, fontSize: textSize.scale(18)),),
+                          Text("${MyApp.userName}", style: TextStyle(color: Colors.white70, fontSize: textSize.scale(18)),),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Text("회원번호 ", style: TextStyle(color: Colors.white, fontSize: textSize.scale(18)),),
+                          Text("${MyApp.userId}", style: TextStyle(color: Colors.white70, fontSize: textSize.scale(18)),),
+                        ],
+                      ),              ],
+                  )
               ),
               Expanded(
-                flex: 0,
                 child: ClipRRect(
                   borderRadius: BorderRadius.only(
                     bottomLeft: Radius.circular(12.0),
@@ -267,8 +296,8 @@ class MyPageViewState extends State<MyPageView> {
                   child: (MyApp.isLoggedIn == true && MyApp.barcodeImageUrl != null) ?
                   Image.network(
                     MyApp.barcodeImageUrl!,
+                    height: double.infinity,
                     width: double.infinity,
-                    height: 110,
                     fit: BoxFit.contain,
                   )
                       :Padding(
@@ -321,59 +350,63 @@ class MyPageViewState extends State<MyPageView> {
           ),
           child: Row(
             children: [
-              Container(
-                padding: EdgeInsets.only(left: 5, right: 5, top: 5),
-                width: 30,
-                height: double.maxFinite,
-                decoration: BoxDecoration(
-                    color: Colors.cyan.shade800,
-                    border: Border(right: BorderSide(color: Colors.cyan.shade900, width: 2))
-                ),
-                child: Column(
-                  children: [
-                    Text('추천 도서', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
-                    Icon(Icons.menu_open, color: Colors.white, )
-                  ],
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => recommendbookspage()),
+                  );
+                },
+                child: Container(
+                  width: screenSize.width*0.07,
+                  height: double.maxFinite,
+                  decoration: BoxDecoration(
+                      color: Colors.cyan.shade800,
+                      border: Border(right: BorderSide(color: Colors.cyan.shade900, width: 2))
+                  ),
+                  child: Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(5.0),
+                        child: Text('추천 도서', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
+                      ),
+                      Icon(Icons.menu_open, color: Colors.white, )
+                    ],
+                  ),
                 ),
               ),
               Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Container(
-                      width: MediaQuery.of(context).size.width*0.2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Image.asset('assets/images/라플라스.jpg', height: MediaQuery.of(context).size.height*0.19,),
-                          Text('라플라스의 마녀', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
-                          Text('히가시노 게이고', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: MediaQuery.of(context).size.width*0.2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Image.asset('assets/images/레이크.jpg', height: MediaQuery.of(context).size.height*0.19,),
-                          Text('레이크 사이드', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
-                          Text('히가시노 게이고', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: MediaQuery.of(context).size.width*0.2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Image.asset('assets/images/돈의심리학.png', height: MediaQuery.of(context).size.height*0.19,),
-                          Text('돈의 심리학', softWrap: true, style: TextStyle(fontSize: 10, ), overflow: TextOverflow.ellipsis),
-                          Text('모건 하우절', style: TextStyle(color: Colors.grey.shade600, fontSize: 10),overflow: TextOverflow.ellipsis)
-                        ],
-                      ),
-                    ),
-                  ],
+                child: Container( //책정보박스
+                  //decoration: BoxDecoration(border: Border.all(width: 2, color: Colors.red)),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: _recommendbookMainWidget.map((book) {
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BookDetail(book_id: book.book_id),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          //decoration: BoxDecoration(border: Border.all(width: 2, color: Colors.green)),
+                          height: screenSize.height*0.27,
+                          width: screenSize.width * 0.84*0.27,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image.network(book.imageUrl, height: screenSize.height*0.27*0.67),
+                              Text(book.bookTitle, softWrap: true, style: TextStyle(fontSize: textSize.scale(10)), overflow: TextOverflow.ellipsis),
+                              Text(book.author, style: TextStyle(color: Colors.grey.shade600, fontSize: textSize.scale(10)), overflow: TextOverflow.ellipsis)
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
               )
             ],
@@ -400,8 +433,7 @@ class MyPageViewState extends State<MyPageView> {
                   );
                 },
                 child: Container(
-                  padding: EdgeInsets.only(left: 5, right: 5, top: 5),
-                  width: 30,
+                  width: screenSize.width*0.07,
                   height: double.maxFinite,
                   decoration: BoxDecoration(
                       color: Colors.cyan.shade800,
@@ -409,28 +441,47 @@ class MyPageViewState extends State<MyPageView> {
                   ),
                   child: Column(
                     children: [
-                      Text('신착 도서', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      Padding(
+                        padding: const EdgeInsets.all(5.0),
+                        child: Text('신착 도서', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
+                      ),
                       Icon(Icons.menu_open, color: Colors.white, )
                     ],
                   ),
                 ),
               ),
               Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: _newbookMainWidget.map((book) {
-                    return Container(
-                      width: MediaQuery.of(context).size.width * 0.2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Image.network(book.imageUrl, height: MediaQuery.of(context).size.height * 0.19),
-                          Text(book.bookTitle, softWrap: true, style: TextStyle(fontSize: 10), overflow: TextOverflow.ellipsis),
-                          Text(book.author, style: TextStyle(color: Colors.grey.shade600, fontSize: 10), overflow: TextOverflow.ellipsis)
-                        ],
-                      ),
-                    );
-                  }).toList(),
+                child: Container( //책정보박스
+                  //decoration: BoxDecoration(border: Border.all(width: 2, color: Colors.red)),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: _newbookMainWidget.map((book) {
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BookDetail(book_id: book.book_id),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          //decoration: BoxDecoration(border: Border.all(width: 2, color: Colors.green)),
+                          height: screenSize.height*0.27,
+                          width: screenSize.width * 0.84*0.27,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image.network(book.imageUrl, height: screenSize.height*0.27*0.67),
+                              Text(book.bookTitle, softWrap: true, style: TextStyle(fontSize: textSize.scale(10)), overflow: TextOverflow.ellipsis),
+                              Text(book.author, style: TextStyle(color: Colors.grey.shade600, fontSize: textSize.scale(10)), overflow: TextOverflow.ellipsis)
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
               )
             ],
@@ -455,5 +506,3 @@ class MyPageViewState extends State<MyPageView> {
     );
   }
 }
-
-
