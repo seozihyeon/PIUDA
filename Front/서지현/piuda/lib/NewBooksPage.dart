@@ -5,7 +5,7 @@ import 'package:piuda/BookSearch.dart';
 import 'package:intl/intl.dart';
 import 'package:piuda/Utils/BookUtils.dart';
 import 'package:intl/intl.dart';
-
+import 'package:piuda/Widgets/bookcontainer_widget.dart';
 
 class newbookspage extends StatefulWidget {
   const newbookspage({super.key});
@@ -98,8 +98,8 @@ class _newbookspageState extends State<newbookspage> {
   Future<void> fetchNewBooks(String selectedLibrary, {DateTime? startDate, DateTime? endDate}) async {
     try {
       String url = selectedLibrary == '도서관전체'
-          ? 'http://10.0.2.2:8080/newbooks/all'
-          : 'http://10.0.2.2:8080/newbooks/$selectedLibrary';
+          ? 'http://34.64.173.65:8080/newbooks/all'
+          : 'http://34.64.173.65:8080/newbooks/$selectedLibrary';
 
       if (startDate != null && endDate != null) {
         // 시작 날짜와 끝나는 날짜가 있는 경우 쿼리 파라미터에 추가
@@ -143,6 +143,7 @@ class _newbookspageState extends State<newbookspage> {
             onReservationCompleted: () {
               // 예약이 완료되었을 때 수행할 작업을 여기에 추가
             },
+            recommender: null,
           ));
         }
 
@@ -158,44 +159,64 @@ class _newbookspageState extends State<newbookspage> {
   }
 
   Widget _buildDateDropdown() {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('날짜범위'),
-        TextButton(
-          onPressed: () => _showDatePicker(context, true),
-          child: Row(
-            children: [
-              Text(_startDate != null ? '${DateFormat('yyyy-MM-dd').format(_startDate!)}'  : '${DateFormat('yyyy-MM-dd').format(DateTime(DateTime.now().year, DateTime.now().month - 1, DateTime.now().day))}',
-                  style: TextStyle(color: Colors.cyan.shade900)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            TextButton(
+              onPressed: () => _showDatePicker(context, true),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _startDate != null
+                        ? '${DateFormat('yyyy-MM-dd').format(_startDate!)}'
+                        : '${DateFormat('yyyy-MM-dd').format(DateTime.now())}',
+                    style: TextStyle(color: Colors.cyan.shade900),
+                  ),
+                  Icon(Icons.arrow_drop_down, color: Colors.grey[700]),
+                ],
               ),
-              Icon(Icons.arrow_drop_down)
-            ],
-          ),
-        ),
-        Text('~'),
-        TextButton(
-          onPressed: () => _showDatePicker(context, false),
-          child: Row(
-            children: [
-              Text(_endDate != null ? '${DateFormat('yyyy-MM-dd').format(_endDate!)}' : '${DateFormat('yyyy-MM-dd').format(DateTime.now())}',
-                  style: TextStyle(color: Colors.cyan.shade900)),
-              Icon(Icons.arrow_drop_down)
-            ],
-          ),
-        ),
-        IconButton(
-          onPressed: () {
-            fetchNewBooks(
-              _selectedLibrary.isNotEmpty ? _selectedLibrary.first : '도서관전체',
-              startDate: _startDate,
-              endDate: _endDate,
-            );
-          },
-          icon: Icon(Icons.search),
+            ),
+            Text('~'),
+            TextButton(
+              onPressed: () => _showDatePicker(context, false),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _endDate != null
+                        ? '${DateFormat('yyyy-MM-dd').format(_endDate!)}'
+                        : '${DateFormat('yyyy-MM-dd').format(DateTime.now())}',
+                    style: TextStyle(color: Colors.cyan.shade900),
+                  ),
+                  Icon(Icons.arrow_drop_down, color: Colors.grey[700]),
+                ],
+              ),
+            ),
+            Spacer(),
+            IconButton(
+              onPressed: () {
+                fetchNewBooks(
+                  _selectedLibrary.isNotEmpty ? _selectedLibrary.first : '도서관전체',
+                  startDate: _startDate,
+                  endDate: _endDate,
+                );
+              },
+              icon: Icon(Icons.search),
+            ),
+          ],
         ),
       ],
     );
   }
+
+
+
 
   Future<void> _showDatePicker(BuildContext context, bool isStartDate) async {
     final pickedDate = await showDatePicker(
@@ -258,7 +279,7 @@ class _newbookspageState extends State<newbookspage> {
           children: [
             Container(
               margin: EdgeInsets.only(left: 9, right: 9, bottom: 9, top: 9),
-              padding: EdgeInsets.symmetric(horizontal: 12),
+              padding: EdgeInsets.only(left: 12, right: 9,),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4.0),
                 border: Border.all(

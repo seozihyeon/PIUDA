@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:piuda/MyBookingPage.dart';
 import 'package:piuda/MyLog.dart';
 import 'package:piuda/Widgets/main_3widget.dart';
@@ -26,6 +27,7 @@ final Uri _url = Uri.parse('https://www.sdlib.or.kr/main/');
 bool isLoggedIn = false;
 
 void main() {
+  debugPaintSizeEnabled = false;
   initializeDateFormatting().then((_) {
     runApp(MyApp());
   });
@@ -59,7 +61,7 @@ class MyApp extends StatelessWidget {
         progressIndicatorTheme: ProgressIndicatorThemeData(
           color: Colors.cyan.shade700,
         ),
-          textSelectionTheme: TextSelectionThemeData(
+        textSelectionTheme: TextSelectionThemeData(
           cursorColor: Colors.cyan.shade800,
           selectionColor: Colors.cyan.shade100, // 드래그하여 선택한 텍스트의 배경 색상
           selectionHandleColor: Colors.cyan.shade800, // 선택 핸들의 색상
@@ -124,8 +126,7 @@ class _HomePageState extends State<HomePage> {
     myPageView = MyPageView(
       key: myPageViewKey,
       onLibraryChanged: (newLibrary) {
-        print("도서관이 변경되었습니다: $newLibrary");
-        // 필요한 추가 동작을 여기에 구현합니다.
+        //print("도서관이 변경되었습니다: $newLibrary");
       },
     );
 
@@ -133,8 +134,6 @@ class _HomePageState extends State<HomePage> {
     _focusedDay = ValueNotifier(DateTime.now());
     fetchEvents(selectedLibrary);
     _selectedEvents = _getEventsForDay(_selectedDay.value);
-
-    //myPageView.callFetchMainNewBooks(selectedLibrary);
   }
 
   // 로그인 상태를 업데이트하는 함수
@@ -143,7 +142,6 @@ class _HomePageState extends State<HomePage> {
       isLoggedIn = loginResult['isLoggedIn'];
       userName = loginResult['username'];
       userId = loginResult['userId'];
-
     });
   }
 
@@ -236,7 +234,7 @@ class _HomePageState extends State<HomePage> {
   List<Event> _selectedEvents = [];
 
   Future<void> fetchEvents(String libraryName) async {
-    final url = Uri.parse('http://10.0.2.2:8080/api/events/$libraryName');
+    final url = Uri.parse('http://34.64.173.65:8080/api/events/$libraryName');
     print("Requesting events from: $url");
 
     final response = await http.get(url);
@@ -338,7 +336,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _logout() async {
     var response = await http.post(
-      Uri.parse('http://10.0.2.2:8080/logout'),
+      Uri.parse('http://34.64.173.65:8080/logout'),
     );
 
     if (response.statusCode == 200) {
@@ -577,7 +575,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    var screenSize = MediaQuery.of(context).size;
+    final screenSize = MediaQuery.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -807,7 +805,8 @@ class _HomePageState extends State<HomePage> {
 
 
             Container(
-              margin: EdgeInsets.only(left: 20, bottom: 8),
+              margin: EdgeInsets.only(left: 20, right:20, bottom: 8),
+              //decoration: BoxDecoration(border: Border.all(width: 2)),
               child: Row(
                 children: [
                   LibDropdown(
@@ -815,29 +814,31 @@ class _HomePageState extends State<HomePage> {
                     onLibraryChanged: _onLibraryChanged,
                     libraryUrls: libraryUrls,
                   ),
-                  GestureDetector(
-                    onTap: () => _launchLibraryUrl('공지사항'),
+                  Expanded(
                     child: Container(
-                      padding: EdgeInsets.all(5.0),
-                      margin: EdgeInsets.only(top: 5, bottom: 5, left: 10.0, right: 10),
+                      //decoration: BoxDecoration(border: Border.all(width: 2, color: Colors.red)),
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          Icon(Icons.arrow_forward_ios, color: Colors.grey.shade800, size: 18.0,),
-                          Text('공지사항', style: TextStyle(color: Colors.grey.shade800, fontSize: 18.0, fontWeight: FontWeight.bold,),),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Container(height: 18, decoration: BoxDecoration(border: Border(right: BorderSide(color: Colors.grey, width: 2)))),
-                  GestureDetector(
-                    onTap: () => _launchLibraryUrl('문화행사'),
-                    child: Container(
-                      padding: EdgeInsets.all(5.0),
-                      margin: EdgeInsets.only(top: 5, bottom: 5, left: 10.0, right: 10.0),
-                      child: Row(
-                        children: [
-                          Icon(Icons.arrow_forward_ios, color: Colors.grey.shade800, size: 18.0,),
-                          Text('문화행사', style: TextStyle(color: Colors.grey.shade800, fontSize: 18.0, fontWeight: FontWeight.bold,),),
+                          GestureDetector(
+                            onTap: () => _launchLibraryUrl('공지사항'),
+                            child: Row(
+                              children: [
+                                Icon(Icons.arrow_forward_ios, color: Colors.grey.shade800, size: MediaQuery.of(context).size.height*0.022),
+                                Text('공지사항', style: TextStyle(color: Colors.grey.shade800, fontSize: MediaQuery.textScalerOf(context).scale(16.0), fontWeight: FontWeight.bold,),),
+                              ],
+                            ),
+                          ),
+                          Container(height: MediaQuery.of(context).size.height*0.025, decoration: BoxDecoration(border: Border(right: BorderSide(color: Colors.grey, width: 2)))),
+                          GestureDetector(
+                            onTap: () => _launchLibraryUrl('문화행사'),
+                            child: Row(
+                              children: [
+                                Icon(Icons.arrow_forward_ios, color: Colors.grey.shade800, size: MediaQuery.of(context).size.height*0.022,),
+                                Text('문화행사', style: TextStyle(color: Colors.grey.shade800, fontSize: MediaQuery.textScalerOf(context).scale(16.0), fontWeight: FontWeight.bold,),),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                     ),
